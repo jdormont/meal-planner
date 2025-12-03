@@ -19,11 +19,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadUserProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
+
+    if (error) {
+      console.error('Error loading user profile:', error);
+    }
 
     setUserProfile(data);
   };
