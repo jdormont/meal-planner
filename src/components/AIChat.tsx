@@ -200,7 +200,6 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
           },
           body: JSON.stringify({
             messages: [...messages, { role: 'user', content: userMessage }],
-            apiKey: import.meta.env.VITE_OPENAI_API_KEY,
             ratingHistory,
             userPreferences,
           }),
