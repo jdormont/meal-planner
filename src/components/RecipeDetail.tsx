@@ -1,0 +1,468 @@
+import { useState, useEffect } from 'react';
+import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
+import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Plus } from 'lucide-react';
+import { marked } from 'marked';
+import { useAuth } from '../contexts/AuthContext';
+
+type RecipeDetailProps = {
+  recipe: Recipe;
+  onClose: () => void;
+  onEdit: () => void;
+};
+
+export function RecipeDetail({ recipe, onClose, onEdit }: RecipeDetailProps) {
+  const { user } = useAuth();
+  const [currentRating, setCurrentRating] = useState<RecipeRating | null>(null);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [pendingRating, setPendingRating] = useState<'thumbs_up' | 'thumbs_down' | null>(null);
+  const [feedback, setFeedback] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showMealSelector, setShowMealSelector] = useState(false);
+  const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
+  const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
+  const [addingToMeal, setAddingToMeal] = useState(false);
+  const totalTime = recipe.prep_time_minutes + recipe.cook_time_minutes;
+
+  const renderMarkdown = (text: string) => {
+    return { __html: marked(text, { breaks: true, gfm: true }) as string };
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadCurrentRating();
+      loadAvailableMeals();
+    }
+  }, [user, recipe.id]);
+
+  const loadCurrentRating = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('recipe_ratings')
+      .select('*')
+      .eq('recipe_id', recipe.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    setCurrentRating(data);
+  };
+
+  const loadAvailableMeals = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('meals')
+      .select('*')
+      .eq('is_archived', false)
+      .order('date', { ascending: true });
+
+    setAvailableMeals(data || []);
+  };
+
+  const addRecipeToMeal = async () => {
+    if (!user || !selectedMealId) return;
+
+    setAddingToMeal(true);
+    try {
+      const { data: existingMealRecipes } = await supabase
+        .from('meal_recipes')
+        .select('sort_order')
+        .eq('meal_id', selectedMealId)
+        .order('sort_order', { ascending: false })
+        .limit(1);
+
+      const nextSortOrder = existingMealRecipes && existingMealRecipes.length > 0
+        ? existingMealRecipes[0].sort_order + 1
+        : 0;
+
+      const { error } = await supabase
+        .from('meal_recipes')
+        .insert({
+          meal_id: selectedMealId,
+          recipe_id: recipe.id,
+          user_id: user.id,
+          sort_order: nextSortOrder,
+          is_completed: false,
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          alert('This recipe is already in the selected meal.');
+        } else {
+          throw error;
+        }
+      } else {
+        setShowMealSelector(false);
+        setSelectedMealId(null);
+        alert('Recipe added to meal successfully!');
+      }
+    } catch (error) {
+      console.error('Error adding recipe to meal:', error);
+      alert('Failed to add recipe to meal. Please try again.');
+    } finally {
+      setAddingToMeal(false);
+    }
+  };
+
+  const handleRatingClick = (rating: 'thumbs_up' | 'thumbs_down') => {
+    setPendingRating(rating);
+    setFeedback(currentRating?.feedback || '');
+    setShowFeedbackDialog(true);
+  };
+
+  const submitRating = async () => {
+    if (!user || !pendingRating) return;
+
+    setLoading(true);
+    try {
+      if (currentRating) {
+        await supabase
+          .from('recipe_ratings')
+          .update({
+            rating: pendingRating,
+            feedback: feedback.trim(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', currentRating.id);
+      } else {
+        await supabase
+          .from('recipe_ratings')
+          .insert({
+            recipe_id: recipe.id,
+            user_id: user.id,
+            rating: pendingRating,
+            feedback: feedback.trim(),
+          });
+      }
+
+      await loadCurrentRating();
+      setShowFeedbackDialog(false);
+      setPendingRating(null);
+      setFeedback('');
+    } catch (error) {
+      console.error('Error saving rating:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="relative">
+          {recipe.image_url ? (
+            <img
+              src={recipe.image_url}
+              alt={recipe.title}
+              className="w-full h-64 object-cover"
+            />
+          ) : (
+            <div className="w-full h-64 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
+              <span className="text-9xl">🍽️</span>
+            </div>
+          )}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-lg transition shadow-lg"
+          >
+            <X className="w-6 h-6 text-gray-700" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-8">
+          <div className="mb-6">
+            <h1
+              className="text-4xl font-bold text-gray-900 mb-3"
+              dangerouslySetInnerHTML={renderMarkdown(recipe.title)}
+            />
+            {recipe.description && (
+              <p className="text-gray-600 text-lg">
+                {recipe.description}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6 mb-6 pb-6 border-b">
+            <div className="flex items-center gap-2 text-gray-700">
+              <Clock className="w-5 h-5 text-orange-600" />
+              <div>
+                <div className="text-sm text-gray-500">Total Time</div>
+                <div className="font-semibold">{totalTime} minutes</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <Users className="w-5 h-5 text-orange-600" />
+              <div>
+                <div className="text-sm text-gray-500">Servings</div>
+                <div className="font-semibold">{recipe.servings}</div>
+              </div>
+            </div>
+            {recipe.prep_time_minutes > 0 && (
+              <div>
+                <div className="text-sm text-gray-500">Prep Time</div>
+                <div className="font-semibold text-gray-700">{recipe.prep_time_minutes} min</div>
+              </div>
+            )}
+            {recipe.cook_time_minutes > 0 && (
+              <div>
+                <div className="text-sm text-gray-500">Cook Time</div>
+                <div className="font-semibold text-gray-700">{recipe.cook_time_minutes} min</div>
+              </div>
+            )}
+          </div>
+
+          {recipe.tags.length > 0 && (
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
+                {recipe.tags.map((tag, idx) => {
+                  const isStructured = tag.includes(':');
+                  const displayTag = isStructured
+                    ? tag.split(':')[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                    : tag;
+                  const tagColor = isStructured
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-orange-100 text-orange-700';
+
+                  return (
+                    <span
+                      key={idx}
+                      className={`px-3 py-1 ${tagColor} rounded-full text-sm font-medium`}
+                    >
+                      {displayTag}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {recipe.ingredients.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Ingredients
+              </h2>
+              <ul className="space-y-2">
+                {recipe.ingredients.map((ingredient, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="text-orange-600 mt-1">•</span>
+                    <span className="text-gray-700">
+                      {ingredient.quantity} {ingredient.unit} {ingredient.name}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {recipe.instructions.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Instructions
+              </h2>
+              <ol className="space-y-4">
+                {recipe.instructions.map((instruction, idx) => (
+                  <li key={idx} className="flex gap-4">
+                    <span className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold">
+                      {idx + 1}
+                    </span>
+                    <div
+                      className="text-gray-700 pt-1 leading-relaxed prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={renderMarkdown(instruction)}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {recipe.notes && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <h3 className="font-semibold text-gray-900 mb-2">Notes</h3>
+              <div
+                className="text-gray-700 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={renderMarkdown(recipe.notes)}
+              />
+            </div>
+          )}
+
+          {recipe.source_url && (
+            <div className="mb-6">
+              <a
+                href={recipe.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Original Source
+              </a>
+            </div>
+          )}
+
+          {user && (
+            <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <h3 className="font-semibold text-gray-900 mb-3">Rate this recipe</h3>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleRatingClick('thumbs_up')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                    currentRating?.rating === 'thumbs_up'
+                      ? 'bg-green-100 text-green-700 border-2 border-green-500'
+                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <ThumbsUp className="w-5 h-5" />
+                  <span className="font-medium">Good</span>
+                </button>
+                <button
+                  onClick={() => handleRatingClick('thumbs_down')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                    currentRating?.rating === 'thumbs_down'
+                      ? 'bg-red-100 text-red-700 border-2 border-red-500'
+                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <ThumbsDown className="w-5 h-5" />
+                  <span className="font-medium">Not Good</span>
+                </button>
+              </div>
+              {currentRating && (
+                <p className="mt-3 text-sm text-gray-600">
+                  {currentRating.feedback && (
+                    <span>
+                      <strong>Your feedback:</strong> {currentRating.feedback}
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-6 border-t">
+            <button
+              onClick={onEdit}
+              className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+            >
+              <Edit2 className="w-5 h-5" />
+              Edit Recipe
+            </button>
+            <button
+              onClick={() => setShowMealSelector(true)}
+              className="flex-1 px-6 py-3 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition font-medium flex items-center justify-center gap-2"
+            >
+              <Calendar className="w-5 h-5" />
+              Add to Meal
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showFeedbackDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Tell us more about your rating
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Your feedback helps improve future recipe recommendations.
+            </p>
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="What did you like or dislike about this recipe? (optional)"
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={submitRating}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Submit Rating'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowFeedbackDialog(false);
+                  setPendingRating(null);
+                  setFeedback('');
+                }}
+                disabled={loading}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMealSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Add to Meal</h3>
+            <p className="text-gray-600 mb-4">
+              Select which meal you'd like to add "{recipe.title}" to:
+            </p>
+            {availableMeals.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">
+                No meals available. Create a meal first!
+              </p>
+            ) : (
+              <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg mb-4">
+                {availableMeals.map((meal) => (
+                  <button
+                    key={meal.id}
+                    onClick={() => setSelectedMealId(meal.id)}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition border-b border-gray-100 ${
+                      selectedMealId === meal.id
+                        ? 'bg-orange-50 font-medium text-orange-900'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{meal.name}</div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(meal.date).toLocaleDateString()}
+                        </div>
+                      </div>
+                      {selectedMealId === meal.id && (
+                        <span className="text-orange-600">✓</span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={addRecipeToMeal}
+                disabled={!selectedMealId || addingToMeal}
+                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addingToMeal ? 'Adding...' : 'Add to Meal'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowMealSelector(false);
+                  setSelectedMealId(null);
+                }}
+                disabled={addingToMeal}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

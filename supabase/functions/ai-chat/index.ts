@@ -1,0 +1,255 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }
+
+  try {
+    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences } = await req.json();
+    const apiKey = clientApiKey || Deno.env.get("OPENAI_API_KEY") || Deno.env.get("ANTHROPIC_API_KEY");
+    
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ 
+          error: "AI API key not configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in your Supabase project settings." 
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const isOpenAI = apiKey.startsWith('sk-');
+    const url = isOpenAI 
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://api.anthropic.com/v1/messages";
+
+    let preferencesContext = '';
+
+    if (userPreferences) {
+      preferencesContext = '\n\n**User Cooking Preferences:**\n';
+
+      if (userPreferences.favorite_cuisines && userPreferences.favorite_cuisines.length > 0) {
+        preferencesContext += `\nFavorite Cuisines: ${userPreferences.favorite_cuisines.join(', ')}`;
+      }
+
+      if (userPreferences.favorite_dishes && userPreferences.favorite_dishes.length > 0) {
+        preferencesContext += `\nFavorite Dishes: ${userPreferences.favorite_dishes.join(', ')}`;
+      }
+
+      if (userPreferences.dietary_style) {
+        preferencesContext += `\nDietary Style: ${userPreferences.dietary_style}`;
+      }
+
+      if (userPreferences.food_restrictions && userPreferences.food_restrictions.length > 0) {
+        preferencesContext += `\nFood Restrictions/Allergies: ${userPreferences.food_restrictions.join(', ')}`;
+      }
+
+      if (userPreferences.time_preference) {
+        const timeMap: any = {
+          quick: 'under 30 minutes',
+          moderate: '30-60 minutes',
+          relaxed: '60+ minutes'
+        };
+        preferencesContext += `\nPreferred Cooking Time: ${timeMap[userPreferences.time_preference] || userPreferences.time_preference}`;
+      }
+
+      if (userPreferences.skill_level) {
+        preferencesContext += `\nCooking Skill Level: ${userPreferences.skill_level}`;
+      }
+
+      if (userPreferences.household_size) {
+        preferencesContext += `\nCooking For: ${userPreferences.household_size} people`;
+      }
+
+      if (userPreferences.spice_preference) {
+        preferencesContext += `\nSpice Preference: ${userPreferences.spice_preference}`;
+      }
+
+      if (userPreferences.cooking_equipment && userPreferences.cooking_equipment.length > 0) {
+        preferencesContext += `\nAvailable Equipment: ${userPreferences.cooking_equipment.join(', ')}`;
+      }
+
+      if (userPreferences.additional_notes && userPreferences.additional_notes.trim()) {
+        preferencesContext += `\nAdditional Notes: ${userPreferences.additional_notes}`;
+      }
+
+      preferencesContext += '\n\nIMPORTANT: Use these preferences to personalize all recipe recommendations. Respect dietary restrictions and allergies completely. Adjust recipe complexity based on skill level and time preference.';
+    }
+
+    let ratingContext = '';
+    if (ratingHistory && ratingHistory.length > 0) {
+      const likedRecipes = ratingHistory
+        .filter((r: any) => r.rating === 'thumbs_up')
+        .map((r: any) => {
+          const title = r.recipes?.title || 'Unknown';
+          const tags = r.recipes?.tags?.join(', ') || '';
+          const feedback = r.feedback ? ` (${r.feedback})` : '';
+          return `${title}${tags ? ` [${tags}]` : ''}${feedback}`;
+        });
+
+      const dislikedRecipes = ratingHistory
+        .filter((r: any) => r.rating === 'thumbs_down')
+        .map((r: any) => {
+          const title = r.recipes?.title || 'Unknown';
+          const tags = r.recipes?.tags?.join(', ') || '';
+          const feedback = r.feedback ? ` (${r.feedback})` : '';
+          return `${title}${tags ? ` [${tags}]` : ''}${feedback}`;
+        });
+
+      if (likedRecipes.length > 0 || dislikedRecipes.length > 0) {
+        ratingContext = '\n\n**User Recipe Ratings History:**\n';
+        if (likedRecipes.length > 0) {
+          ratingContext += `\nRecipes they LIKED:\n${likedRecipes.map(r => `- ${r}`).join('\n')}`;
+        }
+        if (dislikedRecipes.length > 0) {
+          ratingContext += `\n\nRecipes they DISLIKED:\n${dislikedRecipes.map(r => `- ${r}`).join('\n')}`;
+        }
+        ratingContext += '\n\nUse this information to personalize recommendations and avoid suggesting similar recipes to ones they disliked.';
+      }
+    }
+
+    const systemPrompt = `You are CookFlow, an AI assistant embedded in a recipe + meal-planning application.
+
+Your responsibilities:
+
+1. **Follow the user's cooking preferences automatically unless overridden:**
+   - Cooking for 2 adults + 2 kids (~3 adult portions).
+   - Low heat by default.
+   - Weeknight meals must be 30–45 minutes unless user specifies otherwise.
+   - Avoid recipes requiring a blender or food processor.
+   - User shops weekly at the Park Slope Coop with access to specialty ingredients and good produce.
+
+2. **When user asks for recipe recommendations or ideas:**
+   - FIRST show 3-4 brief options with:
+     * Recipe name
+     * 1-2 sentence description
+     * Why they would like it based on their preferences
+   - ONLY provide full detailed recipes when user selects one or explicitly asks for details
+   - Mark full recipes with "FULL_RECIPE" at the start so the app knows to show the save button
+
+3. **When providing a FULL RECIPE:**
+   - Start with "FULL_RECIPE" on its own line
+   - Then provide a friendly introduction sentence
+   - Then list the recipe details in a clear, readable format using:
+     * Markdown headers (##) for sections like Ingredients and Instructions
+     * Bullet points (-) for ingredients
+     * Numbered lists (1., 2., 3.) for instructions
+   - DO NOT wrap the recipe in code blocks or backticks
+   - DO NOT use JSON format
+   - Write naturally in markdown format
+
+4. **You can CRUD recipes, weekly plans, and event menus using the app's data functions.
+   After generating content, ask whether the user wants it saved.**
+
+5. **All reasoning must respect:**
+   - The user's time constraints.
+   - Kid-friendly flavors.
+   - Realistic home-kitchen constraints.
+   - Preference for science-based cooking, Samin-style seasoning balance, Ottolenghi-style flavors, and Ina Garten approachability.
+
+6. **Examples of allowed queries:**
+   - "Give me 3 ideas for a 40-minute Tuesday meal." → Show brief options first
+   - "Tell me more about option 2" → Show full detailed recipe in markdown format
+   - "Turn that into a saved recipe."
+   - "Build a Passover menu using my saved mains."
+   - "Generate a shopping list for next week's plan."
+
+Behave as a smart recipe developer, meal planner, and culinary assistant.${preferencesContext}${ratingContext}`;
+
+    let requestBody;
+    let headers;
+
+    if (isOpenAI) {
+      headers = {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      };
+      requestBody = {
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages,
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      };
+    } else {
+      headers = {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      };
+      requestBody = {
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: messages,
+      };
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("AI API Error:", errorData);
+      throw new Error(`AI API request failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    let message;
+    if (isOpenAI) {
+      message = data.choices[0].message.content;
+    } else {
+      message = data.content[0].text;
+    }
+
+    // Clean up any JSON code blocks that might have been included
+    if (message.includes('```json') || message.includes('```')) {
+      message = message.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    }
+
+    return new Response(
+      JSON.stringify({ message }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Unknown error occurred" 
+      }),
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
+});
