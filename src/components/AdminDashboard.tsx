@@ -22,12 +22,24 @@ export function AdminDashboard() {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
 
-      if (error) throw error;
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-get-users`;
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to load users');
+      }
+
+      const { users: data } = await response.json();
       setUsers(data || []);
     } catch (error) {
       console.error('Error loading users:', error);
@@ -58,12 +70,24 @@ export function AdminDashboard() {
   const approveUser = async (userId: string) => {
     setActionLoading(userId);
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ status: 'APPROVED', updated_at: new Date().toISOString() })
-        .eq('user_id', userId);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
 
-      if (error) throw error;
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user-status`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, status: 'APPROVED' }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to approve user');
+      }
+
       await loadUsers();
     } catch (error) {
       console.error('Error approving user:', error);
@@ -78,12 +102,24 @@ export function AdminDashboard() {
 
     setActionLoading(userId);
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ status: 'REJECTED', updated_at: new Date().toISOString() })
-        .eq('user_id', userId);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
 
-      if (error) throw error;
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user-status`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, status: 'REJECTED' }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to reject user');
+      }
+
       await loadUsers();
     } catch (error) {
       console.error('Error rejecting user:', error);
