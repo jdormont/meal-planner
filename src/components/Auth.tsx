@@ -6,6 +6,7 @@ export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
@@ -16,7 +17,7 @@ export function Auth() {
     setError(null);
 
     const { error: authError } = isSignUp
-      ? await signUp(email, password)
+      ? await signUp(email, password, fullName)
       : await signIn(email, password);
 
     if (authError) {
@@ -44,11 +45,27 @@ export function Auth() {
         </h1>
         <p className="text-center text-gray-600 mb-8">
           {isSignUp
-            ? 'Start organizing your recipes today'
+            ? 'Your account will be reviewed by an admin before approval'
             : 'Sign in to access your recipes'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp && (
+            <div>
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
+                placeholder="John Doe"
+              />
+            </div>
+          )}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               Email
@@ -106,6 +123,7 @@ export function Auth() {
             onClick={() => {
               setIsSignUp(!isSignUp);
               setError(null);
+              setFullName('');
             }}
             className="text-orange-600 hover:text-orange-700 text-sm font-medium"
           >

@@ -67,3 +67,13 @@ export type MealRecipe = {
 export type MealWithRecipes = Meal & {
   recipes: (MealRecipe & { recipe: Recipe })[];
 };
+
+export type UserProfile = {
+  id: string;
+  user_id: string;
+  full_name: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+};

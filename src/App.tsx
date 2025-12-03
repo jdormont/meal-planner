@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
+import { AccountStatus } from './components/AccountStatus';
+import { AdminDashboard } from './components/AdminDashboard';
 import { RecipeList } from './components/RecipeList';
 import { RecipeForm } from './components/RecipeForm';
 import { RecipeDetail } from './components/RecipeDetail';
@@ -11,10 +13,10 @@ import { MealList } from './components/MealList';
 import { MealForm } from './components/MealForm';
 import { MealDetail } from './components/MealDetail';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar } from 'lucide-react';
+import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield } from 'lucide-react';
 
 function App() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, userProfile, loading: authLoading, signOut } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +33,7 @@ function App() {
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   const [selectedMeal, setSelectedMeal] = useState<MealWithRecipes | null>(null);
   const [editingMealRecipeIds, setEditingMealRecipeIds] = useState<string[]>([]);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -327,6 +330,21 @@ function App() {
     return <Auth />;
   }
 
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+        <div className="text-center">
+          <ChefHat className="w-16 h-16 text-orange-600 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (userProfile.status === 'PENDING' || userProfile.status === 'REJECTED') {
+    return <AccountStatus />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
       <header className="bg-white shadow-sm border-b">
@@ -342,11 +360,30 @@ function App() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {userProfile.is_admin && (
+                <button
+                  onClick={() => {
+                    setShowAdmin(!showAdmin);
+                    setShowMeals(false);
+                    setShowChat(false);
+                    setShowSettings(false);
+                  }}
+                  className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                    showAdmin
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Shield className="w-5 h-5" />
+                  Admin
+                </button>
+              )}
               <button
                 onClick={() => {
                   setShowMeals(!showMeals);
                   setShowChat(false);
                   setShowSettings(false);
+                  setShowAdmin(false);
                 }}
                 className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
                   showMeals
@@ -362,6 +399,7 @@ function App() {
                   setShowChat(!showChat);
                   setShowSettings(false);
                   setShowMeals(false);
+                  setShowAdmin(false);
                 }}
                 className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
                   showChat
@@ -393,6 +431,7 @@ function App() {
                   setShowSettings(!showSettings);
                   setShowChat(false);
                   setShowMeals(false);
+                  setShowAdmin(false);
                 }}
                 className={`p-2 rounded-lg transition ${
                   showSettings
@@ -416,7 +455,9 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {showSettings ? (
+        {showAdmin ? (
+          <AdminDashboard />
+        ) : showSettings ? (
           <Settings />
         ) : showChat ? (
           <div className="h-[calc(100vh-10rem)]">
