@@ -490,6 +490,11 @@ function App() {
               <MealList
                 meals={meals}
                 onSelect={setSelectedMeal}
+                onCreateNew={() => {
+                  setEditingMeal(null);
+                  setEditingMealRecipeIds([]);
+                  setShowMealForm(true);
+                }}
               />
             )}
           </div>
@@ -517,6 +522,13 @@ function App() {
                   }}
                   onDelete={deleteRecipe}
                   onSelect={setSelectedRecipe}
+                  onCreateNew={() => {
+                    setEditingRecipe(null);
+                    setShowForm(true);
+                  }}
+                  onOpenChat={() => {
+                    setShowChat(true);
+                  }}
                 />
               </>
             )}

@@ -1,12 +1,13 @@
 import { MealWithRecipes } from '../lib/supabase';
-import { Calendar, ChefHat, CheckCircle2, Circle } from 'lucide-react';
+import { Calendar, ChefHat, CheckCircle2, Circle, Plus, Sparkles } from 'lucide-react';
 
 type MealListProps = {
   meals: MealWithRecipes[];
   onSelect: (meal: MealWithRecipes) => void;
+  onCreateNew?: () => void;
 };
 
-export function MealList({ meals, onSelect }: MealListProps) {
+export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -25,10 +26,52 @@ export function MealList({ meals, onSelect }: MealListProps) {
 
   if (meals.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl shadow-md">
-        <ChefHat className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">No meals planned yet</h3>
-        <p className="text-gray-600">Create your first meal to start planning!</p>
+      <div className="flex items-center justify-center py-16">
+        <div className="max-w-xl w-full bg-white rounded-2xl shadow-lg p-12">
+          <div className="text-center mb-8">
+            <div className="inline-flex p-4 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full mb-6">
+              <Calendar className="w-16 h-16 text-orange-600" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              Start Planning Your Meals
+            </h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Organize your recipes into meal plans to stay on track with your cooking goals
+            </p>
+
+            {onCreateNew && (
+              <button
+                onClick={onCreateNew}
+                className="group relative inline-flex items-center gap-3 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl px-8 py-4 transition-all transform hover:scale-105 hover:shadow-xl font-semibold text-lg"
+              >
+                <Plus className="w-6 h-6" />
+                Create Your First Meal
+                <Sparkles className="w-5 h-5" />
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-xl transition-colors" />
+              </button>
+            )}
+          </div>
+
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <div className="text-sm text-gray-600 space-y-2">
+              <p className="font-medium text-gray-900 mb-3">With meal planning you can:</p>
+              <ul className="space-y-2 text-left max-w-md mx-auto">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>Organize recipes for specific dates and events</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>Track which recipes you've completed</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>Stay organized with your cooking schedule</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
