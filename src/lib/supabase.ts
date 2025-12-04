@@ -76,4 +76,8 @@ export type UserProfile = {
   is_admin: boolean;
   created_at: string;
   updated_at: string;
+  login_count?: number;
+  recipe_count?: number;
+  chat_count?: number;
+  meal_count?: number;
 };

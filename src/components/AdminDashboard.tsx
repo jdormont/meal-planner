@@ -233,6 +233,10 @@ export function AdminDashboard() {
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">User ID</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Admin</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Logins</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Recipes</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Chats</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Meals</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Signed Up</th>
                 <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
               </tr>
@@ -240,7 +244,7 @@ export function AdminDashboard() {
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-500">
+                  <td colSpan={10} className="text-center py-8 text-gray-500">
                     No users found
                   </td>
                 </tr>
@@ -276,6 +280,18 @@ export function AdminDashboard() {
                           Admin
                         </span>
                       )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="text-sm font-medium text-gray-900">{user.login_count ?? 0}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="text-sm font-medium text-gray-900">{user.recipe_count ?? 0}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="text-sm font-medium text-gray-900">{user.chat_count ?? 0}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="text-sm font-medium text-gray-900">{user.meal_count ?? 0}</span>
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600">
                       {new Date(user.created_at).toLocaleDateString()}

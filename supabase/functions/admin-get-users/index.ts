@@ -62,8 +62,44 @@ Deno.serve(async (req: Request) => {
       throw usersError;
     }
 
+    const usersWithMetrics = await Promise.all(
+      users.map(async (user) => {
+        const [recipeCount, chatCount, mealCount, loginCount] = await Promise.all([
+          supabaseAdmin
+            .from('recipes')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.user_id)
+            .then(({ count }) => count || 0),
+
+          supabaseAdmin
+            .from('chats')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.user_id)
+            .then(({ count }) => count || 0),
+
+          supabaseAdmin
+            .from('meals')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.user_id)
+            .then(({ count }) => count || 0),
+
+          supabaseAdmin.rpc('count_user_logins', { target_user_id: user.user_id })
+            .then(({ data }) => data || 0)
+            .catch(() => 0),
+        ]);
+
+        return {
+          ...user,
+          recipe_count: recipeCount,
+          chat_count: chatCount,
+          meal_count: mealCount,
+          login_count: loginCount,
+        };
+      })
+    );
+
     return new Response(
-      JSON.stringify({ users }),
+      JSON.stringify({ users: usersWithMetrics }),
       {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
