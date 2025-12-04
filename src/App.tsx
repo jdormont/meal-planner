@@ -516,6 +516,13 @@ function App() {
             setShowForm(false);
             setEditingRecipe(null);
           }}
+          onDelete={editingRecipe && !editingRecipe.id.startsWith('temp-') ? async () => {
+            if (confirm('Are you sure you want to delete this recipe?')) {
+              await deleteRecipe(editingRecipe.id);
+              setShowForm(false);
+              setEditingRecipe(null);
+            }
+          } : undefined}
         />
       )}
 

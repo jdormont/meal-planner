@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Recipe } from '../lib/supabase';
-import { X, Plus, Minus, Loader2 } from 'lucide-react';
+import { X, Plus, Minus, Loader2, Trash2 } from 'lucide-react';
 
 type RecipeFormProps = {
   recipe?: Recipe | null;
   onSave: (recipe: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
   onCancel: () => void;
+  onDelete?: () => void;
 };
 
-export function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps) {
+export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: string; unit: string }>>([
@@ -652,17 +653,28 @@ export function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps) {
           </div>
 
           <div className="flex gap-3 pt-4 border-t">
+            {recipe && !recipe.id.startsWith('temp-') && onDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="px-6 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition font-medium flex items-center gap-2"
+              >
+                <Trash2 className="w-5 h-5" />
+                Delete
+              </button>
+            )}
+            <div className="flex-1"></div>
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isFetchingImage}
-              className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isFetchingImage && <Loader2 className="w-5 h-5 animate-spin" />}
               {isFetchingImage ? 'Finding image...' : 'Save Recipe'}
