@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase, UserProfile } from '../lib/supabase';
-import { Shield, Search, CheckCircle, XCircle, Users, Clock, UserCheck, UserX, Loader2 } from 'lucide-react';
+import { Shield, Search, CheckCircle, XCircle, Users, Clock, UserCheck, UserX, Loader2, RotateCcw, Trash2 } from 'lucide-react';
 
 type FilterStatus = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -124,6 +124,75 @@ export function AdminDashboard() {
     } catch (error) {
       console.error('Error rejecting user:', error);
       alert('Failed to reject user. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const setPending = async (userId: string) => {
+    if (!confirm('Are you sure you want to set this user back to pending status?')) return;
+
+    setActionLoading(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user-status`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, status: 'PENDING' }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update user status');
+      }
+
+      await loadUsers();
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      alert('Failed to update user status. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const deleteUser = async (userId: string, userName: string) => {
+    const confirmMessage = `Are you sure you want to permanently delete ${userName}?\n\nThis will delete:\n- User account\n- All recipes\n- All chats\n- All meals\n\nThis action cannot be undone.`;
+
+    if (!confirm(confirmMessage)) return;
+
+    const doubleConfirm = confirm('Please confirm one more time. This action is permanent and cannot be undone.');
+    if (!doubleConfirm) return;
+
+    setActionLoading(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete user');
+      }
+
+      await loadUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Failed to delete user. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -297,34 +366,60 @@ export function AdminDashboard() {
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4">
-                      {user.status === 'PENDING' && !user.is_admin && (
+                      {!user.is_admin && (
                         <div className="flex gap-2 justify-end">
+                          {user.status === 'PENDING' && (
+                            <>
+                              <button
+                                onClick={() => approveUser(user.user_id)}
+                                disabled={actionLoading === user.user_id}
+                                className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                                title="Approve user"
+                              >
+                                {actionLoading === user.user_id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="w-4 h-4" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => rejectUser(user.user_id)}
+                                disabled={actionLoading === user.user_id}
+                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                                title="Reject user"
+                              >
+                                {actionLoading === user.user_id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <XCircle className="w-4 h-4" />
+                                )}
+                              </button>
+                            </>
+                          )}
+                          {(user.status === 'APPROVED' || user.status === 'REJECTED') && (
+                            <button
+                              onClick={() => setPending(user.user_id)}
+                              disabled={actionLoading === user.user_id}
+                              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                              title="Set back to pending"
+                            >
+                              {actionLoading === user.user_id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <RotateCcw className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
                           <button
-                            onClick={() => approveUser(user.user_id)}
+                            onClick={() => deleteUser(user.user_id, user.full_name)}
                             disabled={actionLoading === user.user_id}
-                            className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                            className="px-3 py-1 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                            title="Delete user permanently"
                           >
                             {actionLoading === user.user_id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <>
-                                <CheckCircle className="w-4 h-4" />
-                                Approve
-                              </>
-                            )}
-                          </button>
-                          <button
-                            onClick={() => rejectUser(user.user_id)}
-                            disabled={actionLoading === user.user_id}
-                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
-                          >
-                            {actionLoading === user.user_id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <>
-                                <XCircle className="w-4 h-4" />
-                                Reject
-                              </>
+                              <Trash2 className="w-4 h-4" />
                             )}
                           </button>
                         </div>
