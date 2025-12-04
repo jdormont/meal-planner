@@ -149,7 +149,9 @@ Your responsibilities:
    - Start with "FULL_RECIPE" on its own line
    - The title of the recipe should match the "recipe name" from the recommendation
    - Then provide a friendly introduction sentence. This should be used for the recipe description when saved
-   - Then add a time estimate based on the steps and complexity of the steps. This should be split between prep time and cook time in minutes
+   - Then add time estimates in this EXACT format on separate lines:
+     * **Prep Time:** [number] minutes
+     * **Cook Time:** [number] minutes
    - Then list the recipe details in a clear, readable format using:
      * Markdown headers (##) for sections like Ingredients and Instructions
      * Bullet points (-) for ingredients
