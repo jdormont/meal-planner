@@ -165,18 +165,25 @@ function extractJsonLd(html: string): RecipeData | null {
 function normalizeJsonLdRecipe(recipe: any): RecipeData {
   let ingredients: string[] = [];
 
+  console.log('Raw recipeIngredient type:', typeof recipe.recipeIngredient);
+  console.log('Is array?', Array.isArray(recipe.recipeIngredient));
+
   // Try to extract ingredients from various possible structures
   if (Array.isArray(recipe.recipeIngredient)) {
-    ingredients = recipe.recipeIngredient.flatMap((ing: any) => {
-      if (typeof ing === 'string') return ing;
-      if (ing.text) return ing.text;
+    console.log('Processing', recipe.recipeIngredient.length, 'ingredients');
+
+    ingredients = recipe.recipeIngredient.flatMap((ing: any, index: number) => {
+      console.log(`Ingredient ${index}:`, typeof ing, ing);
+
+      if (typeof ing === 'string') return [ing];
+      if (ing.text) return [ing.text];
       // Handle grouped ingredients with itemListElement
       if (ing.itemListElement) {
         return ing.itemListElement.map((item: any) =>
           typeof item === 'string' ? item : (item.text || item.name || '')
         );
       }
-      if (ing.name) return ing.name;
+      if (ing.name) return [ing.name];
       return [];
     }).filter(Boolean);
   } else if (typeof recipe.recipeIngredient === 'string') {
@@ -184,6 +191,7 @@ function normalizeJsonLdRecipe(recipe: any): RecipeData {
   }
 
   console.log('Normalized ingredients:', ingredients.length, 'items');
+  console.log('First 3 ingredients:', ingredients.slice(0, 3));
 
   let instructions: string[] = [];
   if (Array.isArray(recipe.recipeInstructions)) {
