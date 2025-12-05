@@ -78,7 +78,6 @@ function App() {
         .from('recipes')
         .select('*')
         .eq('is_shared', true)
-        .neq('user_id', user!.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -169,6 +168,7 @@ function App() {
       }
 
       await loadRecipes();
+      await loadCommunityRecipes();
       setShowForm(false);
       setEditingRecipe(null);
     } catch (error) {
@@ -183,6 +183,7 @@ function App() {
 
       if (error) throw error;
       await loadRecipes();
+      await loadCommunityRecipes();
     } catch (error) {
       console.error('Error deleting recipe:', error);
       alert('Failed to delete recipe. Please try again.');
@@ -627,6 +628,11 @@ function App() {
                   recipes={filteredCommunityRecipes}
                   onSelect={setSelectedRecipe}
                   onCopy={copyRecipe}
+                  onEdit={(recipe) => {
+                    setEditingRecipe(recipe);
+                    setShowForm(true);
+                    setShowCommunity(false);
+                  }}
                   currentUserId={user!.id}
                 />
               </>

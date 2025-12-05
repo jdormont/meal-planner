@@ -1,14 +1,15 @@
 import { Recipe } from '../lib/supabase';
-import { Clock, Users, Copy, Eye } from 'lucide-react';
+import { Clock, Users, Copy, Eye, Edit2 } from 'lucide-react';
 
 type CommunityRecipesProps = {
   recipes: Recipe[];
   onSelect: (recipe: Recipe) => void;
   onCopy: (recipe: Recipe) => void;
+  onEdit: (recipe: Recipe) => void;
   currentUserId: string;
 };
 
-export function CommunityRecipes({ recipes, onSelect, onCopy, currentUserId }: CommunityRecipesProps) {
+export function CommunityRecipes({ recipes, onSelect, onCopy, onEdit, currentUserId }: CommunityRecipesProps) {
   if (recipes.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl shadow-sm">
@@ -23,30 +24,42 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, currentUserId }: C
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {recipes.map((recipe) => (
-        <div
-          key={recipe.id}
-          className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
-        >
-          <div onClick={() => onSelect(recipe)}>
-            {recipe.image_url ? (
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={recipe.image_url}
-                  alt={recipe.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            ) : (
-              <div className="h-48 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
-                <Users className="w-16 h-16 text-orange-300" />
-              </div>
-            )}
+      {recipes.map((recipe) => {
+        const isOwner = recipe.user_id === currentUserId;
+        return (
+          <div
+            key={recipe.id}
+            className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+          >
+            <div onClick={() => onSelect(recipe)}>
+              {recipe.image_url ? (
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={recipe.image_url}
+                    alt={recipe.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {isOwner && (
+                    <div className="absolute top-2 right-2 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full shadow-lg">
+                      Your Recipe
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="h-48 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center relative">
+                  <Users className="w-16 h-16 text-orange-300" />
+                  {isOwner && (
+                    <div className="absolute top-2 right-2 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full shadow-lg">
+                      Your Recipe
+                    </div>
+                  )}
+                </div>
+              )}
 
-            <div className="p-5">
-              <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
-                {recipe.title}
-              </h3>
+              <div className="p-5">
+                <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
+                  {recipe.title}
+                </h3>
               <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                 {recipe.description || 'No description'}
               </p>
@@ -84,24 +97,35 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, currentUserId }: C
             </div>
           </div>
 
-          <div className="px-5 pb-4 flex gap-2">
-            <button
-              onClick={() => onSelect(recipe)}
-              className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
-            >
-              <Eye className="w-4 h-4" />
-              View
-            </button>
-            <button
-              onClick={() => onCopy(recipe)}
-              className="flex-1 px-4 py-2 border border-orange-600 text-orange-600 hover:bg-orange-50 rounded-lg transition font-medium flex items-center justify-center gap-2"
-            >
-              <Copy className="w-4 h-4" />
-              Copy
-            </button>
+            <div className="px-5 pb-4 flex gap-2">
+              <button
+                onClick={() => onSelect(recipe)}
+                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+              >
+                <Eye className="w-4 h-4" />
+                View
+              </button>
+              {isOwner ? (
+                <button
+                  onClick={() => onEdit(recipe)}
+                  className="flex-1 px-4 py-2 border border-orange-600 text-orange-600 hover:bg-orange-50 rounded-lg transition font-medium flex items-center justify-center gap-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Edit
+                </button>
+              ) : (
+                <button
+                  onClick={() => onCopy(recipe)}
+                  className="flex-1 px-4 py-2 border border-orange-600 text-orange-600 hover:bg-orange-50 rounded-lg transition font-medium flex items-center justify-center gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
