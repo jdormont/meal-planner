@@ -88,6 +88,16 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // If ingredients are missing, try to extract them with AI as a fallback
+    if (recipe.ingredients.length === 0) {
+      console.log('No ingredients found, attempting AI extraction');
+      const aiRecipe = await extractWithAI(html);
+      if (aiRecipe && aiRecipe.ingredients.length > 0) {
+        console.log('AI extracted', aiRecipe.ingredients.length, 'ingredients');
+        recipe.ingredients = aiRecipe.ingredients;
+      }
+    }
+
     return new Response(
       JSON.stringify(recipe),
       {
@@ -125,7 +135,9 @@ function extractJsonLd(html: string): RecipeData | null {
 
         for (const item of recipes) {
           if (item['@type'] === 'Recipe' || (Array.isArray(item['@type']) && item['@type'].includes('Recipe'))) {
-            return normalizeJsonLdRecipe(item);
+            const normalized = normalizeJsonLdRecipe(item);
+            console.log('Extracted recipe with', normalized.ingredients.length, 'ingredients');
+            return normalized;
           }
 
           if (item['@graph']) {
@@ -133,7 +145,9 @@ function extractJsonLd(html: string): RecipeData | null {
               node['@type'] === 'Recipe' || (Array.isArray(node['@type']) && node['@type'].includes('Recipe'))
             );
             if (recipeInGraph) {
-              return normalizeJsonLdRecipe(recipeInGraph);
+              const normalized = normalizeJsonLdRecipe(recipeInGraph);
+              console.log('Extracted recipe from @graph with', normalized.ingredients.length, 'ingredients');
+              return normalized;
             }
           }
         }
@@ -270,16 +284,18 @@ async function extractWithAI(html: string): Promise<RecipeData | null> {
 
     const isOpenAI = apiKey.startsWith('sk-');
 
-    const prompt = `Extract only recipe-relevant data from this HTML. Return a JSON object with:
+    const prompt = `Extract recipe data from this HTML. Return a JSON object with:
 - title (string)
 - description (string, optional)
-- ingredients (array of strings)
-- instructions (array of strings)
+- ingredients (array of strings - IMPORTANT: extract ALL ingredients including quantities, even if they are in subsections like "Marinade", "Sauce", "Stir-fry", etc.)
+- instructions (array of strings - each step as a separate string)
 - prep_time_minutes (number, estimated if not available)
 - cook_time_minutes (number, estimated if not available)
 - servings (number)
 - tags (array of strings, include cuisine type, meal type, dietary info)
 - image_url (string, optional)
+
+CRITICAL: Make sure to extract ALL ingredients from the recipe, including those organized in subsections.
 
 HTML content:
 ${cleanedHtml}
