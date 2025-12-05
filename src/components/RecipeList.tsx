@@ -1,5 +1,5 @@
 import { Recipe } from '../lib/supabase';
-import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat } from 'lucide-react';
+import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe } from 'lucide-react';
 
 type RecipeListProps = {
   recipes: Recipe[];
@@ -8,9 +8,10 @@ type RecipeListProps = {
   onSelect: (recipe: Recipe) => void;
   onCreateNew?: () => void;
   onOpenChat?: () => void;
+  onImportFromWeb?: () => void;
 };
 
-export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, onOpenChat }: RecipeListProps) {
+export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, onOpenChat, onImportFromWeb }: RecipeListProps) {
   if (recipes.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -27,7 +28,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             {onCreateNew && (
               <button
                 onClick={onCreateNew}
@@ -41,6 +42,26 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                     <h3 className="text-xl font-bold mb-1">Create Recipe</h3>
                     <p className="text-sm text-orange-50">
                       Start from scratch with your own recipe
+                    </p>
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-xl transition-colors" />
+              </button>
+            )}
+
+            {onImportFromWeb && (
+              <button
+                onClick={onImportFromWeb}
+                className="group relative bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className="p-3 bg-white/20 rounded-lg">
+                    <Globe className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-1">Import from Web</h3>
+                    <p className="text-sm text-green-50">
+                      Scrape a recipe from any website
                     </p>
                   </div>
                 </div>

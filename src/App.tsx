@@ -13,6 +13,7 @@ import { MealList } from './components/MealList';
 import { MealForm } from './components/MealForm';
 import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
+import { RecipeImportModal } from './components/RecipeImportModal';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
 import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User } from 'lucide-react';
 
@@ -39,6 +40,7 @@ function App() {
   const [editingMealRecipeIds, setEditingMealRecipeIds] = useState<string[]>([]);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -711,6 +713,9 @@ function App() {
                   onOpenChat={() => {
                     setShowChat(true);
                   }}
+                  onImportFromWeb={() => {
+                    setShowImportModal(true);
+                  }}
                 />
               </>
             )}
@@ -778,6 +783,16 @@ function App() {
             setShowMealForm(true);
           }}
           onDelete={() => deleteMeal(selectedMeal.id)}
+        />
+      )}
+
+      {showImportModal && (
+        <RecipeImportModal
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={(recipe) => {
+            setEditingRecipe(recipe as Recipe);
+            setShowForm(true);
+          }}
         />
       )}
     </div>
