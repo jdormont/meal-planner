@@ -155,7 +155,7 @@ function App() {
 
   const saveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
-      if (editingRecipe && !editingRecipe.id.startsWith('temp-')) {
+      if (editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-')) {
         const { error } = await supabase
           .from('recipes')
           .update(recipeData)
@@ -758,7 +758,7 @@ function App() {
             setShowForm(false);
             setEditingRecipe(null);
           }}
-          onDelete={editingRecipe && !editingRecipe.id.startsWith('temp-') ? async () => {
+          onDelete={editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-') ? async () => {
             if (confirm('Are you sure you want to delete this recipe?')) {
               await deleteRecipe(editingRecipe.id);
               setShowForm(false);
@@ -817,7 +817,13 @@ function App() {
         <RecipeImportModal
           onClose={() => setShowImportModal(false)}
           onImportComplete={(recipe) => {
-            setEditingRecipe(recipe as Recipe);
+            setEditingRecipe({
+              ...recipe,
+              id: `temp-${Date.now()}`,
+              user_id: user!.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            } as Recipe);
             setShowForm(true);
           }}
         />
