@@ -163,11 +163,27 @@ function extractJsonLd(html: string): RecipeData | null {
 }
 
 function normalizeJsonLdRecipe(recipe: any): RecipeData {
-  const ingredients = Array.isArray(recipe.recipeIngredient)
-    ? recipe.recipeIngredient
-    : typeof recipe.recipeIngredient === 'string'
-    ? [recipe.recipeIngredient]
-    : [];
+  let ingredients: string[] = [];
+
+  // Try to extract ingredients from various possible structures
+  if (Array.isArray(recipe.recipeIngredient)) {
+    ingredients = recipe.recipeIngredient.flatMap((ing: any) => {
+      if (typeof ing === 'string') return ing;
+      if (ing.text) return ing.text;
+      // Handle grouped ingredients with itemListElement
+      if (ing.itemListElement) {
+        return ing.itemListElement.map((item: any) =>
+          typeof item === 'string' ? item : (item.text || item.name || '')
+        );
+      }
+      if (ing.name) return ing.name;
+      return [];
+    }).filter(Boolean);
+  } else if (typeof recipe.recipeIngredient === 'string') {
+    ingredients = [recipe.recipeIngredient];
+  }
+
+  console.log('Normalized ingredients:', ingredients.length, 'items');
 
   let instructions: string[] = [];
   if (Array.isArray(recipe.recipeInstructions)) {
