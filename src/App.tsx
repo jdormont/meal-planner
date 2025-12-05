@@ -14,7 +14,7 @@ import { MealForm } from './components/MealForm';
 import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users } from 'lucide-react';
+import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User } from 'lucide-react';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -38,6 +38,7 @@ function App() {
   const [selectedMeal, setSelectedMeal] = useState<MealWithRecipes | null>(null);
   const [editingMealRecipeIds, setEditingMealRecipeIds] = useState<string[]>([]);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -453,28 +454,11 @@ function App() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Recipe Manager</h1>
-                <p className="text-sm text-gray-600">Organize, plan, and discover recipes</p>
+                <p className="text-sm text-gray-600 hidden sm:block">Organize, plan, and discover recipes</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {userProfile.is_admin && (
-                <button
-                  onClick={() => {
-                    setShowAdmin(!showAdmin);
-                    setShowMeals(false);
-                    setShowChat(false);
-                    setShowSettings(false);
-                  }}
-                  className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
-                    showAdmin
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Shield className="w-5 h-5" />
-                  Admin
-                </button>
-              )}
+
+            <nav className="flex items-center gap-2">
               <button
                 onClick={() => {
                   setShowMeals(false);
@@ -484,14 +468,14 @@ function App() {
                   setShowCommunity(false);
                   setSelectedRecipe(null);
                 }}
-                className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                className={`px-3 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
                   !showMeals && !showChat && !showSettings && !showAdmin && !showCommunity
                     ? 'bg-orange-600 text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <BookOpen className="w-5 h-5" />
-                My Recipes
+                <span className="hidden md:inline">My Recipes</span>
               </button>
               <button
                 onClick={() => {
@@ -503,14 +487,14 @@ function App() {
                   setSearchTerm('');
                   setSelectedTags([]);
                 }}
-                className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                className={`px-3 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
                   showCommunity
                     ? 'bg-orange-600 text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <Users className="w-5 h-5" />
-                Community
+                <span className="hidden md:inline">Community</span>
               </button>
               <button
                 onClick={() => {
@@ -520,14 +504,14 @@ function App() {
                   setShowAdmin(false);
                   setShowCommunity(false);
                 }}
-                className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                className={`px-3 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
                   showMeals
                     ? 'bg-orange-600 text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <Calendar className="w-5 h-5" />
-                Meals
+                <span className="hidden md:inline">Meals</span>
               </button>
               <button
                 onClick={() => {
@@ -537,15 +521,18 @@ function App() {
                   setShowAdmin(false);
                   setShowCommunity(false);
                 }}
-                className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                className={`px-3 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
                   showChat
                     ? 'bg-orange-600 text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <MessageSquare className="w-5 h-5" />
-                AI Assistant
+                <span className="hidden md:inline">AI</span>
               </button>
+
+              <div className="hidden sm:block h-6 w-px bg-gray-300 mx-1"></div>
+
               {!showCommunity && (
                 <button
                   onClick={() => {
@@ -558,37 +545,73 @@ function App() {
                       setShowForm(true);
                     }
                   }}
-                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium"
+                  className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm"
+                  title={showMeals ? 'New Meal' : 'New Recipe'}
                 >
                   <Plus className="w-5 h-5" />
-                  {showMeals ? 'New Meal' : 'New Recipe'}
+                  <span className="hidden lg:inline">{showMeals ? 'New' : 'New'}</span>
                 </button>
               )}
-              <button
-                onClick={() => {
-                  setShowSettings(!showSettings);
-                  setShowChat(false);
-                  setShowMeals(false);
-                  setShowAdmin(false);
-                  setShowCommunity(false);
-                }}
-                className={`p-2 rounded-lg transition ${
-                  showSettings
-                    ? 'bg-orange-100 text-orange-600'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                }`}
-                title="Settings"
-              >
-                <SettingsIcon className="w-5 h-5" />
-              </button>
-              <button
-                onClick={signOut}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition"
-                title="Sign out"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition"
+                  title="User menu"
+                >
+                  <User className="w-5 h-5" />
+                </button>
+
+                {showUserMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowUserMenu(false)}
+                    ></div>
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                      {userProfile.is_admin && (
+                        <button
+                          onClick={() => {
+                            setShowAdmin(!showAdmin);
+                            setShowMeals(false);
+                            setShowChat(false);
+                            setShowSettings(false);
+                            setShowCommunity(false);
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                        >
+                          <Shield className="w-4 h-4" />
+                          Admin Panel
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setShowSettings(!showSettings);
+                          setShowChat(false);
+                          setShowMeals(false);
+                          setShowAdmin(false);
+                          setShowCommunity(false);
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                      >
+                        <SettingsIcon className="w-4 h-4" />
+                        Settings
+                      </button>
+                      <hr className="my-1 border-gray-200" />
+                      <button
+                        onClick={signOut}
+                        className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-3"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </nav>
           </div>
         </div>
       </header>
