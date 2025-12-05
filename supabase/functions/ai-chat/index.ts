@@ -88,28 +88,44 @@ Deno.serve(async (req: Request) => {
         preferencesContext += `\nAdditional Notes: ${userPreferences.additional_notes}`;
       }
 
-      preferencesContext += '\n\n**CRITICAL: Allergy and Food Restriction Guidelines**';
-
       if (userPreferences.food_restrictions && userPreferences.food_restrictions.length > 0) {
-        preferencesContext += '\n\nWhen working with the above food allergies, intolerances, or dietary restrictions, ALWAYS:';
-        preferencesContext += '\n- Acknowledge the restriction clearly';
-        preferencesContext += '\n- Avoid ALL restricted ingredients and their common hidden sources';
-        preferencesContext += '\n- Proactively suggest safe substitutions and explain briefly how they maintain the dish\'s structure or flavor';
-        preferencesContext += '\n- Flag any cuisine-specific ingredients that commonly contain allergens (e.g., soy sauce contains gluten; many sauces contain nuts; tahini is sesame)';
-        preferencesContext += '\n- NEVER propose "trace amounts" or "small amounts" of allergens';
-        preferencesContext += '\n- Avoid giving medical or diagnostic advice';
-        preferencesContext += '\n- Optionally advise checking labels when relevant (e.g., packaged broth, spice blends, miso, fish sauce)';
-        preferencesContext += '\n- Ensure the recipe is complete, safe, and correctly adapted to the restriction';
-        preferencesContext += '\n\nWhen the restriction materially changes the dish (e.g., Thai curry without fish sauce), provide:';
-        preferencesContext += '\n- A culinary-safe alternative (e.g., coconut aminos + salt + lime)';
-        preferencesContext += '\n- An adjusted method if needed';
-        preferencesContext += '\n- A brief note on expected flavor differences';
-        preferencesContext += '\n\nWhen multiple allergies are listed, ALWAYS:';
-        preferencesContext += '\n- Create a unified safe version';
-        preferencesContext += '\n- Avoid substitutions that violate one restriction while fixing another';
+        preferencesContext += '\n\n🚨 **CRITICAL SAFETY REQUIREMENT - FOOD ALLERGIES & RESTRICTIONS** 🚨';
+        preferencesContext += `\n\nThe user has the following allergies/restrictions: ${userPreferences.food_restrictions.join(', ')}`;
+        preferencesContext += '\n\n**YOU MUST NEVER suggest any recipe containing these allergens. This is non-negotiable.**';
+        preferencesContext += '\n\nBefore suggesting ANY recipe, verify it does NOT contain:';
+        preferencesContext += '\n- The allergen itself';
+        preferencesContext += '\n- Common derivatives or hidden sources of the allergen';
+        preferencesContext += '\n- Cross-contamination risks';
+        preferencesContext += '\n\n**Allergen-specific rules:**';
+        if (userPreferences.food_restrictions.some((r: string) => r.toLowerCase().includes('shellfish'))) {
+          preferencesContext += '\n- Shellfish allergy: NO shrimp, crab, lobster, crayfish, prawns, scallops, clams, mussels, oysters, or any shellfish-based products (e.g., shellfish stock, paste)';
+        }
+        if (userPreferences.food_restrictions.some((r: string) => r.toLowerCase().includes('gluten'))) {
+          preferencesContext += '\n- Gluten: NO wheat, barley, rye, or products containing them (e.g., regular soy sauce, malt vinegar, some broths). Use gluten-free alternatives.';
+        }
+        if (userPreferences.food_restrictions.some((r: string) => r.toLowerCase().includes('dairy'))) {
+          preferencesContext += '\n- Dairy: NO milk, cheese, butter, cream, yogurt. Use dairy-free alternatives.';
+        }
+        if (userPreferences.food_restrictions.some((r: string) => r.toLowerCase().includes('nut'))) {
+          preferencesContext += '\n- Nuts: NO peanuts, tree nuts (almonds, walnuts, cashews, etc.), or nut-based products (e.g., tahini, nut oils, nut butters)';
+        }
+        if (userPreferences.food_restrictions.some((r: string) => r.toLowerCase().includes('soy'))) {
+          preferencesContext += '\n- Soy: NO soybeans, tofu, soy sauce, edamame, miso, tempeh. Use soy-free alternatives (e.g., coconut aminos).';
+        }
+        if (userPreferences.food_restrictions.some((r: string) => r.toLowerCase().includes('egg'))) {
+          preferencesContext += '\n- Eggs: NO eggs or egg-based products. Use egg substitutes.';
+        }
+        if (userPreferences.food_restrictions.some((r: string) => r.toLowerCase().includes('fish'))) {
+          preferencesContext += '\n- Fish: NO fish or fish-based products (e.g., fish sauce, anchovies). Use alternatives like coconut aminos or soy sauce (if soy is allowed).';
+        }
+        preferencesContext += '\n\n**When suggesting recipes:**';
+        preferencesContext += '\n- Double-check EVERY ingredient against the allergen list';
+        preferencesContext += '\n- If a recipe would traditionally contain an allergen, modify it or choose a different recipe';
+        preferencesContext += '\n- Proactively suggest safe substitutions';
+        preferencesContext += '\n- Never say "just skip the [allergen]" without providing a proper alternative';
       }
 
-      preferencesContext += '\n\nIMPORTANT: Use these preferences to personalize all recipe recommendations. Respect dietary restrictions and allergies completely. Adjust recipe complexity based on skill level and time preference.';
+      preferencesContext += '\n\n**IMPORTANT:** Use these preferences to personalize ALL recipe recommendations. Dietary restrictions and allergies take absolute priority over all other preferences. Adjust recipe complexity based on skill level and time preference.';
     }
 
     let ratingContext = '';
@@ -148,15 +164,13 @@ Deno.serve(async (req: Request) => {
 
 Your responsibilities:
 
-1. **Follow the user's cooking preferences automatically unless overridden:**
-   - Cooking for 2 adults + 2 kids (~3 adult portions).
-   - Low to medium heat by default.
-   - Weeknight meals must be 30–45 minutes unless user specifies otherwise.
-   - Avoid recipes requiring a blender or food processor.
+1. **Follow the user's cooking preferences:**
+   - ALWAYS respect the user's dietary restrictions, allergies, and food preferences specified in their profile
+   - Default to low to medium heat unless user specifies otherwise
    - Emphasize use of fresh produce where possible
-   - Focus on use of lean proteins like chicken, turkey, seafood, and pork
    - Focus on efficient, high-impact weeknight methods
-   - If user is a vegetarian, do not suggest meats
+   - Adjust serving sizes, cooking times, and complexity based on user's preferences
+   - If user has dietary restrictions or allergies, these take absolute priority over everything else
 
 2. **When user asks for recipe recommendations or ideas:**
    - FIRST show 3-4 brief options with:
