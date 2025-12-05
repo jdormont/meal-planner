@@ -88,6 +88,27 @@ Deno.serve(async (req: Request) => {
         preferencesContext += `\nAdditional Notes: ${userPreferences.additional_notes}`;
       }
 
+      preferencesContext += '\n\n**CRITICAL: Allergy and Food Restriction Guidelines**';
+
+      if (userPreferences.food_restrictions && userPreferences.food_restrictions.length > 0) {
+        preferencesContext += '\n\nWhen working with the above food allergies, intolerances, or dietary restrictions, ALWAYS:';
+        preferencesContext += '\n- Acknowledge the restriction clearly';
+        preferencesContext += '\n- Avoid ALL restricted ingredients and their common hidden sources';
+        preferencesContext += '\n- Proactively suggest safe substitutions and explain briefly how they maintain the dish\'s structure or flavor';
+        preferencesContext += '\n- Flag any cuisine-specific ingredients that commonly contain allergens (e.g., soy sauce contains gluten; many sauces contain nuts; tahini is sesame)';
+        preferencesContext += '\n- NEVER propose "trace amounts" or "small amounts" of allergens';
+        preferencesContext += '\n- Avoid giving medical or diagnostic advice';
+        preferencesContext += '\n- Optionally advise checking labels when relevant (e.g., packaged broth, spice blends, miso, fish sauce)';
+        preferencesContext += '\n- Ensure the recipe is complete, safe, and correctly adapted to the restriction';
+        preferencesContext += '\n\nWhen the restriction materially changes the dish (e.g., Thai curry without fish sauce), provide:';
+        preferencesContext += '\n- A culinary-safe alternative (e.g., coconut aminos + salt + lime)';
+        preferencesContext += '\n- An adjusted method if needed';
+        preferencesContext += '\n- A brief note on expected flavor differences';
+        preferencesContext += '\n\nWhen multiple allergies are listed, ALWAYS:';
+        preferencesContext += '\n- Create a unified safe version';
+        preferencesContext += '\n- Avoid substitutions that violate one restriction while fixing another';
+      }
+
       preferencesContext += '\n\nIMPORTANT: Use these preferences to personalize all recipe recommendations. Respect dietary restrictions and allergies completely. Adjust recipe complexity based on skill level and time preference.';
     }
 
