@@ -69,8 +69,7 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
     return {
       quantity: quantity || '',
       unit: unit || '',
-      ingredient: ingredient || str, // Fall back to full string if parsing fails
-      notes: notes || ''
+      name: ingredient || str, // Fall back to full string if parsing fails
     };
   };
 
