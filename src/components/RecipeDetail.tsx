@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
-import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Plus } from 'lucide-react';
+import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Plus, Copy, Share2 } from 'lucide-react';
 import { marked } from 'marked';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,10 +8,12 @@ type RecipeDetailProps = {
   recipe: Recipe;
   onClose: () => void;
   onEdit: () => void;
+  onCopy?: (recipe: Recipe) => void;
 };
 
-export function RecipeDetail({ recipe, onClose, onEdit }: RecipeDetailProps) {
+export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailProps) {
   const { user } = useAuth();
+  const isOwner = user?.id === recipe.user_id;
   const [currentRating, setCurrentRating] = useState<RecipeRating | null>(null);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [pendingRating, setPendingRating] = useState<'thumbs_up' | 'thumbs_down' | null>(null);
@@ -171,6 +173,12 @@ export function RecipeDetail({ recipe, onClose, onEdit }: RecipeDetailProps) {
 
         <div className="flex-1 overflow-y-auto p-8">
           <div className="mb-6">
+            {recipe.is_shared && !isOwner && (
+              <div className="mb-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 text-blue-700">
+                <Share2 className="w-5 h-5" />
+                <span className="font-medium">Community Recipe</span>
+              </div>
+            )}
             <h1
               className="text-4xl font-bold text-gray-900 mb-3"
               dangerouslySetInnerHTML={renderMarkdown(recipe.title)}
@@ -339,13 +347,23 @@ export function RecipeDetail({ recipe, onClose, onEdit }: RecipeDetailProps) {
           )}
 
           <div className="flex gap-3 pt-6 border-t">
-            <button
-              onClick={onEdit}
-              className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
-            >
-              <Edit2 className="w-5 h-5" />
-              Edit Recipe
-            </button>
+            {isOwner ? (
+              <button
+                onClick={onEdit}
+                className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+              >
+                <Edit2 className="w-5 h-5" />
+                Edit Recipe
+              </button>
+            ) : onCopy ? (
+              <button
+                onClick={() => onCopy(recipe)}
+                className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+              >
+                <Copy className="w-5 h-5" />
+                Copy Recipe
+              </button>
+            ) : null}
             <button
               onClick={() => setShowMealSelector(true)}
               className="flex-1 px-6 py-3 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition font-medium flex items-center justify-center gap-2"

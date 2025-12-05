@@ -12,19 +12,23 @@ import Settings from './components/Settings';
 import { MealList } from './components/MealList';
 import { MealForm } from './components/MealForm';
 import { MealDetail } from './components/MealDetail';
+import { CommunityRecipes } from './components/CommunityRecipes';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield } from 'lucide-react';
+import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users } from 'lucide-react';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [communityRecipes, setCommunityRecipes] = useState<Recipe[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
+  const [filteredCommunityRecipes, setFilteredCommunityRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCommunity, setShowCommunity] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [meals, setMeals] = useState<MealWithRecipes[]>([]);
@@ -38,6 +42,7 @@ function App() {
   useEffect(() => {
     if (user) {
       loadRecipes();
+      loadCommunityRecipes();
       loadMeals();
     }
   }, [user]);
@@ -46,11 +51,16 @@ function App() {
     filterRecipes();
   }, [recipes, searchTerm, selectedTags]);
 
+  useEffect(() => {
+    filterCommunityRecipes();
+  }, [communityRecipes, searchTerm, selectedTags]);
+
   const loadRecipes = async () => {
     try {
       const { data, error } = await supabase
         .from('recipes')
         .select('*')
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -59,6 +69,22 @@ function App() {
       console.error('Error loading recipes:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCommunityRecipes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('is_shared', true)
+        .neq('user_id', user!.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCommunityRecipes(data || []);
+    } catch (error) {
+      console.error('Error loading community recipes:', error);
     }
   };
 
@@ -86,9 +112,34 @@ function App() {
     setFilteredRecipes(filtered);
   };
 
+  const filterCommunityRecipes = () => {
+    let filtered = [...communityRecipes];
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter((recipe) => {
+        const titleMatch = recipe.title.toLowerCase().includes(term);
+        const descMatch = recipe.description.toLowerCase().includes(term);
+        const ingredientMatch = recipe.ingredients.some((ing) =>
+          ing.name.toLowerCase().includes(term)
+        );
+        return titleMatch || descMatch || ingredientMatch;
+      });
+    }
+
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((recipe) =>
+        selectedTags.some((tag) => recipe.tags.includes(tag))
+      );
+    }
+
+    setFilteredCommunityRecipes(filtered);
+  };
+
   const getAllTags = () => {
     const tagSet = new Set<string>();
-    recipes.forEach((recipe) => {
+    const recipesToScan = showCommunity ? communityRecipes : recipes;
+    recipesToScan.forEach((recipe) => {
       recipe.tags.forEach((tag) => tagSet.add(tag));
     });
     return Array.from(tagSet).sort();
@@ -135,6 +186,34 @@ function App() {
     } catch (error) {
       console.error('Error deleting recipe:', error);
       alert('Failed to delete recipe. Please try again.');
+    }
+  };
+
+  const copyRecipe = async (recipe: Recipe) => {
+    try {
+      const { error } = await supabase.from('recipes').insert([{
+        user_id: user!.id,
+        title: `${recipe.title} (Copy)`,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        prep_time_minutes: recipe.prep_time_minutes,
+        cook_time_minutes: recipe.cook_time_minutes,
+        servings: recipe.servings,
+        tags: recipe.tags,
+        image_url: recipe.image_url,
+        source_url: recipe.source_url,
+        notes: recipe.notes,
+        is_shared: false,
+      }]);
+
+      if (error) throw error;
+      await loadRecipes();
+      setShowCommunity(false);
+      alert('Recipe copied to your collection!');
+    } catch (error) {
+      console.error('Error copying recipe:', error);
+      alert('Failed to copy recipe. Please try again.');
     }
   };
 
@@ -323,6 +402,7 @@ function App() {
       servings: 4,
       tags: ['AI Generated'],
       notes: 'Recipe generated by AI assistant',
+      is_shared: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -400,10 +480,11 @@ function App() {
                   setShowChat(false);
                   setShowSettings(false);
                   setShowAdmin(false);
+                  setShowCommunity(false);
                   setSelectedRecipe(null);
                 }}
                 className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
-                  !showMeals && !showChat && !showSettings && !showAdmin
+                  !showMeals && !showChat && !showSettings && !showAdmin && !showCommunity
                     ? 'bg-orange-600 text-white'
                     : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
@@ -413,10 +494,30 @@ function App() {
               </button>
               <button
                 onClick={() => {
+                  setShowCommunity(!showCommunity);
+                  setShowMeals(false);
+                  setShowChat(false);
+                  setShowSettings(false);
+                  setShowAdmin(false);
+                  setSearchTerm('');
+                  setSelectedTags([]);
+                }}
+                className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                  showCommunity
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Users className="w-5 h-5" />
+                Community
+              </button>
+              <button
+                onClick={() => {
                   setShowMeals(!showMeals);
                   setShowChat(false);
                   setShowSettings(false);
                   setShowAdmin(false);
+                  setShowCommunity(false);
                 }}
                 className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
                   showMeals
@@ -433,6 +534,7 @@ function App() {
                   setShowSettings(false);
                   setShowMeals(false);
                   setShowAdmin(false);
+                  setShowCommunity(false);
                 }}
                 className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
                   showChat
@@ -443,28 +545,31 @@ function App() {
                 <MessageSquare className="w-5 h-5" />
                 AI Assistant
               </button>
-              <button
-                onClick={() => {
-                  if (showMeals) {
-                    setEditingMeal(null);
-                    setEditingMealRecipeIds([]);
-                    setShowMealForm(true);
-                  } else {
-                    setEditingRecipe(null);
-                    setShowForm(true);
-                  }
-                }}
-                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium"
-              >
-                <Plus className="w-5 h-5" />
-                {showMeals ? 'New Meal' : 'New Recipe'}
-              </button>
+              {!showCommunity && (
+                <button
+                  onClick={() => {
+                    if (showMeals) {
+                      setEditingMeal(null);
+                      setEditingMealRecipeIds([]);
+                      setShowMealForm(true);
+                    } else {
+                      setEditingRecipe(null);
+                      setShowForm(true);
+                    }
+                  }}
+                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium"
+                >
+                  <Plus className="w-5 h-5" />
+                  {showMeals ? 'New Meal' : 'New Recipe'}
+                </button>
+              )}
               <button
                 onClick={() => {
                   setShowSettings(!showSettings);
                   setShowChat(false);
                   setShowMeals(false);
                   setShowAdmin(false);
+                  setShowCommunity(false);
                 }}
                 className={`p-2 rounded-lg transition ${
                   showSettings
@@ -495,6 +600,37 @@ function App() {
         ) : showChat ? (
           <div className="h-[calc(100vh-10rem)]">
             <AIChat onSaveRecipe={parseAIRecipe} />
+          </div>
+        ) : showCommunity ? (
+          <div>
+            {loading ? (
+              <div className="text-center py-12">
+                <Users className="w-12 h-12 text-orange-600 mx-auto mb-4 animate-pulse" />
+                <p className="text-gray-600">Loading community recipes...</p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Community Recipes</h2>
+                  <p className="text-gray-600">
+                    Discover and copy recipes shared by other users
+                  </p>
+                </div>
+                <RecipeSearch
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  selectedTags={selectedTags}
+                  onTagToggle={toggleTag}
+                  availableTags={getAllTags()}
+                />
+                <CommunityRecipes
+                  recipes={filteredCommunityRecipes}
+                  onSelect={setSelectedRecipe}
+                  onCopy={copyRecipe}
+                  currentUserId={user!.id}
+                />
+              </>
+            )}
           </div>
         ) : showMeals ? (
           <div>
@@ -580,13 +716,14 @@ function App() {
             setSelectedRecipe(null);
             setShowForm(true);
           }}
+          onCopy={copyRecipe}
         />
       )}
 
       {showMealForm && (
         <MealForm
           meal={editingMeal}
-          recipes={recipes}
+          recipes={[...recipes, ...communityRecipes]}
           selectedRecipeIds={editingMealRecipeIds}
           onSave={saveMeal}
           onCancel={() => {

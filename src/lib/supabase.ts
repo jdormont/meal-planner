@@ -27,6 +27,7 @@ export type Recipe = {
   image_url?: string;
   source_url?: string;
   notes: string;
+  is_shared: boolean;
   created_at: string;
   updated_at: string;
 };

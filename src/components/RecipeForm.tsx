@@ -24,6 +24,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
   const [imageUrl, setImageUrl] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [notes, setNotes] = useState('');
+  const [isShared, setIsShared] = useState(false);
   const [isFetchingImage, setIsFetchingImage] = useState(false);
   const [isAutoTagging, setIsAutoTagging] = useState(false);
 
@@ -40,6 +41,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       setImageUrl(recipe.image_url || '');
       setSourceUrl(recipe.source_url || '');
       setNotes(recipe.notes);
+      setIsShared(recipe.is_shared);
     }
   }, [recipe]);
 
@@ -220,6 +222,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       image_url: finalImageUrl || undefined,
       source_url: sourceUrl || undefined,
       notes,
+      is_shared: isShared,
     });
   };
 
@@ -650,6 +653,23 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
               placeholder="Any personal notes or modifications..."
             />
+          </div>
+
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isShared}
+                onChange={(e) => setIsShared(e.target.checked)}
+                className="mt-1 w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <div>
+                <div className="font-medium text-gray-900">Share with Community</div>
+                <div className="text-sm text-gray-600 mt-1">
+                  Allow other users to view and copy this recipe. You can unshare it at any time.
+                </div>
+              </div>
+            </label>
           </div>
 
           <div className="flex gap-3 pt-4 border-t">
