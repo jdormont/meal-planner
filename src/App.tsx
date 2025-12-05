@@ -13,8 +13,9 @@ import { MealList } from './components/MealList';
 import { MealForm } from './components/MealForm';
 import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
+import { RecipeImportModal } from './components/RecipeImportModal';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User } from 'lucide-react';
+import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe } from 'lucide-react';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -39,6 +40,7 @@ function App() {
   const [editingMealRecipeIds, setEditingMealRecipeIds] = useState<string[]>([]);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -153,7 +155,7 @@ function App() {
 
   const saveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
-      if (editingRecipe && !editingRecipe.id.startsWith('temp-')) {
+      if (editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-')) {
         const { error } = await supabase
           .from('recipes')
           .update(recipeData)
@@ -689,6 +691,33 @@ function App() {
               </div>
             ) : (
               <>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">My Recipes</h2>
+                    <p className="text-gray-600 mt-1">
+                      {filteredRecipes.length} {filteredRecipes.length === 1 ? 'recipe' : 'recipes'}
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowImportModal(true)}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm"
+                    >
+                      <Globe className="w-5 h-5" />
+                      <span className="hidden sm:inline">Import from Web</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingRecipe(null);
+                        setShowForm(true);
+                      }}
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span className="hidden sm:inline">New Recipe</span>
+                    </button>
+                  </div>
+                </div>
                 <RecipeSearch
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
@@ -711,6 +740,9 @@ function App() {
                   onOpenChat={() => {
                     setShowChat(true);
                   }}
+                  onImportFromWeb={() => {
+                    setShowImportModal(true);
+                  }}
                 />
               </>
             )}
@@ -726,7 +758,7 @@ function App() {
             setShowForm(false);
             setEditingRecipe(null);
           }}
-          onDelete={editingRecipe && !editingRecipe.id.startsWith('temp-') ? async () => {
+          onDelete={editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-') ? async () => {
             if (confirm('Are you sure you want to delete this recipe?')) {
               await deleteRecipe(editingRecipe.id);
               setShowForm(false);
@@ -778,6 +810,22 @@ function App() {
             setShowMealForm(true);
           }}
           onDelete={() => deleteMeal(selectedMeal.id)}
+        />
+      )}
+
+      {showImportModal && (
+        <RecipeImportModal
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={(recipe) => {
+            setEditingRecipe({
+              ...recipe,
+              id: `temp-${Date.now()}`,
+              user_id: user!.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            } as Recipe);
+            setShowForm(true);
+          }}
         />
       )}
     </div>
