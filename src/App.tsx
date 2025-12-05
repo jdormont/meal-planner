@@ -273,14 +273,14 @@ function App() {
       const lowerLine = line.toLowerCase();
 
       // Parse prep time
-      const prepMatch = line.match(/\*?\*?prep\s+time\*?\*?:?\s*(\d+)\s*min/i);
+      const prepMatch = line.match(/\*?\*?prep\s+time\*?\*?:?\s*(\d+)\s*(?:min|minutes?)/i);
       if (prepMatch) {
         prepTime = parseInt(prepMatch[1]);
         return;
       }
 
       // Parse cook time
-      const cookMatch = line.match(/\*?\*?cook\s+time\*?\*?:?\s*(\d+)\s*min/i);
+      const cookMatch = line.match(/\*?\*?cook\s+time\*?\*?:?\s*(\d+)\s*(?:min|minutes?)/i);
       if (cookMatch) {
         cookTime = parseInt(cookMatch[1]);
         return;
