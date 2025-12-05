@@ -396,6 +396,23 @@ function App() {
               )}
               <button
                 onClick={() => {
+                  setShowMeals(false);
+                  setShowChat(false);
+                  setShowSettings(false);
+                  setShowAdmin(false);
+                  setSelectedRecipe(null);
+                }}
+                className={`px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                  !showMeals && !showChat && !showSettings && !showAdmin
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <BookOpen className="w-5 h-5" />
+                My Recipes
+              </button>
+              <button
+                onClick={() => {
                   setShowMeals(!showMeals);
                   setShowChat(false);
                   setShowSettings(false);
