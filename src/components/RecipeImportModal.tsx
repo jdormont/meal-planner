@@ -111,10 +111,11 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
         return parseIngredient(String(ing));
       });
 
-      // Update the recipe with parsed ingredients
+      // Update the recipe with parsed ingredients and default fields
       const recipeWithParsedIngredients = {
         ...recipe,
-        ingredients: parsedIngredients
+        ingredients: parsedIngredients,
+        is_shared: false
       };
 
       setStatus('done');
