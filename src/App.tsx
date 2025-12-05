@@ -15,7 +15,7 @@ import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
 import { RecipeImportModal } from './components/RecipeImportModal';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User } from 'lucide-react';
+import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe } from 'lucide-react';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -691,6 +691,33 @@ function App() {
               </div>
             ) : (
               <>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">My Recipes</h2>
+                    <p className="text-gray-600 mt-1">
+                      {filteredRecipes.length} {filteredRecipes.length === 1 ? 'recipe' : 'recipes'}
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowImportModal(true)}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm"
+                    >
+                      <Globe className="w-5 h-5" />
+                      <span className="hidden sm:inline">Import from Web</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingRecipe(null);
+                        setShowForm(true);
+                      }}
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span className="hidden sm:inline">New Recipe</span>
+                    </button>
+                  </div>
+                </div>
                 <RecipeSearch
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
