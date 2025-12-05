@@ -14,6 +14,66 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
+  const parseIngredient = (ingredientStr: string) => {
+    // Pattern: [quantity] [unit] ingredient [, notes]
+    // Examples:
+    // "4 tablespoons extra-virgin olive oil, divided"
+    // "1/2 pound spaghetti"
+    // "Coarsely ground black pepper, to taste"
+
+    const str = ingredientStr.trim();
+
+    // Match quantity at the start (including fractions like 1/2, 1 1/2, etc.)
+    const quantityMatch = str.match(/^(\d+(?:\/\d+)?(?:\s+\d+\/\d+)?|\d+\.\d+|\d+)/);
+    let quantity = '';
+    let remaining = str;
+
+    if (quantityMatch) {
+      quantity = quantityMatch[1];
+      remaining = str.slice(quantityMatch[0].length).trim();
+    }
+
+    // Check for notes at the end (after comma)
+    let notes = '';
+    const commaIndex = remaining.lastIndexOf(',');
+    if (commaIndex !== -1) {
+      notes = remaining.slice(commaIndex + 1).trim();
+      remaining = remaining.slice(0, commaIndex).trim();
+    }
+
+    // Common units (ordered by length to match longer units first)
+    const units = [
+      'tablespoons', 'tablespoon', 'teaspoons', 'teaspoon', 'cups', 'cup',
+      'ounces', 'ounce', 'pounds', 'pound', 'grams', 'gram', 'kilograms', 'kilogram',
+      'milliliters', 'milliliter', 'liters', 'liter', 'quarts', 'quart', 'pints', 'pint',
+      'gallons', 'gallon', 'cloves', 'clove', 'slices', 'slice', 'pieces', 'piece',
+      'pinch', 'dash', 'tbsp', 'tsp', 'oz', 'lb', 'ml', 'l', 'kg', 'g', 'qt', 'pt', 'gal'
+    ];
+
+    // Find unit at the start of remaining string
+    let unit = '';
+    let ingredient = remaining;
+
+    for (const possibleUnit of units) {
+      const regex = new RegExp(`^${possibleUnit}\\b`, 'i');
+      if (regex.test(remaining)) {
+        unit = remaining.match(regex)![0];
+        ingredient = remaining.slice(unit.length).trim();
+        break;
+      }
+    }
+
+    // Remove parenthetical notes from ingredient (like "(60ml)")
+    ingredient = ingredient.replace(/\([^)]*\)/g, '').trim();
+
+    return {
+      quantity: quantity || '',
+      unit: unit || '',
+      ingredient: ingredient || str, // Fall back to full string if parsing fails
+      notes: notes || ''
+    };
+  };
+
   const handleImport = async () => {
     if (!url.trim()) {
       setError('Please enter a valid URL');
@@ -42,10 +102,26 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
       setStatus('creating');
       const recipe = await response.json();
 
+      // Parse string ingredients into structured objects
+      const parsedIngredients = recipe.ingredients.map((ing: string | object) => {
+        // If already an object, return as-is
+        if (typeof ing === 'object' && ing !== null) {
+          return ing;
+        }
+        // Otherwise parse the string
+        return parseIngredient(String(ing));
+      });
+
+      // Update the recipe with parsed ingredients
+      const recipeWithParsedIngredients = {
+        ...recipe,
+        ingredients: parsedIngredients
+      };
+
       setStatus('done');
 
       setTimeout(() => {
-        onImportComplete(recipe);
+        onImportComplete(recipeWithParsedIngredients);
         onClose();
       }, 1000);
     } catch (err) {
