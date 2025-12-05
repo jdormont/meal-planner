@@ -109,17 +109,24 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
           className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden group cursor-pointer"
           onClick={() => onSelect(recipe)}
         >
-          {recipe.image_url ? (
-            <img
-              src={recipe.image_url}
-              alt={recipe.title}
-              className="w-full h-48 object-cover"
-            />
-          ) : (
-            <div className="w-full h-48 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
-              <span className="text-6xl">🍽️</span>
-            </div>
-          )}
+          <div className="relative">
+            {recipe.image_url ? (
+              <img
+                src={recipe.image_url}
+                alt={recipe.title}
+                className="w-full h-48 object-cover"
+              />
+            ) : (
+              <div className="w-full h-48 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
+                <span className="text-6xl">🍽️</span>
+              </div>
+            )}
+            {recipe.source_url && (
+              <div className="absolute top-2 right-2 px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-full shadow-lg">
+                Imported
+              </div>
+            )}
+          </div>
 
           <div className="p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
