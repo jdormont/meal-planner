@@ -163,7 +163,28 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       console.log('Response data:', data);
 
       if (data.tags && Object.keys(data.tags).length > 0) {
-        const newTags = [...tags];
+        let newTags = [...tags];
+
+        // Remove incompatible tags based on recipe type
+        if (recipeType === 'cocktail') {
+          // Remove food-specific tags from cocktails
+          newTags = newTags.filter(t =>
+            !t.startsWith('technique:') &&
+            !t.startsWith('grain:') &&
+            !t.startsWith('protein:') &&
+            !t.startsWith('cuisine:') &&
+            !t.startsWith('meal:')
+          );
+        } else {
+          // Remove cocktail-specific tags from food recipes
+          newTags = newTags.filter(t =>
+            !t.startsWith('base:') &&
+            !t.startsWith('flavor:') &&
+            !t.startsWith('strength:') &&
+            !t.startsWith('method:') &&
+            !t.startsWith('occasion:')
+          );
+        }
 
         // Handle food tags
         if (data.tags.technique) {
