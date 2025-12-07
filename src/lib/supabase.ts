@@ -9,6 +9,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export type CocktailMetadata = {
+  spiritBase?: string;
+  glassType?: string;
+  garnish?: string;
+  method?: string;
+  ice?: string;
+};
+
 export type Recipe = {
   id: string;
   user_id: string;
@@ -28,6 +36,8 @@ export type Recipe = {
   source_url?: string;
   notes: string;
   is_shared: boolean;
+  recipe_type: 'food' | 'cocktail';
+  cocktail_metadata?: CocktailMetadata | null;
   created_at: string;
   updated_at: string;
 };
