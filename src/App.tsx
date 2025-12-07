@@ -399,13 +399,29 @@ function App() {
                        title.toLowerCase().includes('martini') ||
                        title.toLowerCase().includes('margarita') ||
                        title.toLowerCase().includes('mojito') ||
-                       ingredients.some(ing =>
-                         ing.name.toLowerCase().includes('vodka') ||
-                         ing.name.toLowerCase().includes('gin') ||
-                         ing.name.toLowerCase().includes('rum') ||
-                         ing.name.toLowerCase().includes('tequila') ||
-                         ing.name.toLowerCase().includes('whiskey')
-                       );
+                       title.toLowerCase().includes('old fashioned') ||
+                       title.toLowerCase().includes('negroni') ||
+                       ingredients.some(ing => {
+                         const ingLower = ing.name.toLowerCase();
+                         return ingLower.includes('vodka') ||
+                           ingLower.includes('gin') ||
+                           ingLower.includes('rum') ||
+                           ingLower.includes('tequila') ||
+                           ingLower.includes('whiskey') ||
+                           ingLower.includes('whisky') ||
+                           ingLower.includes('bourbon') ||
+                           ingLower.includes('scotch') ||
+                           ingLower.includes('cognac') ||
+                           ingLower.includes('brandy') ||
+                           ingLower.includes('vermouth') ||
+                           ingLower.includes('aperol') ||
+                           ingLower.includes('campari') ||
+                           ingLower.includes('bitters') ||
+                           ingLower.includes('liqueur') ||
+                           ingLower.includes('amaretto') ||
+                           ingLower.includes('benedictine') ||
+                           ingLower.includes('chartreuse');
+                       });
 
     const parsedRecipe: Recipe = {
       id: 'temp-ai-recipe',
