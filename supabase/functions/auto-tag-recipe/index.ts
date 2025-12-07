@@ -2,26 +2,21 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
     const { title, description, ingredients, instructions, prepTime, cookTime } = await req.json();
-    console.log("Received request:", { title, ingredients, instructions });
 
-    const apiKey = Deno.env.get("OPENAI_API_KEY") || Deno.env.get("ANTHROPIC_API_KEY");
-
+    const apiKey = Deno.env.get('AI_API_KEY');
     if (!apiKey) {
-      console.log("No API key found");
+      console.error("AI_API_KEY not configured");
       return new Response(
         JSON.stringify({ tags: {} }),
         {
@@ -68,7 +63,7 @@ Deno.serve(async (req: Request) => {
                        ingredientsLower.includes('liqueur');
 
     const systemPrompt = isCocktail
-      ? `You are a cocktail categorization assistant. Based on the cocktail details provided, suggest appropriate tags from these categories:
+      ? `You are a cocktail categorization assistant. Based on the cocktail details provided, suggest appropriate tags and cocktail details from these categories:
 
 **base**: vodka, gin, rum, tequila, whiskey, bourbon, scotch, brandy, cognac, mezcal, champagne, wine, non-alcoholic
 **flavor**: citrus, herbal, fruity, bitter, sweet, spicy, sour, tropical, creamy, smoky, floral, nutty
@@ -76,16 +71,27 @@ Deno.serve(async (req: Request) => {
 **method**: shaken, stirred, built, blended, muddled, layered
 **occasion**: aperitif, digestif, party, brunch, summer, winter, tiki, classic, modern
 
+**baseSpirit**: vodka, gin, rum (light), rum (dark), tequila (blanco), tequila (reposado), whiskey, bourbon, scotch, rye, brandy, cognac, mezcal, champagne, wine, liqueur, non-alcoholic
+**glassType**: rocks, highball, coupe, martini, wine, flute, mug, hurricane, collins, margarita, shot, other
+**cocktailMethod**: shaken, stirred, built, blended, muddled, layered
+**ice**: cubed, crushed, large-cube, none, frozen
+**garnish**: lemon-twist, lime-wedge, orange-peel, cherry, olive, mint, none, salt-rim, sugar-rim, other
+
 Return ONLY a JSON object with your suggestions in this exact format:
 {
   "base": "value",
   "flavor": "value",
   "strength": "value",
   "method": "value",
-  "occasion": "value"
+  "occasion": "value",
+  "baseSpirit": "value",
+  "glassType": "value",
+  "cocktailMethod": "value",
+  "ice": "value",
+  "garnish": "value"
 }
 
-Select ONE option from each category. Choose the most appropriate option based on the cocktail.`
+Select ONE option from each category. Choose the most appropriate option based on the cocktail. For garnish, provide a simple description like "lemon twist" or "cherry" if not from the list.`
       : `You are a recipe categorization assistant. Based on the recipe details provided, suggest appropriate tags from these categories:
 
 **technique**: saute, bake, broil, grill, roast, steam, boil, fry, slow-cook, pressure-cook, raw
@@ -183,8 +189,25 @@ Select ONE option from each category. Choose the most appropriate option based o
 
     console.log("Final tags:", tags);
 
+    // Extract cocktail details if present
+    const cocktailDetails = isCocktail ? {
+      baseSpirit: tags.baseSpirit || '',
+      glassType: tags.glassType || '',
+      method: tags.cocktailMethod || '',
+      ice: tags.ice || '',
+      garnish: tags.garnish || ''
+    } : {};
+
+    // Remove cocktail detail fields from tags object
+    const tagsCopy = { ...tags };
+    delete tagsCopy.baseSpirit;
+    delete tagsCopy.glassType;
+    delete tagsCopy.cocktailMethod;
+    delete tagsCopy.ice;
+    delete tagsCopy.garnish;
+
     return new Response(
-      JSON.stringify({ tags }),
+      JSON.stringify({ tags: tagsCopy, cocktailDetails }),
       {
         headers: {
           ...corsHeaders,
