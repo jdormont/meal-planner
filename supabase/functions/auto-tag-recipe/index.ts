@@ -16,9 +16,9 @@ Deno.serve(async (req: Request) => {
 
     console.log("Received recipeType:", recipeType);
 
-    const apiKey = Deno.env.get('AI_API_KEY');
+    const apiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) {
-      console.error("AI_API_KEY not configured");
+      console.error("OPENAI_API_KEY or ANTHROPIC_API_KEY not configured");
       return new Response(
         JSON.stringify({ tags: {} }),
         {
