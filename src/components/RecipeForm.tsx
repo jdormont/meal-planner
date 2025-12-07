@@ -143,6 +143,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         instructions: instructions.filter(i => i.trim()),
         prepTime,
         cookTime,
+        recipeType,
       };
       console.log('Sending auto-tag request:', payload);
 
@@ -273,21 +274,13 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
 
       // Populate cocktail detail fields if present
       if (data.cocktailDetails && recipeType === 'cocktail') {
-        if (data.cocktailDetails.baseSpirit) {
-          setBaseSpirit(data.cocktailDetails.baseSpirit);
-        }
-        if (data.cocktailDetails.glassType) {
-          setGlassType(data.cocktailDetails.glassType);
-        }
-        if (data.cocktailDetails.method) {
-          setMethod(data.cocktailDetails.method);
-        }
-        if (data.cocktailDetails.ice) {
-          setIce(data.cocktailDetails.ice);
-        }
-        if (data.cocktailDetails.garnish) {
-          setGarnish(data.cocktailDetails.garnish);
-        }
+        setCocktailMetadata({
+          spiritBase: data.cocktailDetails.baseSpirit || '',
+          glassType: data.cocktailDetails.glassType || '',
+          method: data.cocktailDetails.method || '',
+          ice: data.cocktailDetails.ice || '',
+          garnish: data.cocktailDetails.garnish || ''
+        });
       }
     } catch (error) {
       console.error('Error auto-tagging recipe:', error);

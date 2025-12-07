@@ -12,7 +12,9 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { title, description, ingredients, instructions, prepTime, cookTime } = await req.json();
+    const { title, description, ingredients, instructions, prepTime, cookTime, recipeType } = await req.json();
+
+    console.log("Received recipeType:", recipeType);
 
     const apiKey = Deno.env.get('AI_API_KEY');
     if (!apiKey) {
@@ -32,35 +34,15 @@ Deno.serve(async (req: Request) => {
     console.log("Using API:", apiKey.startsWith('sk-') ? 'OpenAI' : 'Anthropic');
 
     const isOpenAI = apiKey.startsWith('sk-');
-    const url = isOpenAI 
+    const url = isOpenAI
       ? "https://api.openai.com/v1/chat/completions"
       : "https://api.anthropic.com/v1/messages";
 
     const ingredientsList = ingredients?.map((i: any) => i.name).filter(Boolean).join(', ') || '';
     const instructionsList = instructions?.join(' ') || '';
 
-    const titleLower = (title?.toLowerCase() || '');
-    const ingredientsLower = ingredientsList.toLowerCase();
-    const isCocktail = titleLower.includes('cocktail') ||
-                       titleLower.includes('drink') ||
-                       titleLower.includes('martini') ||
-                       titleLower.includes('margarita') ||
-                       titleLower.includes('mojito') ||
-                       titleLower.includes('old fashioned') ||
-                       titleLower.includes('negroni') ||
-                       ingredientsLower.includes('vodka') ||
-                       ingredientsLower.includes('gin') ||
-                       ingredientsLower.includes('rum') ||
-                       ingredientsLower.includes('tequila') ||
-                       ingredientsLower.includes('whiskey') ||
-                       ingredientsLower.includes('whisky') ||
-                       ingredientsLower.includes('bourbon') ||
-                       ingredientsLower.includes('scotch') ||
-                       ingredientsLower.includes('cognac') ||
-                       ingredientsLower.includes('brandy') ||
-                       ingredientsLower.includes('vermouth') ||
-                       ingredientsLower.includes('bitters') ||
-                       ingredientsLower.includes('liqueur');
+    const isCocktail = recipeType === 'cocktail';
+    console.log("Is cocktail:", isCocktail);
 
     const systemPrompt = isCocktail
       ? `You are a cocktail categorization assistant. Based on the cocktail details provided, suggest appropriate tags and cocktail details from these categories:
@@ -205,6 +187,9 @@ Select ONE option from each category. Choose the most appropriate option based o
     delete tagsCopy.cocktailMethod;
     delete tagsCopy.ice;
     delete tagsCopy.garnish;
+
+    console.log("Returning tags:", tagsCopy);
+    console.log("Returning cocktailDetails:", cocktailDetails);
 
     return new Response(
       JSON.stringify({ tags: tagsCopy, cocktailDetails }),
