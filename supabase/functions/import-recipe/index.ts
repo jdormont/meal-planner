@@ -16,6 +16,14 @@ interface RecipeData {
   servings: number;
   tags: string[];
   image_url?: string;
+  recipe_type?: 'food' | 'cocktail';
+  cocktail_metadata?: {
+    spiritBase?: string;
+    glassType?: string;
+    garnish?: string;
+    method?: string;
+    ice?: string;
+  };
 }
 
 Deno.serve(async (req: Request) => {
@@ -238,9 +246,14 @@ function normalizeJsonLdRecipe(recipe: any): RecipeData {
     ? (typeof recipe.image[0] === 'string' ? recipe.image[0] : recipe.image[0]?.url)
     : recipe.image?.url;
 
+  const title = recipe.name || 'Imported Recipe';
+  const description = recipe.description || '';
+
+  const isCocktail = detectCocktail(title, description, tags, ingredients);
+
   return {
-    title: recipe.name || 'Imported Recipe',
-    description: recipe.description || '',
+    title,
+    description,
     ingredients,
     instructions,
     prep_time_minutes: prepTime,
@@ -248,7 +261,48 @@ function normalizeJsonLdRecipe(recipe: any): RecipeData {
     servings,
     tags: [...new Set(tags.filter(Boolean))],
     image_url: imageUrl,
+    recipe_type: isCocktail ? 'cocktail' : 'food',
+    cocktail_metadata: isCocktail ? extractCocktailMetadata(title, description, instructions) : undefined,
   };
+}
+
+function detectCocktail(title: string, description: string, tags: string[], ingredients: string[]): boolean {
+  const cocktailKeywords = ['cocktail', 'drink', 'martini', 'margarita', 'mojito', 'daiquiri', 'sangria', 'punch', 'shot', 'shooter'];
+  const spiritKeywords = ['vodka', 'gin', 'rum', 'tequila', 'whiskey', 'bourbon', 'brandy', 'mezcal'];
+
+  const titleLower = title.toLowerCase();
+  const descLower = description.toLowerCase();
+  const tagsLower = tags.map(t => t.toLowerCase()).join(' ');
+  const ingredientsText = ingredients.join(' ').toLowerCase();
+
+  const allText = `${titleLower} ${descLower} ${tagsLower} ${ingredientsText}`;
+
+  return cocktailKeywords.some(keyword => allText.includes(keyword)) ||
+         spiritKeywords.some(spirit => ingredientsText.includes(spirit));
+}
+
+function extractCocktailMetadata(title: string, description: string, instructions: string[]): any {
+  const metadata: any = {};
+
+  const allText = `${title} ${description} ${instructions.join(' ')}`.toLowerCase();
+
+  if (allText.includes('vodka')) metadata.spiritBase = 'vodka';
+  else if (allText.includes('gin')) metadata.spiritBase = 'gin';
+  else if (allText.includes('rum')) metadata.spiritBase = 'rum';
+  else if (allText.includes('tequila')) metadata.spiritBase = 'tequila';
+  else if (allText.includes('whiskey') || allText.includes('bourbon')) metadata.spiritBase = 'whiskey';
+  else if (allText.includes('brandy')) metadata.spiritBase = 'brandy';
+
+  if (allText.includes('shake') || allText.includes('shaken')) metadata.method = 'shaken';
+  else if (allText.includes('stir') || allText.includes('stirred')) metadata.method = 'stirred';
+  else if (allText.includes('blend') || allText.includes('blended')) metadata.method = 'blended';
+
+  if (allText.includes('rocks glass') || allText.includes('old fashioned')) metadata.glassType = 'rocks';
+  else if (allText.includes('martini glass')) metadata.glassType = 'martini';
+  else if (allText.includes('highball')) metadata.glassType = 'highball';
+  else if (allText.includes('coupe')) metadata.glassType = 'coupe';
+
+  return Object.keys(metadata).length > 0 ? metadata : null;
 }
 
 function parseDuration(duration: string | undefined): number {
@@ -318,8 +372,16 @@ async function extractWithAI(html: string): Promise<RecipeData | null> {
 - servings (number)
 - tags (array of strings, include cuisine type, meal type, dietary info)
 - image_url (string, optional)
+- recipe_type (string - "food" or "cocktail" - detect if this is a cocktail/drink recipe)
+- cocktail_metadata (object, optional - only if recipe_type is "cocktail", include:
+  - spiritBase: primary spirit (vodka, gin, rum, tequila, whiskey, bourbon, brandy, mezcal)
+  - glassType: type of glass (rocks, highball, martini, coupe, collins, etc.)
+  - garnish: garnish description
+  - method: preparation method (shaken, stirred, built, blended, muddled)
+  - ice: ice specification (cubed, crushed, neat, rocks, large-cube))
 
 CRITICAL: Make sure to extract ALL ingredients from the recipe, including those organized in subsections.
+IMPORTANT: Detect if this is a cocktail recipe based on the presence of spirits, cocktail terminology, or drink-related keywords.
 
 HTML content:
 ${cleanedHtml}

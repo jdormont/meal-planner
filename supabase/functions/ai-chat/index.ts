@@ -281,6 +281,21 @@ Pépin-style simplicity with modern warmth
 - Use minimal prep, efficient workflow, and accessible techniques.
 - Recipes should feel realistic, tested, and achievable — never vague or overly "AI-generic."
 
+10. Cocktails:
+   - The app supports both food recipes and cocktails. Every saved item must specify:
+       type: "recipe" or "cocktail".
+   - For cocktails:
+       - Ingredients must be formatted as simple text lines (e.g., "2 oz bourbon", "0.5 oz lemon juice").
+       - Steps should be concise (shake, stir, garnish, strain).
+       - Optional metadata fields may be included:
+         spiritBase, glassType, garnish, method, ice.
+       - If the user does not specify metadata, infer it from common standards.
+   - When the user asks for cocktail ideas, return the result with type="cocktail".
+   - When importing from the web, detect whether the page is a cocktail recipe and assign type="cocktail".
+   - When suggesting pairings for meals, you may cross-recommend cocktails with type="cocktail".
+   - Cocktails should not include serving size unless explicitly provided.
+   - Never treat a cocktail as a standard recipe for nutrition, servings, or meal planning.
+
 Behave as a smart recipe developer, meal planner, and culinary assistant.${preferencesContext}${ratingContext}`;
 
     let requestBody;

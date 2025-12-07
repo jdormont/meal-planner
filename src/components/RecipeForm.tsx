@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Recipe } from '../lib/supabase';
+import { Recipe, CocktailMetadata } from '../lib/supabase';
 import { X, Plus, Minus, Loader2, Trash2 } from 'lucide-react';
 
 type RecipeFormProps = {
@@ -27,6 +27,14 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
   const [isShared, setIsShared] = useState(false);
   const [isFetchingImage, setIsFetchingImage] = useState(false);
   const [isAutoTagging, setIsAutoTagging] = useState(false);
+  const [recipeType, setRecipeType] = useState<'food' | 'cocktail'>('food');
+  const [cocktailMetadata, setCocktailMetadata] = useState<CocktailMetadata>({
+    spiritBase: '',
+    glassType: '',
+    garnish: '',
+    method: '',
+    ice: '',
+  });
 
   useEffect(() => {
     if (recipe) {
@@ -42,6 +50,16 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       setSourceUrl(recipe.source_url || '');
       setNotes(recipe.notes);
       setIsShared(recipe.is_shared);
+      setRecipeType(recipe.recipe_type);
+      if (recipe.cocktail_metadata) {
+        setCocktailMetadata({
+          spiritBase: recipe.cocktail_metadata.spiritBase || '',
+          glassType: recipe.cocktail_metadata.glassType || '',
+          garnish: recipe.cocktail_metadata.garnish || '',
+          method: recipe.cocktail_metadata.method || '',
+          ice: recipe.cocktail_metadata.ice || '',
+        });
+      }
     }
   }, [recipe]);
 
@@ -210,6 +228,14 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       setIsFetchingImage(false);
     }
 
+    const cocktailMetadataToSave = recipeType === 'cocktail' && (
+      cocktailMetadata.spiritBase ||
+      cocktailMetadata.glassType ||
+      cocktailMetadata.garnish ||
+      cocktailMetadata.method ||
+      cocktailMetadata.ice
+    ) ? cocktailMetadata : null;
+
     onSave({
       title,
       description,
@@ -223,6 +249,8 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       source_url: sourceUrl || undefined,
       notes,
       is_shared: isShared,
+      recipe_type: recipeType,
+      cocktail_metadata: cocktailMetadataToSave,
     });
   };
 
@@ -232,10 +260,14 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              {recipe?.id.startsWith('temp-') ? 'Review AI Recipe' : recipe ? 'Edit Recipe' : 'New Recipe'}
+              {recipe?.id.startsWith('temp-')
+                ? `Review AI ${recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}`
+                : recipe
+                  ? `Edit ${recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}`
+                  : `New ${recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}`}
             </h2>
             {recipe?.id.startsWith('temp-') && (
-              <p className="text-sm text-gray-600 mt-1">Review and edit the recipe before saving</p>
+              <p className="text-sm text-gray-600 mt-1">Review and edit the {recipeType === 'cocktail' ? 'cocktail' : 'recipe'} before saving</p>
             )}
           </div>
           <button
@@ -249,7 +281,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Recipe Title *
+              {recipeType === 'cocktail' ? 'Cocktail Name' : 'Recipe Title'} *
             </label>
             <input
               type="text"
@@ -257,7 +289,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               onChange={(e) => setTitle(e.target.value)}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-              placeholder="Delicious Pasta Carbonara"
+              placeholder={recipeType === 'cocktail' ? 'Classic Old Fashioned' : 'Delicious Pasta Carbonara'}
             />
           </div>
 
@@ -277,7 +309,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prep Time (min)
+                {recipeType === 'cocktail' ? 'Prep Time (min)' : 'Prep Time (min)'}
               </label>
               <input
                 type="number"
@@ -289,7 +321,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cook Time (min)
+                {recipeType === 'cocktail' ? 'Mix/Chill Time (min)' : 'Cook Time (min)'}
               </label>
               <input
                 type="number"
@@ -301,7 +333,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Servings
+                {recipeType === 'cocktail' ? 'Servings/Drinks' : 'Servings'}
               </label>
               <input
                 type="number"
@@ -312,6 +344,101 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               />
             </div>
           </div>
+
+          {recipeType === 'cocktail' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Cocktail Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    Base Spirit
+                  </label>
+                  <select
+                    value={cocktailMetadata.spiritBase}
+                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, spiritBase: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                  >
+                    <option value="">Select...</option>
+                    <option value="vodka">Vodka</option>
+                    <option value="gin">Gin</option>
+                    <option value="rum">Rum</option>
+                    <option value="tequila">Tequila</option>
+                    <option value="whiskey">Whiskey</option>
+                    <option value="bourbon">Bourbon</option>
+                    <option value="brandy">Brandy</option>
+                    <option value="mezcal">Mezcal</option>
+                    <option value="non-alcoholic">Non-Alcoholic</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    Glass Type
+                  </label>
+                  <select
+                    value={cocktailMetadata.glassType}
+                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, glassType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                  >
+                    <option value="">Select...</option>
+                    <option value="rocks">Rocks/Old Fashioned</option>
+                    <option value="highball">Highball</option>
+                    <option value="martini">Martini</option>
+                    <option value="coupe">Coupe</option>
+                    <option value="collins">Collins</option>
+                    <option value="hurricane">Hurricane</option>
+                    <option value="champagne">Champagne Flute</option>
+                    <option value="shot">Shot Glass</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    Method
+                  </label>
+                  <select
+                    value={cocktailMetadata.method}
+                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, method: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                  >
+                    <option value="">Select...</option>
+                    <option value="shaken">Shaken</option>
+                    <option value="stirred">Stirred</option>
+                    <option value="built">Built</option>
+                    <option value="blended">Blended</option>
+                    <option value="muddled">Muddled</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    Ice
+                  </label>
+                  <select
+                    value={cocktailMetadata.ice}
+                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, ice: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                  >
+                    <option value="">Select...</option>
+                    <option value="cubed">Cubed</option>
+                    <option value="crushed">Crushed</option>
+                    <option value="neat">Neat (No Ice)</option>
+                    <option value="rocks">On the Rocks</option>
+                    <option value="large-cube">Large Cube</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    Garnish
+                  </label>
+                  <input
+                    type="text"
+                    value={cocktailMetadata.garnish}
+                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, garnish: e.target.value })}
+                    placeholder="e.g., lemon twist, cherry, mint sprig"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -324,21 +451,21 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                     type="text"
                     value={ingredient.quantity}
                     onChange={(e) => updateIngredient(index, 'quantity', e.target.value)}
-                    placeholder="1"
+                    placeholder={recipeType === 'cocktail' ? '2' : '1'}
                     className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                   />
                   <input
                     type="text"
                     value={ingredient.unit}
                     onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
-                    placeholder="cup"
+                    placeholder={recipeType === 'cocktail' ? 'oz' : 'cup'}
                     className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                   />
                   <input
                     type="text"
                     value={ingredient.name}
                     onChange={(e) => updateIngredient(index, 'name', e.target.value)}
-                    placeholder="flour"
+                    placeholder={recipeType === 'cocktail' ? 'bourbon' : 'flour'}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                   />
                   <button

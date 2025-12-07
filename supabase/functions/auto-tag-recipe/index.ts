@@ -44,7 +44,31 @@ Deno.serve(async (req: Request) => {
     const ingredientsList = ingredients?.map((i: any) => i.name).filter(Boolean).join(', ') || '';
     const instructionsList = instructions?.join(' ') || '';
 
-    const systemPrompt = `You are a recipe categorization assistant. Based on the recipe details provided, suggest appropriate tags from these categories:
+    const isCocktail = (title?.toLowerCase() || '').includes('cocktail') ||
+                       (title?.toLowerCase() || '').includes('drink') ||
+                       (title?.toLowerCase() || '').includes('martini') ||
+                       ingredientsList.toLowerCase().includes('vodka') ||
+                       ingredientsList.toLowerCase().includes('gin') ||
+                       ingredientsList.toLowerCase().includes('rum') ||
+                       ingredientsList.toLowerCase().includes('tequila') ||
+                       ingredientsList.toLowerCase().includes('whiskey');
+
+    const systemPrompt = isCocktail
+      ? `You are a cocktail categorization assistant. Based on the cocktail details provided, suggest appropriate tags from these categories:
+
+**spirit**: vodka, gin, rum, tequila, whiskey, bourbon, brandy, mezcal, non-alcoholic
+**method**: shaken, stirred, built, blended, muddled
+**style**: classic, tropical, sour, sweet, bitter, refreshing, strong
+
+Return ONLY a JSON object with your suggestions in this exact format:
+{
+  "spirit": "value",
+  "method": "value",
+  "style": "value"
+}
+
+Select ONE option from each category. Choose the most appropriate option based on the cocktail.`
+      : `You are a recipe categorization assistant. Based on the recipe details provided, suggest appropriate tags from these categories:
 
 **technique**: saute, bake, broil, grill, roast, steam, boil, fry, slow-cook, pressure-cook, raw
 **grain**: none, rice, pasta, noodles, quinoa, couscous, bread, potatoes, polenta, other
