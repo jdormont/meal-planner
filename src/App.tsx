@@ -142,9 +142,11 @@ function App() {
   const getAllTags = () => {
     const tagSet = new Set<string>();
     const recipesToScan = showCommunity ? communityRecipes : recipes;
-    recipesToScan.forEach((recipe) => {
-      recipe.tags.forEach((tag) => tagSet.add(tag));
-    });
+    recipesToScan
+      .filter((recipe) => recipe.recipe_type === recipeType)
+      .forEach((recipe) => {
+        recipe.tags.forEach((tag) => tagSet.add(tag));
+      });
     return Array.from(tagSet).sort();
   };
 
