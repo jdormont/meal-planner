@@ -165,6 +165,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       if (data.tags && Object.keys(data.tags).length > 0) {
         const newTags = [...tags];
 
+        // Handle food tags
         if (data.tags.technique) {
           const techniqueTag = `technique:${data.tags.technique}`;
           const filtered = newTags.filter(t => !t.startsWith('technique:'));
@@ -201,6 +202,47 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
           const mealTag = `meal:${data.tags.meal}`;
           const filtered = newTags.filter(t => !t.startsWith('meal:'));
           filtered.push(mealTag);
+          newTags.length = 0;
+          newTags.push(...filtered);
+        }
+
+        // Handle cocktail tags
+        if (data.tags.base) {
+          const baseTag = `base:${data.tags.base}`;
+          const filtered = newTags.filter(t => !t.startsWith('base:'));
+          filtered.push(baseTag);
+          newTags.length = 0;
+          newTags.push(...filtered);
+        }
+
+        if (data.tags.flavor) {
+          const flavorTag = `flavor:${data.tags.flavor}`;
+          const filtered = newTags.filter(t => !t.startsWith('flavor:'));
+          filtered.push(flavorTag);
+          newTags.length = 0;
+          newTags.push(...filtered);
+        }
+
+        if (data.tags.strength) {
+          const strengthTag = `strength:${data.tags.strength}`;
+          const filtered = newTags.filter(t => !t.startsWith('strength:'));
+          filtered.push(strengthTag);
+          newTags.length = 0;
+          newTags.push(...filtered);
+        }
+
+        if (data.tags.method) {
+          const methodTag = `method:${data.tags.method}`;
+          const filtered = newTags.filter(t => !t.startsWith('method:'));
+          filtered.push(methodTag);
+          newTags.length = 0;
+          newTags.push(...filtered);
+        }
+
+        if (data.tags.occasion) {
+          const occasionTag = `occasion:${data.tags.occasion}`;
+          const filtered = newTags.filter(t => !t.startsWith('occasion:'));
+          filtered.push(occasionTag);
           newTags.length = 0;
           newTags.push(...filtered);
         }
