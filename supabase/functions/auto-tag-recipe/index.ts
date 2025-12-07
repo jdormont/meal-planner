@@ -44,27 +44,45 @@ Deno.serve(async (req: Request) => {
     const ingredientsList = ingredients?.map((i: any) => i.name).filter(Boolean).join(', ') || '';
     const instructionsList = instructions?.join(' ') || '';
 
-    const isCocktail = (title?.toLowerCase() || '').includes('cocktail') ||
-                       (title?.toLowerCase() || '').includes('drink') ||
-                       (title?.toLowerCase() || '').includes('martini') ||
-                       ingredientsList.toLowerCase().includes('vodka') ||
-                       ingredientsList.toLowerCase().includes('gin') ||
-                       ingredientsList.toLowerCase().includes('rum') ||
-                       ingredientsList.toLowerCase().includes('tequila') ||
-                       ingredientsList.toLowerCase().includes('whiskey');
+    const titleLower = (title?.toLowerCase() || '');
+    const ingredientsLower = ingredientsList.toLowerCase();
+    const isCocktail = titleLower.includes('cocktail') ||
+                       titleLower.includes('drink') ||
+                       titleLower.includes('martini') ||
+                       titleLower.includes('margarita') ||
+                       titleLower.includes('mojito') ||
+                       titleLower.includes('old fashioned') ||
+                       titleLower.includes('negroni') ||
+                       ingredientsLower.includes('vodka') ||
+                       ingredientsLower.includes('gin') ||
+                       ingredientsLower.includes('rum') ||
+                       ingredientsLower.includes('tequila') ||
+                       ingredientsLower.includes('whiskey') ||
+                       ingredientsLower.includes('whisky') ||
+                       ingredientsLower.includes('bourbon') ||
+                       ingredientsLower.includes('scotch') ||
+                       ingredientsLower.includes('cognac') ||
+                       ingredientsLower.includes('brandy') ||
+                       ingredientsLower.includes('vermouth') ||
+                       ingredientsLower.includes('bitters') ||
+                       ingredientsLower.includes('liqueur');
 
     const systemPrompt = isCocktail
       ? `You are a cocktail categorization assistant. Based on the cocktail details provided, suggest appropriate tags from these categories:
 
-**spirit**: vodka, gin, rum, tequila, whiskey, bourbon, brandy, mezcal, non-alcoholic
-**method**: shaken, stirred, built, blended, muddled
-**style**: classic, tropical, sour, sweet, bitter, refreshing, strong
+**base**: vodka, gin, rum, tequila, whiskey, bourbon, scotch, brandy, cognac, mezcal, champagne, wine, non-alcoholic
+**flavor**: citrus, herbal, fruity, bitter, sweet, spicy, sour, tropical, creamy, smoky, floral, nutty
+**strength**: light, moderate, strong, very-strong
+**method**: shaken, stirred, built, blended, muddled, layered
+**occasion**: aperitif, digestif, party, brunch, summer, winter, tiki, classic, modern
 
 Return ONLY a JSON object with your suggestions in this exact format:
 {
-  "spirit": "value",
+  "base": "value",
+  "flavor": "value",
+  "strength": "value",
   "method": "value",
-  "style": "value"
+  "occasion": "value"
 }
 
 Select ONE option from each category. Choose the most appropriate option based on the cocktail.`
