@@ -7,6 +7,7 @@ type RecipeSearchProps = {
   selectedTags: string[];
   onTagToggle: (tag: string) => void;
   availableTags: string[];
+  recipeType?: 'food' | 'cocktail';
 };
 
 type FilterCategory = {
@@ -20,12 +21,40 @@ export function RecipeSearch({
   selectedTags,
   onTagToggle,
   availableTags,
+  recipeType = 'food',
 }: RecipeSearchProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const categorizeTag = (tag: string): string => {
     const lowerTag = tag.toLowerCase();
 
+    if (recipeType === 'cocktail') {
+      // Cocktail-specific categorization
+      if (lowerTag.startsWith('base:')) {
+        return 'Spirit Base';
+      }
+      if (lowerTag.startsWith('flavor:')) {
+        return 'Flavor Profile';
+      }
+      if (lowerTag.startsWith('strength:')) {
+        return 'Strength';
+      }
+      if (lowerTag.startsWith('method:')) {
+        return 'Method';
+      }
+      if (lowerTag.startsWith('occasion:')) {
+        return 'Occasion';
+      }
+      if (lowerTag.startsWith('garnish:')) {
+        return 'Garnish';
+      }
+      if (lowerTag.startsWith('style:')) {
+        return 'Style';
+      }
+      return 'Other';
+    }
+
+    // Food recipe categorization
     if (lowerTag.includes('breakfast') || lowerTag.includes('lunch') ||
         lowerTag.includes('dinner') || lowerTag.includes('snack') ||
         lowerTag.includes('dessert') || lowerTag.includes('appetizer')) {
@@ -78,7 +107,10 @@ export function RecipeSearch({
       categories[category].push(tag);
     });
 
-    const order = ['Meal Type', 'Cuisine', 'Protein', 'Grain', 'Diet', 'Cooking Style', 'Other'];
+    const order = recipeType === 'cocktail'
+      ? ['Spirit Base', 'Flavor Profile', 'Strength', 'Method', 'Occasion', 'Style', 'Garnish', 'Other']
+      : ['Meal Type', 'Cuisine', 'Protein', 'Grain', 'Diet', 'Cooking Style', 'Other'];
+
     return order
       .filter(cat => categories[cat] && categories[cat].length > 0)
       .map(cat => ({

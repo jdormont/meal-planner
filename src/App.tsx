@@ -681,6 +681,7 @@ function App() {
                   selectedTags={selectedTags}
                   onTagToggle={toggleTag}
                   availableTags={getAllTags()}
+                  recipeType={recipeType}
                 />
                 <CommunityRecipes
                   recipes={filteredCommunityRecipes}
@@ -792,6 +793,7 @@ function App() {
                   selectedTags={selectedTags}
                   onTagToggle={toggleTag}
                   availableTags={getAllTags()}
+                  recipeType={recipeType}
                 />
                 <RecipeList
                   recipes={filteredRecipes}
