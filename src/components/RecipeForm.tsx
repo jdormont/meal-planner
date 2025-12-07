@@ -162,6 +162,8 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       console.log('Response status:', response.status);
       const data = await response.json();
       console.log('Response data:', data);
+      console.log('data.tags:', data.tags);
+      console.log('data.cocktailDetails:', data.cocktailDetails);
 
       if (data.tags && Object.keys(data.tags).length > 0) {
         let newTags = [...tags];
