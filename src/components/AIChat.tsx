@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Save, MessageSquare, Trash2, Plus } from 'lucide-react';
+import { Send, Bot, User, Loader2, Save, MessageSquare, Trash2, Plus, ArrowLeft } from 'lucide-react';
 import { marked } from 'marked';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,6 +32,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
   const [loading, setLoading] = useState(false);
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [showChatList, setShowChatList] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
     if (chatMessages) {
       setMessages(chatMessages as Message[]);
       setCurrentChatId(chatId);
+      setShowChatList(false);
     }
   };
 
@@ -81,6 +83,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
       },
     ]);
     setCurrentChatId(null);
+    setShowChatList(false);
   };
 
   const saveCurrentChat = async () => {
@@ -241,11 +244,12 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
 
   return (
     <div className="flex h-full bg-white rounded-xl shadow-lg overflow-hidden">
-      <div className="w-80 border-r flex flex-col">
+      {/* Chat List Sidebar - Hidden on mobile unless showChatList is true */}
+      <div className={`${showChatList ? 'flex' : 'hidden'} lg:flex w-full lg:w-80 border-r flex-col`}>
         <div className="p-4 border-b bg-gradient-to-r from-orange-600 to-amber-600">
           <button
             onClick={createNewChat}
-            className="w-full px-4 py-2 bg-white hover:bg-gray-50 text-orange-600 rounded-lg transition flex items-center justify-center gap-2 font-medium"
+            className="w-full px-4 py-3 bg-white hover:bg-gray-50 text-orange-600 rounded-lg transition flex items-center justify-center gap-2 font-medium touch-manipulation"
           >
             <Plus className="w-5 h-5" />
             New Chat
@@ -255,7 +259,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
           {chats.map((chat) => (
             <div
               key={chat.id}
-              className={`p-3 rounded-lg mb-2 cursor-pointer transition group hover:bg-gray-50 ${
+              className={`p-4 rounded-lg mb-2 cursor-pointer transition group hover:bg-gray-50 ${
                 currentChatId === chat.id ? 'bg-orange-50 border border-orange-200' : ''
               }`}
             >
@@ -273,7 +277,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
                     e.stopPropagation();
                     deleteChat(chat.id);
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded transition"
+                  className="opacity-0 group-hover:opacity-100 lg:opacity-100 p-2 hover:bg-red-50 rounded transition touch-manipulation"
                 >
                   <Trash2 className="w-4 h-4 text-red-600" />
                 </button>
@@ -283,15 +287,23 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
         </div>
       </div>
 
-      <div className="flex flex-col flex-1">
+      {/* Chat Window - Hidden on mobile when showChatList is true */}
+      <div className={`${showChatList ? 'hidden' : 'flex'} lg:flex flex-col flex-1`}>
         <div className="bg-gradient-to-r from-orange-600 to-amber-600 text-white p-4">
           <div className="flex items-center gap-3">
+            {/* Back button - only visible on mobile */}
+            <button
+              onClick={() => setShowChatList(true)}
+              className="lg:hidden p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition touch-manipulation"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             <div className="p-2 bg-white bg-opacity-20 rounded-lg">
               <Bot className="w-6 h-6" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h2 className="font-bold text-lg">AI Cooking Assistant</h2>
-              <p className="text-sm text-orange-100">Ask me anything about recipes and cooking</p>
+              <p className="text-sm text-orange-100 hidden sm:block">Ask me anything about recipes and cooking</p>
             </div>
           </div>
         </div>
@@ -310,7 +322,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
               </div>
             )}
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+              className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 ${
                 message.role === 'user'
                   ? 'bg-orange-600 text-white'
                   : 'bg-gray-100 text-gray-900'
@@ -327,7 +339,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
               {message.role === 'assistant' && onSaveRecipe && idx > 0 && message.content.includes('FULL_RECIPE') && (
                 <button
                   onClick={() => onSaveRecipe(message.content.replace('FULL_RECIPE', '').trim())}
-                  className="mt-3 px-3 py-1.5 bg-white hover:bg-gray-50 text-orange-600 rounded-lg text-sm font-medium flex items-center gap-2 transition"
+                  className="mt-3 px-4 py-2 min-h-[44px] bg-white hover:bg-gray-50 text-orange-600 rounded-lg text-sm font-medium flex items-center gap-2 transition touch-manipulation"
                 >
                   <Save className="w-4 h-4" />
                   Save as Recipe
@@ -354,20 +366,20 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="border-t p-4">
-        <div className="flex gap-2">
+        <div className="border-t p-4 bg-white">
+        <div className="flex gap-2 items-end">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask me for recipe ideas, cooking tips, or substitutions..."
             rows={2}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none text-base"
           />
           <button
             onClick={sendMessage}
             disabled={!input.trim() || loading}
-            className="px-6 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-3 min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             <Send className="w-5 h-5" />
           </button>
