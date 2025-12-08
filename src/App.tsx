@@ -14,8 +14,9 @@ import { MealForm } from './components/MealForm';
 import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
 import { RecipeImportModal } from './components/RecipeImportModal';
+import { RecipePhotoModal } from './components/RecipePhotoModal';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine } from 'lucide-react';
+import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine, Camera } from 'lucide-react';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -41,6 +42,7 @@ function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [recipeType, setRecipeType] = useState<'food' | 'cocktail'>('food');
 
   useEffect(() => {
@@ -739,12 +741,20 @@ function App() {
                     </div>
                     <div className="flex gap-2 sm:gap-3">
                       <button
+                        onClick={() => setShowPhotoModal(true)}
+                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                        title="Import from Photo"
+                      >
+                        <Camera className="w-5 h-5" />
+                        <span className="hidden sm:inline">Photo</span>
+                      </button>
+                      <button
                         onClick={() => setShowImportModal(true)}
                         className="px-3 sm:px-4 py-2 min-h-[44px] bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
                         title="Import from Web"
                       >
                         <Globe className="w-5 h-5" />
-                        <span className="hidden sm:inline">Import from Web</span>
+                        <span className="hidden sm:inline">Web</span>
                       </button>
                       <button
                         onClick={() => {
@@ -755,7 +765,7 @@ function App() {
                         title={`New ${recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}`}
                       >
                         <Plus className="w-5 h-5" />
-                        <span className="hidden sm:inline">New {recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}</span>
+                        <span className="hidden sm:inline">New</span>
                       </button>
                     </div>
                   </div>
@@ -899,6 +909,22 @@ function App() {
             setEditingRecipe({
               ...recipe,
               id: `temp-${Date.now()}`,
+              user_id: user!.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            } as Recipe);
+            setShowForm(true);
+          }}
+        />
+      )}
+
+      {showPhotoModal && (
+        <RecipePhotoModal
+          onClose={() => setShowPhotoModal(false)}
+          onImportComplete={(recipe) => {
+            setEditingRecipe({
+              ...recipe,
+              id: `temp-photo-${Date.now()}`,
               user_id: user!.id,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
