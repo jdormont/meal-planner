@@ -135,20 +135,21 @@ export function RecipeSearch({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+    <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
       <div className="relative mb-4">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search recipes by name, ingredients, or description..."
-          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+          placeholder="Search recipes by name, ingredients..."
+          className="w-full pl-12 pr-12 py-3 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-base"
         />
         {searchTerm && (
           <button
             onClick={() => onSearchChange('')}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 touch-manipulation"
+            title="Clear search"
           >
             <X className="w-5 h-5" />
           </button>
@@ -160,24 +161,25 @@ export function RecipeSearch({
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Filter by category:
           </label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
             {categorizedTags.map((category) => {
               const selectedInCategory = getSelectedInCategory(category.tags);
               return (
                 <div key={category.name} className="relative">
                   <button
                     onClick={() => setOpenDropdown(openDropdown === category.name ? null : category.name)}
-                    className={`w-full px-4 py-2.5 rounded-lg border-2 transition flex items-center justify-between text-sm font-medium ${
+                    className={`w-full px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border-2 transition flex items-center justify-between text-sm font-medium touch-manipulation ${
                       selectedInCategory.length > 0
                         ? 'border-orange-500 bg-orange-50 text-orange-700'
                         : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                     }`}
+                    title={category.name}
                   >
                     <span className="truncate">
                       {category.name}
                       {selectedInCategory.length > 0 && ` (${selectedInCategory.length})`}
                     </span>
-                    <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${openDropdown === category.name ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 ml-1 flex-shrink-0 transition-transform ${openDropdown === category.name ? 'rotate-180' : ''}`} />
                   </button>
 
                   {openDropdown === category.name && (
@@ -186,23 +188,23 @@ export function RecipeSearch({
                         className="fixed inset-0 z-10"
                         onClick={() => setOpenDropdown(null)}
                       />
-                      <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-20 mt-1 w-full min-w-[200px] bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {category.tags.map((tag) => (
                           <button
                             key={tag}
                             onClick={() => {
                               onTagToggle(tag);
                             }}
-                            className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition ${
+                            className={`w-full px-4 py-3 min-h-[44px] text-left text-sm hover:bg-gray-50 transition touch-manipulation ${
                               selectedTags.includes(tag)
                                 ? 'bg-orange-50 text-orange-700 font-medium'
                                 : 'text-gray-700'
                             }`}
                           >
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2">
                               <span>{cleanTagDisplay(tag)}</span>
                               {selectedTags.includes(tag) && (
-                                <span className="text-orange-500">✓</span>
+                                <span className="text-orange-500 text-base">✓</span>
                               )}
                             </div>
                           </button>
@@ -219,11 +221,11 @@ export function RecipeSearch({
 
       {selectedTags.length > 0 && (
         <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-700">Active filters:</span>
             <button
               onClick={clearAllFilters}
-              className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+              className="px-3 py-1.5 min-h-[36px] text-sm text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg font-medium transition touch-manipulation"
             >
               Clear all
             </button>
@@ -232,14 +234,15 @@ export function RecipeSearch({
             {selectedTags.map((tag) => (
               <span
                 key={tag}
-                className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm flex items-center gap-2"
+                className="pl-3 pr-2 py-2 bg-orange-100 text-orange-700 rounded-full text-sm flex items-center gap-2"
               >
                 {cleanTagDisplay(tag)}
                 <button
                   onClick={() => onTagToggle(tag)}
-                  className="hover:text-orange-900"
+                  className="p-1 hover:text-orange-900 hover:bg-orange-200 rounded-full transition touch-manipulation"
+                  title={`Remove ${cleanTagDisplay(tag)} filter`}
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </button>
               </span>
             ))}

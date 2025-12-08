@@ -481,19 +481,19 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <ChefHat className="w-8 h-8 text-orange-600" />
+        <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 lg:px-8 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-1.5 sm:p-2 bg-orange-100 rounded-lg flex-shrink-0">
+                <ChefHat className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Recipe Manager</h1>
-                <p className="text-sm text-gray-600 hidden sm:block">Organize, plan, and discover recipes</p>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Recipe Manager</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Organize, plan, and discover recipes</p>
               </div>
             </div>
 
-            <nav className="flex items-center gap-2">
+            <nav className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <button
                 onClick={() => {
                   setShowMeals(false);
@@ -503,11 +503,12 @@ function App() {
                   setShowCommunity(false);
                   setSelectedRecipe(null);
                 }}
-                className={`px-3 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
                   !showMeals && !showChat && !showSettings && !showAdmin && !showCommunity
                     ? 'bg-orange-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
+                title="My Recipes"
               >
                 <BookOpen className="w-5 h-5" />
                 <span className="hidden md:inline">My Recipes</span>
@@ -522,11 +523,12 @@ function App() {
                   setSearchTerm('');
                   setSelectedTags([]);
                 }}
-                className={`px-3 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
                   showCommunity
                     ? 'bg-orange-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
+                title="Community Recipes"
               >
                 <Users className="w-5 h-5" />
                 <span className="hidden md:inline">Community</span>
@@ -539,11 +541,12 @@ function App() {
                   setShowAdmin(false);
                   setShowCommunity(false);
                 }}
-                className={`px-3 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
                   showMeals
                     ? 'bg-orange-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
+                title="Meal Planning"
               >
                 <Calendar className="w-5 h-5" />
                 <span className="hidden md:inline">Meals</span>
@@ -556,11 +559,12 @@ function App() {
                   setShowAdmin(false);
                   setShowCommunity(false);
                 }}
-                className={`px-3 py-2 rounded-lg transition flex items-center gap-2 font-medium ${
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
                   showChat
                     ? 'bg-orange-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
+                title="AI Assistant"
               >
                 <MessageSquare className="w-5 h-5" />
                 <span className="hidden md:inline">AI</span>
@@ -580,7 +584,7 @@ function App() {
                       setShowForm(true);
                     }
                   }}
-                  className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm"
+                  className="px-2 sm:px-3 py-2 min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium shadow-sm touch-manipulation"
                   title={showMeals ? 'New Meal' : 'New Recipe'}
                 >
                   <Plus className="w-5 h-5" />
@@ -591,7 +595,7 @@ function App() {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition"
+                  className="p-2 min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition flex items-center justify-center touch-manipulation"
                   title="User menu"
                 >
                   <User className="w-5 h-5" />
@@ -651,7 +655,7 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-3 py-4 sm:px-6 sm:py-8 lg:px-8">
         {showAdmin ? (
           <AdminDashboard />
         ) : showSettings ? (
@@ -733,10 +737,11 @@ function App() {
                         {filteredRecipes.length} {filteredRecipes.length === 1 ? (recipeType === 'cocktail' ? 'cocktail' : 'recipe') : (recipeType === 'cocktail' ? 'cocktails' : 'recipes')}
                       </p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 sm:gap-3">
                       <button
                         onClick={() => setShowImportModal(true)}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm"
+                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                        title="Import from Web"
                       >
                         <Globe className="w-5 h-5" />
                         <span className="hidden sm:inline">Import from Web</span>
@@ -746,7 +751,8 @@ function App() {
                           setEditingRecipe(null);
                           setShowForm(true);
                         }}
-                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm"
+                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                        title={`New ${recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}`}
                       >
                         <Plus className="w-5 h-5" />
                         <span className="hidden sm:inline">New {recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}</span>
@@ -754,21 +760,23 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+                  <div className="flex items-center gap-1 sm:gap-2 p-1 bg-gray-100 rounded-lg w-fit">
                     <button
                       onClick={() => {
                         setRecipeType('food');
                         setSearchTerm('');
                         setSelectedTags([]);
                       }}
-                      className={`px-4 py-2 rounded-md transition flex items-center gap-2 font-medium ${
+                      className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-md transition flex items-center gap-2 font-medium touch-manipulation ${
                         recipeType === 'food'
                           ? 'bg-white text-orange-600 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
+                      title="Food Recipes"
                     >
                       <ChefHat className="w-4 h-4" />
-                      Food Recipes
+                      <span className="hidden sm:inline">Food Recipes</span>
+                      <span className="sm:hidden">Food</span>
                     </button>
                     <button
                       onClick={() => {
@@ -776,11 +784,12 @@ function App() {
                         setSearchTerm('');
                         setSelectedTags([]);
                       }}
-                      className={`px-4 py-2 rounded-md transition flex items-center gap-2 font-medium ${
+                      className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-md transition flex items-center gap-2 font-medium touch-manipulation ${
                         recipeType === 'cocktail'
                           ? 'bg-white text-orange-600 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
+                      title="Cocktails"
                     >
                       <Wine className="w-4 h-4" />
                       Cocktails
