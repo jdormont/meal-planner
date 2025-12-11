@@ -8,6 +8,8 @@ type RecipeSearchProps = {
   onTagToggle: (tag: string) => void;
   availableTags: string[];
   recipeType?: 'food' | 'cocktail';
+  selectedTimeFilter?: string;
+  onTimeFilterChange?: (filter: string) => void;
 };
 
 type FilterCategory = {
@@ -22,8 +24,17 @@ export function RecipeSearch({
   onTagToggle,
   availableTags,
   recipeType = 'food',
+  selectedTimeFilter,
+  onTimeFilterChange,
 }: RecipeSearchProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const timeFilters = [
+    { id: 'quick', label: '30 min or less', icon: '⚡' },
+    { id: 'medium', label: '30-45 min', icon: '⏱️' },
+    { id: 'hour', label: 'About an hour', icon: '🕐' },
+    { id: 'project', label: 'Big project', icon: '🎯' },
+  ];
 
   const categorizeTag = (tag: string): string => {
     const lowerTag = tag.toLowerCase();
@@ -125,6 +136,9 @@ export function RecipeSearch({
 
   const clearAllFilters = () => {
     selectedTags.forEach(tag => onTagToggle(tag));
+    if (selectedTimeFilter && onTimeFilterChange) {
+      onTimeFilterChange('');
+    }
   };
 
   const cleanTagDisplay = (tag: string): string => {
@@ -155,6 +169,32 @@ export function RecipeSearch({
           </button>
         )}
       </div>
+
+      {onTimeFilterChange && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Filter by time:
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            {timeFilters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => onTimeFilterChange(selectedTimeFilter === filter.id ? '' : filter.id)}
+                className={`px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border-2 transition text-sm font-medium touch-manipulation ${
+                  selectedTimeFilter === filter.id
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <span>{filter.icon}</span>
+                  <span className="truncate">{filter.label}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {categorizedTags.length > 0 && (
         <div>
@@ -219,7 +259,7 @@ export function RecipeSearch({
         </div>
       )}
 
-      {selectedTags.length > 0 && (
+      {(selectedTags.length > 0 || selectedTimeFilter) && (
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-700">Active filters:</span>
@@ -231,6 +271,18 @@ export function RecipeSearch({
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
+            {selectedTimeFilter && onTimeFilterChange && (
+              <span className="pl-3 pr-2 py-2 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-2">
+                {timeFilters.find(f => f.id === selectedTimeFilter)?.icon} {timeFilters.find(f => f.id === selectedTimeFilter)?.label}
+                <button
+                  onClick={() => onTimeFilterChange('')}
+                  className="p-1 hover:text-blue-900 hover:bg-blue-200 rounded-full transition touch-manipulation"
+                  title="Remove time filter"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </span>
+            )}
             {selectedTags.map((tag) => (
               <span
                 key={tag}

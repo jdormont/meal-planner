@@ -33,6 +33,7 @@ function App() {
   const [showCommunity, setShowCommunity] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<string>('');
   const [meals, setMeals] = useState<MealWithRecipes[]>([]);
   const [showMeals, setShowMeals] = useState(false);
   const [showMealForm, setShowMealForm] = useState(false);
@@ -55,11 +56,11 @@ function App() {
 
   useEffect(() => {
     filterRecipes();
-  }, [recipes, searchTerm, selectedTags, recipeType]);
+  }, [recipes, searchTerm, selectedTags, recipeType, selectedTimeFilter]);
 
   useEffect(() => {
     filterCommunityRecipes();
-  }, [communityRecipes, searchTerm, selectedTags]);
+  }, [communityRecipes, searchTerm, selectedTags, selectedTimeFilter]);
 
   const loadRecipes = async () => {
     try {
@@ -114,6 +115,24 @@ function App() {
       );
     }
 
+    if (selectedTimeFilter) {
+      filtered = filtered.filter((recipe) => {
+        const totalMinutes = recipe.prep_time_minutes + recipe.cook_time_minutes;
+        switch (selectedTimeFilter) {
+          case 'quick':
+            return totalMinutes <= 30;
+          case 'medium':
+            return totalMinutes > 30 && totalMinutes <= 45;
+          case 'hour':
+            return totalMinutes > 45 && totalMinutes <= 90;
+          case 'project':
+            return totalMinutes > 90;
+          default:
+            return true;
+        }
+      });
+    }
+
     setFilteredRecipes(filtered);
   };
 
@@ -136,6 +155,24 @@ function App() {
       filtered = filtered.filter((recipe) =>
         selectedTags.some((tag) => recipe.tags.includes(tag))
       );
+    }
+
+    if (selectedTimeFilter) {
+      filtered = filtered.filter((recipe) => {
+        const totalMinutes = recipe.prep_time_minutes + recipe.cook_time_minutes;
+        switch (selectedTimeFilter) {
+          case 'quick':
+            return totalMinutes <= 30;
+          case 'medium':
+            return totalMinutes > 30 && totalMinutes <= 45;
+          case 'hour':
+            return totalMinutes > 45 && totalMinutes <= 90;
+          case 'project':
+            return totalMinutes > 90;
+          default:
+            return true;
+        }
+      });
     }
 
     setFilteredCommunityRecipes(filtered);
@@ -688,6 +725,8 @@ function App() {
                   onTagToggle={toggleTag}
                   availableTags={getAllTags()}
                   recipeType={recipeType}
+                  selectedTimeFilter={selectedTimeFilter}
+                  onTimeFilterChange={setSelectedTimeFilter}
                 />
                 <CommunityRecipes
                   recipes={filteredCommunityRecipes}
@@ -776,6 +815,7 @@ function App() {
                         setRecipeType('food');
                         setSearchTerm('');
                         setSelectedTags([]);
+                        setSelectedTimeFilter('');
                       }}
                       className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-md transition flex items-center gap-2 font-medium touch-manipulation ${
                         recipeType === 'food'
@@ -793,6 +833,7 @@ function App() {
                         setRecipeType('cocktail');
                         setSearchTerm('');
                         setSelectedTags([]);
+                        setSelectedTimeFilter('');
                       }}
                       className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-md transition flex items-center gap-2 font-medium touch-manipulation ${
                         recipeType === 'cocktail'
@@ -813,6 +854,8 @@ function App() {
                   onTagToggle={toggleTag}
                   availableTags={getAllTags()}
                   recipeType={recipeType}
+                  selectedTimeFilter={selectedTimeFilter}
+                  onTimeFilterChange={setSelectedTimeFilter}
                 />
                 <RecipeList
                   recipes={filteredRecipes}
