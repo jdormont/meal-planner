@@ -170,7 +170,7 @@ export function RecipeSearch({
         )}
       </div>
 
-      {onTimeFilterChange && (
+      {onTimeFilterChange && recipeType === 'food' && (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Filter by time:
