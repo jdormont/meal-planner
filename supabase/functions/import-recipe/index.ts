@@ -176,6 +176,29 @@ function extractJsonLd(html: string): RecipeData | null {
   return null;
 }
 
+function decodeHtmlEntities(text: string): string {
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&#x27;': "'",
+    '&apos;': "'",
+    '&nbsp;': ' ',
+  };
+
+  let decoded = text;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char);
+  }
+
+  decoded = decoded.replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec)));
+  decoded = decoded.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
+  return decoded;
+}
+
 function normalizeJsonLdRecipe(recipe: any): RecipeData {
   let ingredients: string[] = [];
 
@@ -189,15 +212,15 @@ function normalizeJsonLdRecipe(recipe: any): RecipeData {
     ingredients = recipe.recipeIngredient.flatMap((ing: any, index: number) => {
       console.log(`Ingredient ${index}:`, typeof ing, ing);
 
-      if (typeof ing === 'string') return [ing];
-      if (ing.text) return [ing.text];
+      if (typeof ing === 'string') return [decodeHtmlEntities(ing)];
+      if (ing.text) return [decodeHtmlEntities(ing.text)];
       // Handle grouped ingredients with itemListElement
       if (ing.itemListElement) {
         return ing.itemListElement.map((item: any) =>
-          typeof item === 'string' ? item : (item.text || item.name || '')
+          typeof item === 'string' ? decodeHtmlEntities(item) : decodeHtmlEntities(item.text || item.name || '')
         );
       }
-      if (ing.name) return [ing.name];
+      if (ing.name) return [decodeHtmlEntities(ing.name)];
       return [];
     }).filter(Boolean);
   } else if (typeof recipe.recipeIngredient === 'string') {
@@ -210,28 +233,28 @@ function normalizeJsonLdRecipe(recipe: any): RecipeData {
   let instructions: string[] = [];
   if (Array.isArray(recipe.recipeInstructions)) {
     instructions = recipe.recipeInstructions.flatMap((step: any) => {
-      if (typeof step === 'string') return [step];
-      if (step.text) return [step.text];
-      if (step['@type'] === 'HowToStep' && step.text) return [step.text];
+      if (typeof step === 'string') return [decodeHtmlEntities(step)];
+      if (step.text) return [decodeHtmlEntities(step.text)];
+      if (step['@type'] === 'HowToStep' && step.text) return [decodeHtmlEntities(step.text)];
       if (step['@type'] === 'HowToSection' && step.itemListElement) {
         return step.itemListElement.map((s: any) => {
-          if (typeof s === 'string') return s;
-          if (s.text) return s.text;
-          if (s['@type'] === 'HowToStep' && s.text) return s.text;
+          if (typeof s === 'string') return decodeHtmlEntities(s);
+          if (s.text) return decodeHtmlEntities(s.text);
+          if (s['@type'] === 'HowToStep' && s.text) return decodeHtmlEntities(s.text);
           return '';
         }).filter(Boolean);
       }
       if (step.itemListElement) {
         return step.itemListElement.map((s: any) => {
-          if (typeof s === 'string') return s;
-          if (s.text) return s.text;
+          if (typeof s === 'string') return decodeHtmlEntities(s);
+          if (s.text) return decodeHtmlEntities(s.text);
           return '';
         }).filter(Boolean);
       }
       return [];
     }).filter(Boolean);
   } else if (typeof recipe.recipeInstructions === 'string') {
-    instructions = [recipe.recipeInstructions];
+    instructions = [decodeHtmlEntities(recipe.recipeInstructions)];
   }
 
   console.log('Normalized instructions:', instructions.length, 'steps');
@@ -267,8 +290,8 @@ function normalizeJsonLdRecipe(recipe: any): RecipeData {
     ? (typeof recipe.image[0] === 'string' ? recipe.image[0] : recipe.image[0]?.url)
     : recipe.image?.url;
 
-  const title = recipe.name || 'Imported Recipe';
-  const description = recipe.description || '';
+  const title = decodeHtmlEntities(recipe.name || 'Imported Recipe');
+  const description = decodeHtmlEntities(recipe.description || '');
 
   const isCocktail = detectCocktail(title, description, tags, ingredients);
 
@@ -346,8 +369,8 @@ function extractMicrodata(html: string): RecipeData | null {
 
     if (ogTitle) {
       return {
-        title: ogTitle,
-        description: ogDescription || '',
+        title: decodeHtmlEntities(ogTitle),
+        description: decodeHtmlEntities(ogDescription || ''),
         ingredients: [],
         instructions: [],
         prep_time_minutes: 0,
@@ -355,6 +378,7 @@ function extractMicrodata(html: string): RecipeData | null {
         servings: 4,
         tags: [],
         image_url: ogImage,
+        recipe_type: 'food',
       };
     }
   } catch (error) {
