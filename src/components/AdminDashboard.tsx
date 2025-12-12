@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'react';
-import { supabase, UserProfile } from '../lib/supabase';
-import { Shield, Search, CheckCircle, XCircle, Users, Clock, UserCheck, UserX, Loader2, RotateCcw, Trash2 } from 'lucide-react';
+import { supabase, UserProfile, LLMModel } from '../lib/supabase';
+import { Shield, Search, CheckCircle, XCircle, Users, Clock, UserCheck, UserX, Loader2, RotateCcw, Trash2, Settings, Cpu } from 'lucide-react';
 
 type FilterStatus = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
+type TabType = 'users' | 'models';
 
 export function AdminDashboard() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
+  const [models, setModels] = useState<LLMModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('users');
 
   useEffect(() => {
     loadUsers();
+    loadModels();
   }, []);
 
   useEffect(() => {
@@ -198,6 +202,112 @@ export function AdminDashboard() {
     }
   };
 
+  const loadModels = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('llm_models')
+        .select('*')
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setModels(data || []);
+    } catch (error) {
+      console.error('Error loading models:', error);
+    }
+  };
+
+  const updateUserModel = async (userId: string, modelId: string | null) => {
+    setActionLoading(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-update-user-model`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, modelId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update user model');
+      }
+
+      await loadUsers();
+    } catch (error) {
+      console.error('Error updating user model:', error);
+      alert('Failed to update user model. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const toggleModelActive = async (modelId: string, isActive: boolean) => {
+    setActionLoading(modelId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-manage-models`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'toggle_active', modelId, isActive }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to toggle model status');
+      }
+
+      await loadModels();
+    } catch (error) {
+      console.error('Error toggling model status:', error);
+      alert('Failed to toggle model status. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const setDefaultModel = async (modelId: string) => {
+    if (!confirm('Are you sure you want to set this as the default model for all users?')) return;
+
+    setActionLoading(modelId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-manage-models`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'set_default', modelId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to set default model');
+      }
+
+      await loadModels();
+    } catch (error) {
+      console.error('Error setting default model:', error);
+      alert('Failed to set default model. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const getStats = () => {
     return {
       total: users.length,
@@ -208,6 +318,7 @@ export function AdminDashboard() {
   };
 
   const stats = getStats();
+  const defaultModel = models.find(m => m.is_default);
 
   if (loading) {
     return (
@@ -226,10 +337,37 @@ export function AdminDashboard() {
         </div>
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Admin Dashboard</h2>
-          <p className="text-gray-600">Manage user access and approvals</p>
+          <p className="text-gray-600">Manage users and AI models</p>
         </div>
       </div>
 
+      <div className="flex gap-2 mb-6 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('users')}
+          className={`px-4 py-3 font-medium transition flex items-center gap-2 ${
+            activeTab === 'users'
+              ? 'text-orange-600 border-b-2 border-orange-600'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Users className="w-5 h-5" />
+          User Management
+        </button>
+        <button
+          onClick={() => setActiveTab('models')}
+          className={`px-4 py-3 font-medium transition flex items-center gap-2 ${
+            activeTab === 'models'
+              ? 'text-orange-600 border-b-2 border-orange-600'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Cpu className="w-5 h-5" />
+          LLM Models
+        </button>
+      </div>
+
+      {activeTab === 'users' && (
+        <>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 mb-2">
@@ -302,6 +440,7 @@ export function AdminDashboard() {
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">User ID</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Admin</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">AI Model</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Logins</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Recipes</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Chats</th>
@@ -349,6 +488,21 @@ export function AdminDashboard() {
                           Admin
                         </span>
                       )}
+                    </td>
+                    <td className="py-3 px-4">
+                      <select
+                        value={user.assigned_model_id || ''}
+                        onChange={(e) => updateUserModel(user.user_id, e.target.value || null)}
+                        disabled={actionLoading === user.user_id}
+                        className="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none disabled:opacity-50"
+                      >
+                        <option value="">Default ({defaultModel?.model_name || 'None'})</option>
+                        {models.filter(m => m.is_active).map(model => (
+                          <option key={model.id} value={model.id}>
+                            {model.model_name}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className="text-sm font-medium text-gray-900">{user.login_count ?? 0}</span>
@@ -432,6 +586,96 @@ export function AdminDashboard() {
           </table>
         </div>
       </div>
+        </>
+      )}
+
+      {activeTab === 'models' && (
+        <>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Cpu className="w-6 h-6 text-orange-600" />
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">LLM Model Configuration</h3>
+                <p className="text-sm text-gray-600">Manage AI models and assign them to users</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {models.map((model) => (
+                <div
+                  key={model.id}
+                  className={`p-4 rounded-lg border-2 transition ${
+                    model.is_default
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-gray-200 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="text-lg font-semibold text-gray-900">{model.model_name}</h4>
+                        {model.is_default && (
+                          <span className="px-2 py-1 bg-orange-600 text-white text-xs font-medium rounded-full">
+                            DEFAULT
+                          </span>
+                        )}
+                        {!model.is_active && (
+                          <span className="px-2 py-1 bg-gray-400 text-white text-xs font-medium rounded-full">
+                            INACTIVE
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <strong>Provider:</strong> {model.provider}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <strong>Model ID:</strong> <code className="bg-gray-100 px-2 py-0.5 rounded">{model.model_identifier}</code>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!model.is_default && (
+                        <button
+                          onClick={() => setDefaultModel(model.id)}
+                          disabled={actionLoading === model.id || !model.is_active}
+                          className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {actionLoading === model.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Settings className="w-4 h-4" />
+                          )}
+                          Set as Default
+                        </button>
+                      )}
+                      <button
+                        onClick={() => toggleModelActive(model.id, !model.is_active)}
+                        disabled={actionLoading === model.id || model.is_default}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          model.is_active
+                            ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                            : 'bg-green-600 hover:bg-green-700 text-white'
+                        }`}
+                        title={model.is_default ? 'Cannot deactivate default model' : ''}
+                      >
+                        {actionLoading === model.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : model.is_active ? (
+                          <XCircle className="w-4 h-4" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4" />
+                        )}
+                        {model.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

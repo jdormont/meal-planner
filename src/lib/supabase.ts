@@ -85,10 +85,23 @@ export type UserProfile = {
   full_name: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   is_admin: boolean;
+  assigned_model_id?: string | null;
   created_at: string;
   updated_at: string;
   login_count?: number;
   recipe_count?: number;
   chat_count?: number;
   meal_count?: number;
+};
+
+export type LLMModel = {
+  id: string;
+  model_name: string;
+  model_identifier: string;
+  provider: 'openai' | 'anthropic' | 'google';
+  is_active: boolean;
+  is_default: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
 };

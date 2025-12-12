@@ -1,10 +1,144 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+type ModelConfig = {
+  id: string;
+  model_identifier: string;
+  provider: string;
+  model_name: string;
+};
+
+async function getUserModel(supabaseClient: any, userId: string): Promise<ModelConfig | null> {
+  try {
+    // Get user's assigned model
+    const { data: profile } = await supabaseClient
+      .from("user_profiles")
+      .select(`
+        assigned_model_id,
+        assigned_model:llm_models!assigned_model_id (
+          id,
+          model_identifier,
+          provider,
+          model_name,
+          is_active
+        )
+      `)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    // If user has assigned model and it's active, use it
+    if (profile?.assigned_model && profile.assigned_model.is_active) {
+      return profile.assigned_model as ModelConfig;
+    }
+
+    // Otherwise get default model
+    const { data: defaultModel } = await supabaseClient
+      .from("llm_models")
+      .select("id, model_identifier, provider, model_name")
+      .eq("is_default", true)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    return defaultModel as ModelConfig | null;
+  } catch (error) {
+    console.error("Error fetching user model:", error);
+    return null;
+  }
+}
+
+async function callOpenAI(apiKey: string, model: string, messages: any[], systemPrompt: string) {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+async function callAnthropic(apiKey: string, model: string, messages: any[], systemPrompt: string) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: messages,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Anthropic API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.content[0].text;
+}
+
+async function callGemini(apiKey: string, model: string, messages: any[], systemPrompt: string) {
+  // Gemini API expects a different format
+  const contents = [
+    {
+      role: "user",
+      parts: [{ text: systemPrompt }]
+    },
+    ...messages.map((msg: any) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: msg.content }]
+    }))
+  ];
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Gemini API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.candidates[0].content.parts[0].text;
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -15,13 +149,36 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences } = await req.json();
-    const apiKey = clientApiKey || Deno.env.get("OPENAI_API_KEY") || Deno.env.get("ANTHROPIC_API_KEY");
+    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId } = await req.json();
     
-    if (!apiKey) {
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    // Get user's assigned model or default
+    let modelConfig: ModelConfig | null = null;
+    if (userId) {
+      modelConfig = await getUserModel(supabaseClient, userId);
+    }
+
+    // Fallback to default if no model found
+    if (!modelConfig) {
+      const { data: defaultModel } = await supabaseClient
+        .from("llm_models")
+        .select("id, model_identifier, provider, model_name")
+        .eq("is_default", true)
+        .eq("is_active", true)
+        .maybeSingle();
+      
+      modelConfig = defaultModel as ModelConfig | null;
+    }
+
+    if (!modelConfig) {
       return new Response(
         JSON.stringify({ 
-          error: "AI API key not configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY in your Supabase project settings." 
+          error: "No LLM model configured. Please contact administrator." 
         }),
         {
           status: 500,
@@ -33,10 +190,32 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const isOpenAI = apiKey.startsWith('sk-');
-    const url = isOpenAI 
-      ? "https://api.openai.com/v1/chat/completions"
-      : "https://api.anthropic.com/v1/messages";
+    // Get API key for the provider
+    let apiKey = clientApiKey;
+    if (!apiKey) {
+      if (modelConfig.provider === "openai") {
+        apiKey = Deno.env.get("OPENAI_API_KEY");
+      } else if (modelConfig.provider === "anthropic") {
+        apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+      } else if (modelConfig.provider === "google") {
+        apiKey = Deno.env.get("GOOGLE_API_KEY");
+      }
+    }
+    
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ 
+          error: `API key not configured for ${modelConfig.provider}. Please set the appropriate API key in your Supabase project settings.` 
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
 
     let preferencesContext = '';
 
@@ -307,56 +486,47 @@ Pépin-style simplicity with modern warmth
 
 Behave as a smart recipe developer, meal planner, and culinary assistant.${preferencesContext}${ratingContext}`;
 
-    let requestBody;
-    let headers;
-
-    if (isOpenAI) {
-      headers = {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      };
-      requestBody = {
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      };
-    } else {
-      headers = {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      };
-      requestBody = {
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: messages,
-      };
-    }
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("AI API Error:", errorData);
-      throw new Error(`AI API request failed: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
     let message;
-    if (isOpenAI) {
-      message = data.choices[0].message.content;
-    } else {
-      message = data.content[0].text;
+    try {
+      // Try the assigned model first
+      if (modelConfig.provider === "openai") {
+        message = await callOpenAI(apiKey, modelConfig.model_identifier, messages, systemPrompt);
+      } else if (modelConfig.provider === "anthropic") {
+        message = await callAnthropic(apiKey, modelConfig.model_identifier, messages, systemPrompt);
+      } else if (modelConfig.provider === "google") {
+        message = await callGemini(apiKey, modelConfig.model_identifier, messages, systemPrompt);
+      } else {
+        throw new Error(`Unknown provider: ${modelConfig.provider}`);
+      }
+    } catch (error) {
+      console.error(`Error with ${modelConfig.provider}:`, error);
+      
+      // Fallback to default model if not already using it
+      const { data: defaultModel } = await supabaseClient
+        .from("llm_models")
+        .select("id, model_identifier, provider, model_name")
+        .eq("is_default", true)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (defaultModel && defaultModel.id !== modelConfig.id) {
+        console.log(`Falling back to default model: ${defaultModel.model_name}`);
+        modelConfig = defaultModel as ModelConfig;
+        
+        // Get API key for fallback provider
+        if (modelConfig.provider === "openai") {
+          apiKey = Deno.env.get("OPENAI_API_KEY") || "";
+          message = await callOpenAI(apiKey, modelConfig.model_identifier, messages, systemPrompt);
+        } else if (modelConfig.provider === "anthropic") {
+          apiKey = Deno.env.get("ANTHROPIC_API_KEY") || "";
+          message = await callAnthropic(apiKey, modelConfig.model_identifier, messages, systemPrompt);
+        } else if (modelConfig.provider === "google") {
+          apiKey = Deno.env.get("GOOGLE_API_KEY") || "";
+          message = await callGemini(apiKey, modelConfig.model_identifier, messages, systemPrompt);
+        }
+      } else {
+        throw error;
+      }
     }
 
     // Clean up any JSON code blocks that might have been included
@@ -365,7 +535,12 @@ Behave as a smart recipe developer, meal planner, and culinary assistant.${prefe
     }
 
     return new Response(
-      JSON.stringify({ message }),
+      JSON.stringify({ 
+        message,
+        modelUsed: modelConfig.model_name,
+        modelId: modelConfig.model_identifier,
+        provider: modelConfig.provider
+      }),
       {
         headers: {
           ...corsHeaders,

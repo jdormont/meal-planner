@@ -34,6 +34,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [showChatList, setShowChatList] = useState(true);
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
+  const [currentModel, setCurrentModel] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -209,6 +210,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
             messages: [...messages, { role: 'user', content: userMessage }],
             ratingHistory,
             userPreferences,
+            userId: user?.id,
           }),
         }
       );
@@ -220,6 +222,10 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
       const data = await response.json();
       const assistantMessage = { role: 'assistant' as const, content: data.message };
       setMessages((prev) => [...prev, assistantMessage]);
+
+      if (data.modelUsed) {
+        setCurrentModel(data.modelUsed);
+      }
 
       if (currentChatId) {
         await saveNewMessage(assistantMessage);
@@ -330,7 +336,9 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="font-bold text-lg">AI Cooking Assistant</h2>
-              <p className="text-sm text-orange-100 hidden sm:block">Ask me anything about recipes and cooking</p>
+              <p className="text-sm text-orange-100 hidden sm:block">
+                {currentModel ? `Powered by ${currentModel}` : 'Ask me anything about recipes and cooking'}
+              </p>
             </div>
           </div>
         </div>
