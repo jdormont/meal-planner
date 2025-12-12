@@ -16,7 +16,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const { query } = await req.json();
-    
+
     if (!query) {
       return new Response(
         JSON.stringify({ error: "Query parameter is required" }),
@@ -31,10 +31,10 @@ Deno.serve(async (req: Request) => {
     }
 
     const pexelsApiKey = Deno.env.get("PEXELS_API_KEY");
-    
+
     if (!pexelsApiKey) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Pexels API key not configured",
           imageUrl: null
         }),
@@ -48,7 +48,28 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const searchUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`;
+    let sanitizedQuery = query.toLowerCase().trim();
+
+    const termReplacements: Record<string, string> = {
+      'thighs': 'meat',
+      'thigh': 'meat',
+      'breast': 'meat',
+      'breasts': 'meat',
+      'leg': 'meat',
+      'legs': 'meat',
+      'wing': 'wings',
+      'butt': 'roast',
+      'rump': 'roast',
+    };
+
+    for (const [problematic, safe] of Object.entries(termReplacements)) {
+      const regex = new RegExp(`\\b${problematic}\\b`, 'gi');
+      sanitizedQuery = sanitizedQuery.replace(regex, safe);
+    }
+
+    const foodQuery = `${sanitizedQuery} food dish recipe`;
+
+    const searchUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(foodQuery)}&per_page=1&orientation=landscape`;
     
     const response = await fetch(searchUrl, {
       headers: {

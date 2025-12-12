@@ -159,11 +159,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         }
       );
 
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
-      console.log('data.tags:', data.tags);
-      console.log('data.cocktailDetails:', data.cocktailDetails);
 
       if (data.tags && Object.keys(data.tags).length > 0) {
         let newTags = [...tags];
@@ -619,161 +615,279 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
-                  Main Technique
-                </label>
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const tag = `technique:${e.target.value}`;
-                      if (!tags.includes(tag)) {
-                        setTags([...tags.filter(t => !t.startsWith('technique:')), tag]);
-                      }
-                    }
-                  }}
-                  value={tags.find(t => t.startsWith('technique:'))?.replace('technique:', '') || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-                >
-                  <option value="">Select technique...</option>
-                  <option value="saute">Sauté</option>
-                  <option value="bake">Bake</option>
-                  <option value="broil">Broil</option>
-                  <option value="grill">Grill</option>
-                  <option value="roast">Roast</option>
-                  <option value="steam">Steam</option>
-                  <option value="boil">Boil</option>
-                  <option value="fry">Fry</option>
-                  <option value="slow-cook">Slow Cook</option>
-                  <option value="pressure-cook">Pressure Cook</option>
-                  <option value="raw">Raw/No Cook</option>
-                </select>
-              </div>
+              {recipeType === 'cocktail' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Base Spirit
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `base:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('base:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('base:'))?.replace('base:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select base...</option>
+                      <option value="vodka">Vodka</option>
+                      <option value="gin">Gin</option>
+                      <option value="rum">Rum</option>
+                      <option value="tequila">Tequila</option>
+                      <option value="whiskey">Whiskey</option>
+                      <option value="bourbon">Bourbon</option>
+                      <option value="brandy">Brandy</option>
+                      <option value="mezcal">Mezcal</option>
+                      <option value="non-alcoholic">Non-Alcoholic</option>
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
-                  Grain/Starch
-                </label>
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const tag = `grain:${e.target.value}`;
-                      if (!tags.includes(tag)) {
-                        setTags([...tags.filter(t => !t.startsWith('grain:')), tag]);
-                      }
-                    }
-                  }}
-                  value={tags.find(t => t.startsWith('grain:'))?.replace('grain:', '') || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-                >
-                  <option value="">Select grain/starch...</option>
-                  <option value="none">None</option>
-                  <option value="rice">Rice</option>
-                  <option value="pasta">Pasta</option>
-                  <option value="noodles">Noodles</option>
-                  <option value="quinoa">Quinoa</option>
-                  <option value="couscous">Couscous</option>
-                  <option value="bread">Bread</option>
-                  <option value="potatoes">Potatoes</option>
-                  <option value="polenta">Polenta</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Flavor Profile
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `flavor:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('flavor:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('flavor:'))?.replace('flavor:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select flavor...</option>
+                      <option value="citrus">Citrus</option>
+                      <option value="herbal">Herbal</option>
+                      <option value="fruity">Fruity</option>
+                      <option value="bitter">Bitter</option>
+                      <option value="sweet">Sweet</option>
+                      <option value="spicy">Spicy</option>
+                      <option value="sour">Sour</option>
+                      <option value="tropical">Tropical</option>
+                      <option value="creamy">Creamy</option>
+                      <option value="smoky">Smoky</option>
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
-                  Main Protein
-                </label>
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const tag = `protein:${e.target.value}`;
-                      if (!tags.includes(tag)) {
-                        setTags([...tags.filter(t => !t.startsWith('protein:')), tag]);
-                      }
-                    }
-                  }}
-                  value={tags.find(t => t.startsWith('protein:'))?.replace('protein:', '') || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-                >
-                  <option value="">Select protein...</option>
-                  <option value="none">None/Vegetarian</option>
-                  <option value="fish">Fish</option>
-                  <option value="shellfish">Shellfish</option>
-                  <option value="chicken">Chicken</option>
-                  <option value="turkey">Turkey</option>
-                  <option value="pork">Pork</option>
-                  <option value="beef">Beef</option>
-                  <option value="lamb">Lamb</option>
-                  <option value="eggs">Eggs</option>
-                  <option value="tofu">Tofu</option>
-                  <option value="legumes">Legumes</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Strength
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `strength:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('strength:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('strength:'))?.replace('strength:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select strength...</option>
+                      <option value="light">Light</option>
+                      <option value="moderate">Moderate</option>
+                      <option value="strong">Strong</option>
+                      <option value="very-strong">Very Strong</option>
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
-                  Cuisine
-                </label>
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const tag = `cuisine:${e.target.value}`;
-                      if (!tags.includes(tag)) {
-                        setTags([...tags.filter(t => !t.startsWith('cuisine:')), tag]);
-                      }
-                    }
-                  }}
-                  value={tags.find(t => t.startsWith('cuisine:'))?.replace('cuisine:', '') || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-                >
-                  <option value="">Select cuisine...</option>
-                  <option value="american">American</option>
-                  <option value="italian">Italian</option>
-                  <option value="mexican">Mexican</option>
-                  <option value="chinese">Chinese</option>
-                  <option value="japanese">Japanese</option>
-                  <option value="thai">Thai</option>
-                  <option value="indian">Indian</option>
-                  <option value="french">French</option>
-                  <option value="mediterranean">Mediterranean</option>
-                  <option value="middle-eastern">Middle Eastern</option>
-                  <option value="greek">Greek</option>
-                  <option value="spanish">Spanish</option>
-                  <option value="korean">Korean</option>
-                  <option value="vietnamese">Vietnamese</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Occasion
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `occasion:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('occasion:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('occasion:'))?.replace('occasion:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select occasion...</option>
+                      <option value="aperitif">Aperitif</option>
+                      <option value="digestif">Digestif</option>
+                      <option value="party">Party</option>
+                      <option value="brunch">Brunch</option>
+                      <option value="summer">Summer</option>
+                      <option value="winter">Winter</option>
+                      <option value="classic">Classic</option>
+                      <option value="modern">Modern</option>
+                    </select>
+                  </div>
+                </>
+              )}
+              {recipeType === 'food' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Main Technique
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `technique:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('technique:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('technique:'))?.replace('technique:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select technique...</option>
+                      <option value="saute">Sauté</option>
+                      <option value="bake">Bake</option>
+                      <option value="broil">Broil</option>
+                      <option value="grill">Grill</option>
+                      <option value="roast">Roast</option>
+                      <option value="steam">Steam</option>
+                      <option value="boil">Boil</option>
+                      <option value="fry">Fry</option>
+                      <option value="slow-cook">Slow Cook</option>
+                      <option value="pressure-cook">Pressure Cook</option>
+                      <option value="raw">Raw/No Cook</option>
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">
-                  Meal Type
-                </label>
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const tag = `meal:${e.target.value}`;
-                      if (!tags.includes(tag)) {
-                        setTags([...tags.filter(t => !t.startsWith('meal:')), tag]);
-                      }
-                    }
-                  }}
-                  value={tags.find(t => t.startsWith('meal:'))?.replace('meal:', '') || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-                >
-                  <option value="">Select meal type...</option>
-                  <option value="breakfast">Breakfast</option>
-                  <option value="brunch">Brunch</option>
-                  <option value="lunch">Lunch</option>
-                  <option value="dinner">Dinner</option>
-                  <option value="snack">Snack</option>
-                  <option value="appetizer">Appetizer</option>
-                  <option value="dessert">Dessert</option>
-                  <option value="side">Side Dish</option>
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Grain/Starch
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `grain:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('grain:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('grain:'))?.replace('grain:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select grain/starch...</option>
+                      <option value="none">None</option>
+                      <option value="rice">Rice</option>
+                      <option value="pasta">Pasta</option>
+                      <option value="noodles">Noodles</option>
+                      <option value="quinoa">Quinoa</option>
+                      <option value="couscous">Couscous</option>
+                      <option value="bread">Bread</option>
+                      <option value="potatoes">Potatoes</option>
+                      <option value="polenta">Polenta</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Main Protein
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `protein:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('protein:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('protein:'))?.replace('protein:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select protein...</option>
+                      <option value="none">None/Vegetarian</option>
+                      <option value="fish">Fish</option>
+                      <option value="shellfish">Shellfish</option>
+                      <option value="chicken">Chicken</option>
+                      <option value="turkey">Turkey</option>
+                      <option value="pork">Pork</option>
+                      <option value="beef">Beef</option>
+                      <option value="lamb">Lamb</option>
+                      <option value="eggs">Eggs</option>
+                      <option value="tofu">Tofu</option>
+                      <option value="legumes">Legumes</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Cuisine
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `cuisine:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('cuisine:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('cuisine:'))?.replace('cuisine:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select cuisine...</option>
+                      <option value="american">American</option>
+                      <option value="italian">Italian</option>
+                      <option value="mexican">Mexican</option>
+                      <option value="chinese">Chinese</option>
+                      <option value="japanese">Japanese</option>
+                      <option value="thai">Thai</option>
+                      <option value="indian">Indian</option>
+                      <option value="french">French</option>
+                      <option value="mediterranean">Mediterranean</option>
+                      <option value="middle-eastern">Middle Eastern</option>
+                      <option value="greek">Greek</option>
+                      <option value="spanish">Spanish</option>
+                      <option value="korean">Korean</option>
+                      <option value="vietnamese">Vietnamese</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Meal Type
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tag = `meal:${e.target.value}`;
+                          if (!tags.includes(tag)) {
+                            setTags([...tags.filter(t => !t.startsWith('meal:')), tag]);
+                          }
+                        }
+                      }}
+                      value={tags.find(t => t.startsWith('meal:'))?.replace('meal:', '') || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    >
+                      <option value="">Select meal type...</option>
+                      <option value="breakfast">Breakfast</option>
+                      <option value="brunch">Brunch</option>
+                      <option value="lunch">Lunch</option>
+                      <option value="dinner">Dinner</option>
+                      <option value="snack">Snack</option>
+                      <option value="appetizer">Appetizer</option>
+                      <option value="dessert">Dessert</option>
+                      <option value="side">Side Dish</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="mt-6">
