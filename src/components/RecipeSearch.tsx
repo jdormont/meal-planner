@@ -157,7 +157,7 @@ export function RecipeSearch({
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search recipes by name, ingredients..."
-          className="w-full pl-12 pr-12 py-3 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-base"
+          className="w-full pl-12 pr-12 py-3 min-h-[48px] border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-base"
         />
         {searchTerm && (
           <button
@@ -180,7 +180,7 @@ export function RecipeSearch({
               <button
                 key={filter.id}
                 onClick={() => onTimeFilterChange(selectedTimeFilter === filter.id ? '' : filter.id)}
-                className={`px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border-2 transition text-sm font-medium touch-manipulation ${
+                className={`px-3 sm:px-4 py-2.5 min-h-[44px] rounded-xl border-2 transition text-sm font-medium touch-manipulation ${
                   selectedTimeFilter === filter.id
                     ? 'border-blue-500 bg-blue-50 text-blue-700'
                     : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
@@ -208,9 +208,9 @@ export function RecipeSearch({
                 <div key={category.name} className="relative">
                   <button
                     onClick={() => setOpenDropdown(openDropdown === category.name ? null : category.name)}
-                    className={`w-full px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border-2 transition flex items-center justify-between text-sm font-medium touch-manipulation ${
+                    className={`w-full px-3 sm:px-4 py-2.5 min-h-[44px] rounded-xl border-2 transition flex items-center justify-between text-sm font-medium touch-manipulation ${
                       selectedInCategory.length > 0
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        ? 'border-terracotta-500 bg-terracotta-50 text-terracotta-700'
                         : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                     }`}
                     title={category.name}
@@ -228,7 +228,7 @@ export function RecipeSearch({
                         className="fixed inset-0 z-10"
                         onClick={() => setOpenDropdown(null)}
                       />
-                      <div className="absolute z-20 mt-1 w-full min-w-[200px] bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-20 mt-1 w-full min-w-[200px] bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                         {category.tags.map((tag) => (
                           <button
                             key={tag}
@@ -237,14 +237,14 @@ export function RecipeSearch({
                             }}
                             className={`w-full px-4 py-3 min-h-[44px] text-left text-sm hover:bg-gray-50 transition touch-manipulation ${
                               selectedTags.includes(tag)
-                                ? 'bg-orange-50 text-orange-700 font-medium'
+                                ? 'bg-terracotta-50 text-terracotta-700 font-medium'
                                 : 'text-gray-700'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2">
                               <span>{cleanTagDisplay(tag)}</span>
                               {selectedTags.includes(tag) && (
-                                <span className="text-orange-500 text-base">✓</span>
+                                <span className="text-terracotta-500 text-base">✓</span>
                               )}
                             </div>
                           </button>
@@ -265,7 +265,7 @@ export function RecipeSearch({
             <span className="text-sm font-medium text-gray-700">Active filters:</span>
             <button
               onClick={clearAllFilters}
-              className="px-3 py-1.5 min-h-[36px] text-sm text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg font-medium transition touch-manipulation"
+              className="px-3 py-1.5 min-h-[36px] text-sm text-terracotta-600 hover:text-terracotta-700 hover:bg-terracotta-50 rounded-xl font-medium transition touch-manipulation"
             >
               Clear all
             </button>
@@ -286,12 +286,12 @@ export function RecipeSearch({
             {selectedTags.map((tag) => (
               <span
                 key={tag}
-                className="pl-3 pr-2 py-2 bg-orange-100 text-orange-700 rounded-full text-sm flex items-center gap-2"
+                className="pl-3 pr-2 py-2 bg-terracotta-100 text-terracotta-700 rounded-full text-sm flex items-center gap-2"
               >
                 {cleanTagDisplay(tag)}
                 <button
                   onClick={() => onTagToggle(tag)}
-                  className="p-1 hover:text-orange-900 hover:bg-orange-200 rounded-full transition touch-manipulation"
+                  className="p-1 hover:text-terracotta-900 hover:bg-terracotta-200 rounded-full transition touch-manipulation"
                   title={`Remove ${cleanTagDisplay(tag)} filter`}
                 >
                   <X className="w-4 h-4" />

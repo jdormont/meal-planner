@@ -28,14 +28,14 @@ export function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-cream-100 to-sage-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md texture-subtle">
         <div className="flex items-center justify-center mb-8">
-          <div className="bg-orange-100 p-3 rounded-full">
+          <div className="bg-terracotta-100 p-3 rounded-full">
             {isSignUp ? (
-              <UserPlus className="w-8 h-8 text-orange-600" />
+              <UserPlus className="w-8 h-8 text-terracotta-600" />
             ) : (
-              <LogIn className="w-8 h-8 text-orange-600" />
+              <LogIn className="w-8 h-8 text-terracotta-600" />
             )}
           </div>
         </div>
@@ -61,7 +61,7 @@ export function Auth() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none transition"
                 placeholder="John Doe"
               />
             </div>
@@ -106,7 +106,7 @@ export function Auth() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 rounded-lg transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-terracotta-600 hover:bg-terracotta-700 text-white font-medium py-3 rounded-xl transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -125,7 +125,7 @@ export function Auth() {
               setError(null);
               setFullName('');
             }}
-            className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+            className="text-terracotta-600 hover:text-terracotta-700 text-sm font-medium"
           >
             {isSignUp
               ? 'Already have an account? Sign in'

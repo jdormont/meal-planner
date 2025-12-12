@@ -27,10 +27,10 @@ export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
   if (meals.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="max-w-xl w-full bg-white rounded-2xl shadow-lg p-12">
+        <div className="max-w-xl w-full bg-cream-50 rounded-3xl shadow-lg p-12 texture-subtle">
           <div className="text-center mb-8">
-            <div className="inline-flex p-4 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full mb-6">
-              <Calendar className="w-16 h-16 text-orange-600" />
+            <div className="inline-flex p-4 bg-gradient-to-br from-terracotta-100 to-cream-100 rounded-full mb-6">
+              <Calendar className="w-16 h-16 text-terracotta-600" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-3">
               Start Planning Your Meals
@@ -42,7 +42,7 @@ export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
             {onCreateNew && (
               <button
                 onClick={onCreateNew}
-                className="group relative inline-flex items-center gap-3 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl px-8 py-4 transition-all transform hover:scale-105 hover:shadow-xl font-semibold text-lg"
+                className="group relative inline-flex items-center gap-3 bg-gradient-to-br from-terracotta-500 to-terracotta-600 hover:from-terracotta-600 hover:to-terracotta-700 text-white rounded-xl px-8 py-4 transition-all transform hover:scale-105 hover:shadow-xl font-semibold text-lg"
               >
                 <Plus className="w-6 h-6" />
                 Create Your First Meal

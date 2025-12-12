@@ -185,7 +185,7 @@ export default function Settings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-terracotta-500" />
       </div>
     );
   }
@@ -210,10 +210,10 @@ export default function Settings() {
                   key={cuisine}
                   type="button"
                   onClick={() => toggleCuisine(cuisine)}
-                  className={`px-4 py-2 rounded-lg border-2 transition text-sm font-medium ${
+                  className={`px-4 py-2 rounded-xl border-2 transition text-sm font-medium ${
                     preferences.favorite_cuisines.includes(cuisine)
-                      ? 'border-orange-500 bg-orange-50 text-orange-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      ? 'border-terracotta-500 bg-cream-50 text-terracotta-700'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-sage-300'
                   }`}
                 >
                   {cuisine}
@@ -234,12 +234,12 @@ export default function Settings() {
                 onChange={(e) => setDishInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addDish()}
                 placeholder="e.g., Pad Thai, Chicken Tikka Masala"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               />
               <button
                 type="button"
                 onClick={addDish}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                className="px-4 py-2 bg-terracotta-500 text-white rounded-xl hover:bg-terracotta-600 transition"
               >
                 Add
               </button>
@@ -249,12 +249,12 @@ export default function Settings() {
                 {preferences.favorite_dishes.map(dish => (
                   <span
                     key={dish}
-                    className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm flex items-center gap-2"
+                    className="px-3 py-1 bg-terracotta-100 text-terracotta-700 rounded-full text-sm flex items-center gap-2"
                   >
                     {dish}
                     <button
                       onClick={() => removeDish(dish)}
-                      className="text-orange-500 hover:text-orange-700"
+                      className="text-terracotta-500 hover:text-terracotta-700"
                     >
                       ×
                     </button>
@@ -271,7 +271,7 @@ export default function Settings() {
             <select
               value={preferences.dietary_style}
               onChange={(e) => setPreferences(prev => ({ ...prev, dietary_style: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
             >
               <option value="omnivore">Omnivore</option>
               <option value="vegetarian">Vegetarian</option>
@@ -296,12 +296,12 @@ export default function Settings() {
                 onChange={(e) => setRestrictionInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addRestriction()}
                 placeholder="e.g., Gluten-free, Dairy-free, Nut allergy"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               />
               <button
                 type="button"
                 onClick={addRestriction}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                className="px-4 py-2 bg-terracotta-500 text-white rounded-xl hover:bg-terracotta-600 transition"
               >
                 Add
               </button>
@@ -334,7 +334,7 @@ export default function Settings() {
               <select
                 value={preferences.time_preference}
                 onChange={(e) => setPreferences(prev => ({ ...prev, time_preference: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               >
                 <option value="quick">Quick (under 30 min)</option>
                 <option value="moderate">Moderate (30-60 min)</option>
@@ -349,7 +349,7 @@ export default function Settings() {
               <select
                 value={preferences.skill_level}
                 onChange={(e) => setPreferences(prev => ({ ...prev, skill_level: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               >
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
@@ -367,7 +367,7 @@ export default function Settings() {
                 max="20"
                 value={preferences.household_size}
                 onChange={(e) => setPreferences(prev => ({ ...prev, household_size: parseInt(e.target.value) || 2 }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               />
               <p className="text-xs text-gray-500 mt-1">Number of people you typically cook for</p>
             </div>
@@ -379,7 +379,7 @@ export default function Settings() {
               <select
                 value={preferences.spice_preference}
                 onChange={(e) => setPreferences(prev => ({ ...prev, spice_preference: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               >
                 <option value="mild">Mild</option>
                 <option value="medium">Medium</option>
@@ -399,10 +399,10 @@ export default function Settings() {
                   key={equipment}
                   type="button"
                   onClick={() => toggleEquipment(equipment)}
-                  className={`px-4 py-2 rounded-lg border-2 transition text-sm font-medium ${
+                  className={`px-4 py-2 rounded-xl border-2 transition text-sm font-medium ${
                     preferences.cooking_equipment.includes(equipment)
-                      ? 'border-orange-500 bg-orange-50 text-orange-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      ? 'border-terracotta-500 bg-cream-50 text-terracotta-700'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-sage-300'
                   }`}
                 >
                   {equipment}
@@ -423,7 +423,7 @@ export default function Settings() {
               onChange={(e) => setPreferences(prev => ({ ...prev, additional_notes: e.target.value }))}
               rows={4}
               placeholder="e.g., I prefer one-pot meals, I love experimenting with new ingredients, I avoid recipes with too many steps..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none"
             />
           </div>
 
@@ -438,7 +438,7 @@ export default function Settings() {
             <button
               onClick={savePreferences}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="flex items-center gap-2 px-6 py-3 bg-terracotta-500 text-white rounded-xl hover:bg-terracotta-600 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {saving ? (
                 <>

@@ -323,7 +323,7 @@ export function AdminDashboard() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <Shield className="w-12 h-12 text-orange-600 mx-auto mb-4 animate-pulse" />
+        <Shield className="w-12 h-12 text-terracotta-600 mx-auto mb-4 animate-pulse" />
         <p className="text-gray-600">Loading user management...</p>
       </div>
     );
@@ -332,8 +332,8 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-orange-100 rounded-lg">
-          <Shield className="w-8 h-8 text-orange-600" />
+        <div className="p-3 bg-terracotta-100 rounded-xl">
+          <Shield className="w-8 h-8 text-terracotta-600" />
         </div>
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Admin Dashboard</h2>
@@ -346,7 +346,7 @@ export function AdminDashboard() {
           onClick={() => setActiveTab('users')}
           className={`px-4 py-3 font-medium transition flex items-center gap-2 ${
             activeTab === 'users'
-              ? 'text-orange-600 border-b-2 border-orange-600'
+              ? 'text-terracotta-600 border-b-2 border-terracotta-600'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -357,7 +357,7 @@ export function AdminDashboard() {
           onClick={() => setActiveTab('models')}
           className={`px-4 py-3 font-medium transition flex items-center gap-2 ${
             activeTab === 'models'
-              ? 'text-orange-600 border-b-2 border-orange-600'
+              ? 'text-terracotta-600 border-b-2 border-terracotta-600'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
@@ -377,12 +377,12 @@ export function AdminDashboard() {
           <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
         </div>
 
-        <div className="bg-amber-50 rounded-xl p-6 shadow-sm border border-amber-200">
+        <div className="bg-cream-50 rounded-xl p-6 shadow-sm border border-warmtan-200">
           <div className="flex items-center gap-3 mb-2">
-            <Clock className="w-6 h-6 text-amber-600" />
-            <span className="text-sm font-medium text-amber-900">Pending</span>
+            <Clock className="w-6 h-6 text-warmtan-600" />
+            <span className="text-sm font-medium text-warmtan-900">Pending</span>
           </div>
-          <p className="text-3xl font-bold text-amber-900">{stats.pending}</p>
+          <p className="text-3xl font-bold text-warmtan-900">{stats.pending}</p>
         </div>
 
         <div className="bg-green-50 rounded-xl p-6 shadow-sm border border-green-200">
@@ -411,7 +411,7 @@ export function AdminDashboard() {
               placeholder="Search by name or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
             />
           </div>
 
@@ -420,10 +420,10 @@ export function AdminDashboard() {
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
                   filterStatus === status
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-terracotta-600 text-white'
+                    : 'bg-sage-100 text-gray-700 hover:bg-sage-200'
                 }`}
               >
                 {status}
@@ -471,7 +471,7 @@ export function AdminDashboard() {
                           user.status === 'APPROVED'
                             ? 'bg-green-100 text-green-800'
                             : user.status === 'PENDING'
-                            ? 'bg-amber-100 text-amber-800'
+                            ? 'bg-cream-100 text-warmtan-800'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
@@ -494,7 +494,7 @@ export function AdminDashboard() {
                         value={user.assigned_model_id || ''}
                         onChange={(e) => updateUserModel(user.user_id, e.target.value || null)}
                         disabled={actionLoading === user.user_id}
-                        className="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none disabled:opacity-50"
+                        className="text-sm border border-gray-300 rounded-xl px-2 py-1 focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none disabled:opacity-50"
                       >
                         <option value="">Default ({defaultModel?.model_name || 'None'})</option>
                         {models.filter(m => m.is_active).map(model => (
@@ -527,7 +527,7 @@ export function AdminDashboard() {
                               <button
                                 onClick={() => approveUser(user.user_id)}
                                 disabled={actionLoading === user.user_id}
-                                className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                                className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
                                 title="Approve user"
                               >
                                 {actionLoading === user.user_id ? (
@@ -539,7 +539,7 @@ export function AdminDashboard() {
                               <button
                                 onClick={() => rejectUser(user.user_id)}
                                 disabled={actionLoading === user.user_id}
-                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
                                 title="Reject user"
                               >
                                 {actionLoading === user.user_id ? (
@@ -554,7 +554,7 @@ export function AdminDashboard() {
                             <button
                               onClick={() => setPending(user.user_id)}
                               disabled={actionLoading === user.user_id}
-                              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                              className="px-3 py-1 bg-warmtan-600 hover:bg-warmtan-700 text-white rounded-xl text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
                               title="Set back to pending"
                             >
                               {actionLoading === user.user_id ? (
@@ -567,7 +567,7 @@ export function AdminDashboard() {
                           <button
                             onClick={() => deleteUser(user.user_id, user.full_name)}
                             disabled={actionLoading === user.user_id}
-                            className="px-3 py-1 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
+                            className="px-3 py-1 bg-gray-700 hover:bg-gray-800 text-white rounded-xl text-sm font-medium transition flex items-center gap-1 disabled:opacity-50"
                             title="Delete user permanently"
                           >
                             {actionLoading === user.user_id ? (
@@ -593,7 +593,7 @@ export function AdminDashboard() {
         <>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6">
-              <Cpu className="w-6 h-6 text-orange-600" />
+              <Cpu className="w-6 h-6 text-terracotta-600" />
               <div>
                 <h3 className="text-xl font-semibold text-gray-900">LLM Model Configuration</h3>
                 <p className="text-sm text-gray-600">Manage AI models and assign them to users</p>
@@ -604,9 +604,9 @@ export function AdminDashboard() {
               {models.map((model) => (
                 <div
                   key={model.id}
-                  className={`p-4 rounded-lg border-2 transition ${
+                  className={`p-4 rounded-xl border-2 transition ${
                     model.is_default
-                      ? 'border-orange-500 bg-orange-50'
+                      ? 'border-terracotta-500 bg-cream-50'
                       : 'border-gray-200 bg-white'
                   }`}
                 >
@@ -615,7 +615,7 @@ export function AdminDashboard() {
                       <div className="flex items-center gap-3 mb-2">
                         <h4 className="text-lg font-semibold text-gray-900">{model.model_name}</h4>
                         {model.is_default && (
-                          <span className="px-2 py-1 bg-orange-600 text-white text-xs font-medium rounded-full">
+                          <span className="px-2 py-1 bg-terracotta-600 text-white text-xs font-medium rounded-full">
                             DEFAULT
                           </span>
                         )}
@@ -639,7 +639,7 @@ export function AdminDashboard() {
                         <button
                           onClick={() => setDefaultModel(model.id)}
                           disabled={actionLoading === model.id || !model.is_active}
-                          className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-4 py-2 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {actionLoading === model.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -652,9 +652,9 @@ export function AdminDashboard() {
                       <button
                         onClick={() => toggleModelActive(model.id, !model.is_active)}
                         disabled={actionLoading === model.id || model.is_default}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                           model.is_active
-                            ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                            ? 'bg-sage-600 hover:bg-sage-700 text-white'
                             : 'bg-green-600 hover:bg-green-700 text-white'
                         }`}
                         title={model.is_default ? 'Cannot deactivate default model' : ''}

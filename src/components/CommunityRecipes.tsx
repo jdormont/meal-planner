@@ -46,8 +46,8 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, onEdit, currentUse
                   )}
                 </div>
               ) : (
-                <div className="h-48 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center relative">
-                  <Users className="w-16 h-16 text-orange-300" />
+                <div className="h-48 bg-gradient-to-br from-cream-100 to-sage-100 flex items-center justify-center relative">
+                  <Users className="w-16 h-16 text-sage-300" />
                   {isOwner && (
                     <div className="absolute top-2 right-2 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full shadow-lg">
                       Your Recipe
@@ -82,7 +82,7 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, onEdit, currentUse
                   {recipe.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
-                      className="px-2 py-1 bg-orange-50 text-orange-700 rounded-full text-xs"
+                      className="px-2 py-1 bg-terracotta-50 text-terracotta-700 rounded-full text-xs"
                     >
                       {tag.includes(':') ? tag.split(':')[1] : tag}
                     </span>
@@ -100,7 +100,7 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, onEdit, currentUse
             <div className="px-5 pb-4 flex gap-2">
               <button
                 onClick={() => onSelect(recipe)}
-                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2"
               >
                 <Eye className="w-4 h-4" />
                 View
@@ -108,7 +108,7 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, onEdit, currentUse
               {isOwner ? (
                 <button
                   onClick={() => onEdit(recipe)}
-                  className="flex-1 px-4 py-2 border border-orange-600 text-orange-600 hover:bg-orange-50 rounded-lg transition font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 border border-terracotta-600 text-terracotta-600 hover:bg-cream-50 rounded-xl transition font-medium flex items-center justify-center gap-2"
                 >
                   <Edit2 className="w-4 h-4" />
                   Edit
@@ -116,7 +116,7 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, onEdit, currentUse
               ) : (
                 <button
                   onClick={() => onCopy(recipe)}
-                  className="flex-1 px-4 py-2 border border-orange-600 text-orange-600 hover:bg-orange-50 rounded-lg transition font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 border border-terracotta-600 text-terracotta-600 hover:bg-cream-50 rounded-xl transition font-medium flex items-center justify-center gap-2"
                 >
                   <Copy className="w-4 h-4" />
                   Copy
