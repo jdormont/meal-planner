@@ -96,13 +96,19 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // If ingredients are missing, try to extract them with AI as a fallback
-    if (recipe.ingredients.length === 0) {
-      console.log('No ingredients found, attempting AI extraction');
+    // If ingredients or instructions are missing, try to extract them with AI as a fallback
+    if (recipe.ingredients.length === 0 || recipe.instructions.length === 0) {
+      console.log('Missing ingredients or instructions, attempting AI extraction');
       const aiRecipe = await extractWithAI(html);
-      if (aiRecipe && aiRecipe.ingredients.length > 0) {
-        console.log('AI extracted', aiRecipe.ingredients.length, 'ingredients');
-        recipe.ingredients = aiRecipe.ingredients;
+      if (aiRecipe) {
+        if (recipe.ingredients.length === 0 && aiRecipe.ingredients.length > 0) {
+          console.log('AI extracted', aiRecipe.ingredients.length, 'ingredients');
+          recipe.ingredients = aiRecipe.ingredients;
+        }
+        if (recipe.instructions.length === 0 && aiRecipe.instructions.length > 0) {
+          console.log('AI extracted', aiRecipe.instructions.length, 'instructions');
+          recipe.instructions = aiRecipe.instructions;
+        }
       }
     }
 
@@ -203,17 +209,32 @@ function normalizeJsonLdRecipe(recipe: any): RecipeData {
 
   let instructions: string[] = [];
   if (Array.isArray(recipe.recipeInstructions)) {
-    instructions = recipe.recipeInstructions.map((step: any) => {
-      if (typeof step === 'string') return step;
-      if (step.text) return step.text;
-      if (step.itemListElement) {
-        return step.itemListElement.map((s: any) => s.text || s).join(' ');
+    instructions = recipe.recipeInstructions.flatMap((step: any) => {
+      if (typeof step === 'string') return [step];
+      if (step.text) return [step.text];
+      if (step['@type'] === 'HowToStep' && step.text) return [step.text];
+      if (step['@type'] === 'HowToSection' && step.itemListElement) {
+        return step.itemListElement.map((s: any) => {
+          if (typeof s === 'string') return s;
+          if (s.text) return s.text;
+          if (s['@type'] === 'HowToStep' && s.text) return s.text;
+          return '';
+        }).filter(Boolean);
       }
-      return JSON.stringify(step);
-    });
+      if (step.itemListElement) {
+        return step.itemListElement.map((s: any) => {
+          if (typeof s === 'string') return s;
+          if (s.text) return s.text;
+          return '';
+        }).filter(Boolean);
+      }
+      return [];
+    }).filter(Boolean);
   } else if (typeof recipe.recipeInstructions === 'string') {
     instructions = [recipe.recipeInstructions];
   }
+
+  console.log('Normalized instructions:', instructions.length, 'steps');
 
   const prepTime = parseDuration(recipe.prepTime) || 0;
   const cookTime = parseDuration(recipe.cookTime) || parseDuration(recipe.totalTime) || 0;
@@ -366,7 +387,7 @@ async function extractWithAI(html: string): Promise<RecipeData | null> {
 - title (string)
 - description (string, optional)
 - ingredients (array of strings - IMPORTANT: extract ALL ingredients including quantities, even if they are in subsections like "Marinade", "Sauce", "Stir-fry", etc.)
-- instructions (array of strings - each step as a separate string)
+- instructions (array of strings - CRITICAL: extract ALL cooking/preparation steps as separate array items. Each step should be a complete instruction. Look for numbered or bulleted lists, paragraphs describing steps, or any text that describes how to prepare the recipe.)
 - prep_time_minutes (number, estimated if not available)
 - cook_time_minutes (number, estimated if not available)
 - servings (number)
@@ -380,8 +401,10 @@ async function extractWithAI(html: string): Promise<RecipeData | null> {
   - method: preparation method (shaken, stirred, built, blended, muddled)
   - ice: ice specification (cubed, crushed, neat, rocks, large-cube))
 
-CRITICAL: Make sure to extract ALL ingredients from the recipe, including those organized in subsections.
-IMPORTANT: Detect if this is a cocktail recipe based on the presence of spirits, cocktail terminology, or drink-related keywords.
+CRITICAL REQUIREMENTS:
+1. Extract ALL ingredients from the recipe, including those organized in subsections
+2. Extract ALL instructions/steps - this is extremely important. Look for ANY text that describes how to make the recipe
+3. Detect if this is a cocktail recipe based on the presence of spirits, cocktail terminology, or drink-related keywords
 
 HTML content:
 ${cleanedHtml}
