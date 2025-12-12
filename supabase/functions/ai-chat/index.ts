@@ -16,34 +16,45 @@ type ModelConfig = {
 
 async function getUserModel(supabaseClient: any, userId: string): Promise<ModelConfig | null> {
   try {
-    // Get user's assigned model
-    const { data: profile } = await supabaseClient
+    // Get user's assigned model - use two separate queries to avoid RLS join issues
+    const { data: profile, error: profileError } = await supabaseClient
       .from("user_profiles")
-      .select(`
-        assigned_model_id,
-        assigned_model:llm_models!assigned_model_id (
-          id,
-          model_identifier,
-          provider,
-          model_name,
-          is_active
-        )
-      `)
+      .select("assigned_model_id")
       .eq("user_id", userId)
       .maybeSingle();
 
-    // If user has assigned model and it's active, use it
-    if (profile?.assigned_model && profile.assigned_model.is_active) {
-      return profile.assigned_model as ModelConfig;
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError);
+      return null;
     }
 
-    // Otherwise get default model
-    const { data: defaultModel } = await supabaseClient
+    // If user has an assigned model, fetch it
+    if (profile?.assigned_model_id) {
+      const { data: assignedModel, error: modelError } = await supabaseClient
+        .from("llm_models")
+        .select("id, model_identifier, provider, model_name, is_active")
+        .eq("id", profile.assigned_model_id)
+        .maybeSingle();
+
+      if (modelError) {
+        console.error("Error fetching assigned model:", modelError);
+      } else if (assignedModel && assignedModel.is_active) {
+        return assignedModel as ModelConfig;
+      }
+    }
+
+    // If no assigned model or it's inactive, get default
+    const { data: defaultModel, error: defaultError } = await supabaseClient
       .from("llm_models")
       .select("id, model_identifier, provider, model_name")
       .eq("is_default", true)
       .eq("is_active", true)
       .maybeSingle();
+
+    if (defaultError) {
+      console.error("Error fetching default model:", defaultError);
+      return null;
+    }
 
     return defaultModel as ModelConfig | null;
   } catch (error) {
@@ -71,7 +82,8 @@ async function callOpenAI(apiKey: string, model: string, messages: any[], system
   });
 
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`OpenAI API error: ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -95,7 +107,8 @@ async function callAnthropic(apiKey: string, model: string, messages: any[], sys
   });
 
   if (!response.ok) {
-    throw new Error(`Anthropic API error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Anthropic API error: ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -133,7 +146,8 @@ async function callGemini(apiKey: string, model: string, messages: any[], system
   );
 
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Gemini API error: ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -151,10 +165,18 @@ Deno.serve(async (req: Request) => {
   try {
     const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId } = await req.json();
     
-    // Create Supabase client
+    // Get Authorization header for authenticated requests
+    const authHeader = req.headers.get("Authorization");
+    
+    // Create Supabase client with auth context if available
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      authHeader ? {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      } : undefined
     );
 
     // Get user's assigned model or default
@@ -165,12 +187,16 @@ Deno.serve(async (req: Request) => {
 
     // Fallback to default if no model found
     if (!modelConfig) {
-      const { data: defaultModel } = await supabaseClient
+      const { data: defaultModel, error: defaultError } = await supabaseClient
         .from("llm_models")
         .select("id, model_identifier, provider, model_name")
         .eq("is_default", true)
         .eq("is_active", true)
         .maybeSingle();
+      
+      if (defaultError) {
+        console.error("Error fetching default model:", defaultError);
+      }
       
       modelConfig = defaultModel as ModelConfig | null;
     }
@@ -189,6 +215,8 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
+
+    console.log(`Using model: ${modelConfig.model_name} (${modelConfig.provider})`);
 
     // Get API key for the provider
     let apiKey = clientApiKey;
@@ -487,8 +515,10 @@ Pépin-style simplicity with modern warmth
 Behave as a smart recipe developer, meal planner, and culinary assistant.${preferencesContext}${ratingContext}`;
 
     let message;
+    let usedFallback = false;
     try {
       // Try the assigned model first
+      console.log(`Attempting to call ${modelConfig.provider} with model ${modelConfig.model_identifier}`);
       if (modelConfig.provider === "openai") {
         message = await callOpenAI(apiKey, modelConfig.model_identifier, messages, systemPrompt);
       } else if (modelConfig.provider === "anthropic") {
@@ -511,6 +541,7 @@ Behave as a smart recipe developer, meal planner, and culinary assistant.${prefe
 
       if (defaultModel && defaultModel.id !== modelConfig.id) {
         console.log(`Falling back to default model: ${defaultModel.model_name}`);
+        usedFallback = true;
         modelConfig = defaultModel as ModelConfig;
         
         // Get API key for fallback provider
@@ -539,7 +570,8 @@ Behave as a smart recipe developer, meal planner, and culinary assistant.${prefe
         message,
         modelUsed: modelConfig.model_name,
         modelId: modelConfig.model_identifier,
-        provider: modelConfig.provider
+        provider: modelConfig.provider,
+        usedFallback
       }),
       {
         headers: {
