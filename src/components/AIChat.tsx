@@ -25,7 +25,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm your AI cooking assistant. I can help you discover new recipes, suggest ingredient substitutions, plan meals, and answer cooking questions. What would you like to cook today?",
+      content: "Hi! I'm your AI cooking assistant. I specialize in quick weeknight recipes you can make in 30-40 minutes with common ingredients. Try one of the quick prompts below, or ask me anything about recipes, meal planning, or cooking!",
     },
   ]);
   const [input, setInput] = useState('');
@@ -33,6 +33,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [showChatList, setShowChatList] = useState(true);
+  const [showQuickPrompts, setShowQuickPrompts] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
       setMessages(chatMessages as Message[]);
       setCurrentChatId(chatId);
       setShowChatList(false);
+      setShowQuickPrompts(false);
     }
   };
 
@@ -79,11 +81,12 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
     setMessages([
       {
         role: 'assistant',
-        content: "Hi! I'm your AI cooking assistant. I can help you discover new recipes, suggest ingredient substitutions, plan meals, and answer cooking questions. What would you like to cook today?",
+        content: "Hi! I'm your AI cooking assistant. I specialize in quick weeknight recipes you can make in 30-40 minutes with common ingredients. Try one of the quick prompts below, or ask me anything about recipes, meal planning, or cooking!",
       },
     ]);
     setCurrentChatId(null);
     setShowChatList(false);
+    setShowQuickPrompts(true);
   };
 
   const saveCurrentChat = async () => {
@@ -150,11 +153,12 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+  const sendMessage = async (messageText?: string) => {
+    const userMessage = (messageText || input).trim();
+    if (!userMessage || loading) return;
 
-    const userMessage = input.trim();
     setInput('');
+    setShowQuickPrompts(false);
     const newUserMessage = { role: 'user' as const, content: userMessage };
     setMessages((prev) => [...prev, newUserMessage]);
     setLoading(true);
@@ -242,6 +246,29 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
     }
   };
 
+  const quickPrompts = [
+    {
+      icon: '🥘',
+      text: 'Quick weeknight dinner ideas',
+      prompt: 'What are some easy 30-40 minute dinner recipes I can make with common pantry ingredients?'
+    },
+    {
+      icon: '🛒',
+      text: 'Recipe with my ingredients',
+      prompt: 'I have [list your ingredients]. What can I make for dinner tonight?'
+    },
+    {
+      icon: '📅',
+      text: 'Help me meal plan',
+      prompt: 'Help me plan 5 weeknight dinners for this week that are quick and easy'
+    },
+    {
+      icon: '💡',
+      text: 'Recipe suggestions for me',
+      prompt: 'Based on my preferences and what I\'ve liked before, suggest some recipes I would enjoy'
+    }
+  ];
+
   return (
     <div className="flex h-full bg-white rounded-xl shadow-lg overflow-hidden">
       {/* Chat List Sidebar - Hidden on mobile unless showChatList is true */}
@@ -309,6 +336,29 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {showQuickPrompts && messages.length === 1 && (
+          <div className="max-w-3xl mx-auto mt-8">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Start:</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {quickPrompts.map((prompt, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => sendMessage(prompt.prompt)}
+                  disabled={loading}
+                  className="p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-orange-500 hover:shadow-md transition text-left disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0">{prompt.icon}</span>
+                    <div>
+                      <div className="font-medium text-gray-900 mb-1">{prompt.text}</div>
+                      <div className="text-xs text-gray-500 line-clamp-2">{prompt.prompt}</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {messages.map((message, idx) => (
           <div
             key={idx}
