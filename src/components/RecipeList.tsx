@@ -29,20 +29,27 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
           </div>
 
           <div className="grid md:grid-cols-3 gap-5">
-            {onCreateNew && (
+            {onOpenChat && (
               <button
-                onClick={onCreateNew}
-                className="group relative bg-white hover:bg-gradient-to-br hover:from-terracotta-50 hover:to-cream-50 border-2 border-terracotta-200 hover:border-terracotta-300 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                onClick={onOpenChat}
+                className="group relative bg-white hover:bg-gradient-to-br hover:from-warmtan-50 hover:to-cream-50 border-2 border-warmtan-200 hover:border-warmtan-300 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                 style={{ animationDelay: '0ms' }}
               >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white text-xs font-semibold rounded-full shadow-md">
+                    <Sparkles className="w-3 h-3" />
+                    Suggested starting point
+                  </span>
+                </div>
                 <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="p-4 bg-gradient-to-br from-terracotta-100 to-terracotta-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                    <Plus className="w-10 h-10 text-terracotta-700" />
+                  <div className="p-4 bg-gradient-to-br from-warmtan-100 to-warmtan-200 rounded-2xl group-hover:scale-110 transition-transform duration-300 relative">
+                    <MessageSquare className="w-10 h-10 text-warmtan-700" />
+                    <Sparkles className="w-5 h-5 absolute -top-1 -right-1 text-warmtan-600 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Create a Recipe</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Ask the AI</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Add a recipe from scratch — food or cocktails.
+                      Get recipe ideas, cooking tips, or meal-planning help.
                     </p>
                   </div>
                 </div>
@@ -55,12 +62,6 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                 className="group relative bg-white hover:bg-gradient-to-br hover:from-sage-50 hover:to-cream-50 border-2 border-sage-200 hover:border-sage-300 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                 style={{ animationDelay: '100ms' }}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white text-xs font-semibold rounded-full shadow-md">
-                    <Sparkles className="w-3 h-3" />
-                    Suggested starting point
-                  </span>
-                </div>
                 <div className="flex flex-col items-center gap-4 text-center">
                   <div className="p-4 bg-gradient-to-br from-sage-100 to-sage-200 rounded-2xl group-hover:scale-110 transition-transform duration-300 relative">
                     <Globe className="w-10 h-10 text-sage-700" />
@@ -76,21 +77,20 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
               </button>
             )}
 
-            {onOpenChat && (
+            {onCreateNew && (
               <button
-                onClick={onOpenChat}
-                className="group relative bg-white hover:bg-gradient-to-br hover:from-warmtan-50 hover:to-cream-50 border-2 border-warmtan-200 hover:border-warmtan-300 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                onClick={onCreateNew}
+                className="group relative bg-white hover:bg-gradient-to-br hover:from-terracotta-50 hover:to-cream-50 border-2 border-terracotta-200 hover:border-terracotta-300 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                 style={{ animationDelay: '200ms' }}
               >
                 <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="p-4 bg-gradient-to-br from-warmtan-100 to-warmtan-200 rounded-2xl group-hover:scale-110 transition-transform duration-300 relative">
-                    <MessageSquare className="w-10 h-10 text-warmtan-700" />
-                    <Sparkles className="w-5 h-5 absolute -top-1 -right-1 text-warmtan-600 animate-pulse" />
+                  <div className="p-4 bg-gradient-to-br from-terracotta-100 to-terracotta-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                    <Plus className="w-10 h-10 text-terracotta-700" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Ask the AI</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Create a Recipe</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Get recipe ideas, cooking tips, or meal-planning help.
+                      Add a recipe from scratch — food or cocktails.
                     </p>
                   </div>
                 </div>
