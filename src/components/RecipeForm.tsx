@@ -329,7 +329,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col texture-subtle">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
@@ -361,7 +361,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               placeholder={recipeType === 'cocktail' ? 'Classic Old Fashioned' : 'Delicious Pasta Carbonara'}
             />
           </div>
@@ -374,7 +374,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none"
               placeholder="A brief description of your recipe..."
             />
           </div>
@@ -389,7 +389,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                 value={prepTime}
                 onChange={(e) => setPrepTime(Number(e.target.value))}
                 min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               />
             </div>
             <div>
@@ -401,7 +401,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                 value={cookTime}
                 onChange={(e) => setCookTime(Number(e.target.value))}
                 min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               />
             </div>
             <div>
@@ -413,7 +413,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                 value={servings}
                 onChange={(e) => setServings(Number(e.target.value))}
                 min="1"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               />
             </div>
           </div>
@@ -429,7 +429,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                   <select
                     value={cocktailMetadata.spiritBase}
                     onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, spiritBase: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
                   >
                     <option value="">Select...</option>
                     <option value="vodka">Vodka</option>
@@ -450,7 +450,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                   <select
                     value={cocktailMetadata.glassType}
                     onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, glassType: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
                   >
                     <option value="">Select...</option>
                     <option value="rocks">Rocks/Old Fashioned</option>
@@ -470,7 +470,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                   <select
                     value={cocktailMetadata.method}
                     onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, method: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
                   >
                     <option value="">Select...</option>
                     <option value="shaken">Shaken</option>
@@ -487,7 +487,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                   <select
                     value={cocktailMetadata.ice}
                     onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, ice: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
                   >
                     <option value="">Select...</option>
                     <option value="cubed">Cubed</option>
@@ -506,7 +506,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                     value={cocktailMetadata.garnish}
                     onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, garnish: e.target.value })}
                     placeholder="e.g., lemon twist, cherry, mint sprig"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
                   />
                 </div>
               </div>
@@ -525,21 +525,21 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                     value={ingredient.quantity}
                     onChange={(e) => updateIngredient(index, 'quantity', e.target.value)}
                     placeholder={recipeType === 'cocktail' ? '2' : '1'}
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    className="w-20 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                   />
                   <input
                     type="text"
                     value={ingredient.unit}
                     onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
                     placeholder={recipeType === 'cocktail' ? 'oz' : 'cup'}
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    className="w-24 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                   />
                   <input
                     type="text"
                     value={ingredient.name}
                     onChange={(e) => updateIngredient(index, 'name', e.target.value)}
                     placeholder={recipeType === 'cocktail' ? 'bourbon' : 'flour'}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                   />
                   <button
                     type="button"
@@ -554,7 +554,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             <button
               type="button"
               onClick={addIngredient}
-              className="mt-2 px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition flex items-center gap-2 text-sm font-medium"
+              className="mt-2 px-4 py-2 text-terracotta-600 hover:bg-terracotta-50 rounded-xl transition flex items-center gap-2 text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
               Add Ingredient
@@ -576,7 +576,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                     onChange={(e) => updateInstruction(index, e.target.value)}
                     rows={2}
                     placeholder="Describe this step..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none"
                   />
                   <button
                     type="button"
@@ -591,7 +591,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             <button
               type="button"
               onClick={addInstruction}
-              className="mt-2 px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition flex items-center gap-2 text-sm font-medium"
+              className="mt-2 px-4 py-2 text-terracotta-600 hover:bg-terracotta-50 rounded-xl transition flex items-center gap-2 text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
               Add Step
@@ -607,7 +607,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                 type="button"
                 onClick={autoTagRecipe}
                 disabled={isAutoTagging || !title.trim()}
-                className="px-3 py-1.5 text-sm bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-3 py-1.5 text-sm bg-terracotta-100 hover:bg-terracotta-200 text-terracotta-700 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isAutoTagging && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isAutoTagging ? 'Auto-tagging...' : 'Auto-tag'}
@@ -631,7 +631,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('base:'))?.replace('base:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select base...</option>
                       <option value="vodka">Vodka</option>
@@ -660,7 +660,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('flavor:'))?.replace('flavor:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select flavor...</option>
                       <option value="citrus">Citrus</option>
@@ -690,7 +690,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('strength:'))?.replace('strength:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select strength...</option>
                       <option value="light">Light</option>
@@ -714,7 +714,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('occasion:'))?.replace('occasion:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select occasion...</option>
                       <option value="aperitif">Aperitif</option>
@@ -745,7 +745,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('technique:'))?.replace('technique:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select technique...</option>
                       <option value="saute">Sauté</option>
@@ -776,7 +776,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('grain:'))?.replace('grain:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select grain/starch...</option>
                       <option value="none">None</option>
@@ -806,7 +806,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('protein:'))?.replace('protein:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select protein...</option>
                       <option value="none">None/Vegetarian</option>
@@ -838,7 +838,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('cuisine:'))?.replace('cuisine:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select cuisine...</option>
                       <option value="american">American</option>
@@ -873,7 +873,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                         }
                       }}
                       value={tags.find(t => t.startsWith('meal:'))?.replace('meal:', '') || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     >
                       <option value="">Select meal type...</option>
                       <option value="breakfast">Breakfast</option>
@@ -898,7 +898,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                 {tags.filter(t => !t.includes(':')).map((tag) => (
                   <span
                     key={tag}
-                    className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm flex items-center gap-2"
+                    className="px-3 py-1 bg-terracotta-100 text-terracotta-700 rounded-full text-sm flex items-center gap-2"
                   >
                     {tag}
                     <button
@@ -918,12 +918,12 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                   placeholder="Add custom tag (e.g., spicy, kid-friendly, quick)"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                 />
                 <button
                   type="button"
                   onClick={addTag}
-                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition"
+                  className="px-4 py-2 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition"
                 >
                   Add
                 </button>
@@ -939,7 +939,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               type="url"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               placeholder="https://example.com/image.jpg"
             />
             <p className="mt-1 text-xs text-gray-500">
@@ -955,7 +955,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               type="url"
               value={sourceUrl}
               onChange={(e) => setSourceUrl(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               placeholder="https://example.com/recipe"
             />
           </div>
@@ -968,18 +968,18 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none"
               placeholder="Any personal notes or modifications..."
             />
           </div>
 
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="bg-terracotta-50 border border-terracotta-200 rounded-xl p-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={isShared}
                 onChange={(e) => setIsShared(e.target.checked)}
-                className="mt-1 w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                className="mt-1 w-5 h-5 text-terracotta-600 border-gray-300 rounded focus:ring-terracotta-500"
               />
               <div>
                 <div className="font-medium text-gray-900">Share with Community</div>
@@ -995,7 +995,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               <button
                 type="button"
                 onClick={onDelete}
-                className="px-6 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition font-medium flex items-center gap-2"
+                className="px-6 py-3 border border-red-300 text-red-600 rounded-xl hover:bg-red-50 transition font-medium flex items-center gap-2"
               >
                 <Trash2 className="w-5 h-5" />
                 Delete
@@ -1005,14 +1005,14 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isFetchingImage}
-              className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isFetchingImage && <Loader2 className="w-5 h-5 animate-spin" />}
               {isFetchingImage ? 'Finding image...' : 'Save Recipe'}

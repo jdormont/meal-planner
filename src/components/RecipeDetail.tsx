@@ -150,7 +150,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col texture-subtle">
         <div className="relative">
           {recipe.image_url ? (
             <img
@@ -159,7 +159,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
               className="w-full h-64 object-cover"
             />
           ) : (
-            <div className="w-full h-64 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
+            <div className="w-full h-64 bg-gradient-to-br from-terracotta-100 to-cream-100 flex items-center justify-center">
               <span className="text-9xl">🍽️</span>
             </div>
           )}
@@ -192,14 +192,14 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
 
           <div className="flex flex-wrap items-center gap-6 mb-6 pb-6 border-b">
             <div className="flex items-center gap-2 text-gray-700">
-              <Clock className="w-5 h-5 text-orange-600" />
+              <Clock className="w-5 h-5 text-terracotta-600" />
               <div>
                 <div className="text-sm text-gray-500">Total Time</div>
                 <div className="font-semibold">{totalTime} minutes</div>
               </div>
             </div>
             <div className="flex items-center gap-2 text-gray-700">
-              <Users className="w-5 h-5 text-orange-600" />
+              <Users className="w-5 h-5 text-terracotta-600" />
               <div>
                 <div className="text-sm text-gray-500">{recipe.recipe_type === 'cocktail' ? 'Servings/Drinks' : 'Servings'}</div>
                 <div className="font-semibold">{recipe.servings}</div>
@@ -266,8 +266,8 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
                     ? tag.split(':')[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
                     : tag;
                   const tagColor = isStructured
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-orange-100 text-orange-700';
+                    ? 'bg-sage-100 text-sage-700'
+                    : 'bg-terracotta-100 text-terracotta-700';
 
                   return (
                     <span
@@ -290,7 +290,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
               <ul className="space-y-2">
                 {recipe.ingredients.map((ingredient, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <span className="text-orange-600 mt-1">•</span>
+                    <span className="text-terracotta-600 mt-1">•</span>
                     <span className="text-gray-700">
                       {ingredient.quantity} {ingredient.unit} {ingredient.name}
                     </span>
@@ -308,7 +308,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
               <ol className="space-y-4">
                 {recipe.instructions.map((instruction, idx) => (
                   <li key={idx} className="flex gap-4">
-                    <span className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold">
+                    <span className="flex-shrink-0 w-8 h-8 bg-terracotta-600 text-white rounded-full flex items-center justify-center font-bold">
                       {idx + 1}
                     </span>
                     <div
@@ -337,7 +337,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
                 href={recipe.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium"
+                className="inline-flex items-center gap-2 text-terracotta-600 hover:text-terracotta-700 font-medium"
               >
                 <ExternalLink className="w-4 h-4" />
                 View Original Source
@@ -388,7 +388,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
             {isOwner ? (
               <button
                 onClick={onEdit}
-                className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2"
               >
                 <Edit2 className="w-5 h-5" />
                 Edit Recipe
@@ -396,7 +396,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
             ) : onCopy ? (
               <button
                 onClick={() => onCopy(recipe)}
-                className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2"
               >
                 <Copy className="w-5 h-5" />
                 Copy Recipe
@@ -404,14 +404,14 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
             ) : null}
             <button
               onClick={() => setShowMealSelector(true)}
-              className="flex-1 px-6 py-3 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 border-2 border-sage-600 text-sage-600 rounded-xl hover:bg-sage-50 transition font-medium flex items-center justify-center gap-2"
             >
               <Calendar className="w-5 h-5" />
               Add to Meal
             </button>
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
             >
               Close
             </button>
@@ -433,13 +433,13 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="What did you like or dislike about this recipe? (optional)"
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none mb-4"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none mb-4"
             />
             <div className="flex gap-3">
               <button
                 onClick={submitRating}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium disabled:opacity-50"
               >
                 {loading ? 'Saving...' : 'Submit Rating'}
               </button>
@@ -450,7 +450,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
                   setFeedback('');
                 }}
                 disabled={loading}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -478,7 +478,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
                     onClick={() => setSelectedMealId(meal.id)}
                     className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition border-b border-gray-100 ${
                       selectedMealId === meal.id
-                        ? 'bg-orange-50 font-medium text-orange-900'
+                        ? 'bg-terracotta-50 font-medium text-terracotta-900'
                         : 'text-gray-700'
                     }`}
                   >
@@ -490,7 +490,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
                         </div>
                       </div>
                       {selectedMealId === meal.id && (
-                        <span className="text-orange-600">✓</span>
+                        <span className="text-terracotta-600">✓</span>
                       )}
                     </div>
                   </button>
@@ -511,7 +511,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
                   setSelectedMealId(null);
                 }}
                 disabled={addingToMeal}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium disabled:opacity-50"
               >
                 Cancel
               </button>

@@ -489,9 +489,9 @@ function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center">
         <div className="text-center">
-          <ChefHat className="w-16 h-16 text-orange-600 mx-auto mb-4 animate-pulse" />
+          <ChefHat className="w-16 h-16 text-terracotta-500 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -504,9 +504,9 @@ function App() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center">
         <div className="text-center">
-          <ChefHat className="w-16 h-16 text-orange-600 mx-auto mb-4 animate-pulse" />
+          <ChefHat className="w-16 h-16 text-terracotta-500 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading your profile...</p>
         </div>
       </div>
@@ -518,13 +518,13 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-cream-200 texture-linen">
+      <header className="bg-cream-50 shadow-sm border-b border-sage-200">
         <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 lg:px-8 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="p-1.5 sm:p-2 bg-orange-100 rounded-lg flex-shrink-0">
-                <ChefHat className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600" />
+              <div className="p-1.5 sm:p-2 bg-sage-200 rounded-2xl flex-shrink-0">
+                <ChefHat className="w-6 h-6 sm:w-8 sm:h-8 text-sage-700" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Recipe Manager</h1>
@@ -542,10 +542,10 @@ function App() {
                   setShowCommunity(false);
                   setSelectedRecipe(null);
                 }}
-                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
                   !showMeals && !showChat && !showSettings && !showAdmin && !showCommunity
-                    ? 'bg-orange-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-terracotta-500 text-white shadow-sm'
+                    : 'text-gray-700 hover:bg-sage-100'
                 }`}
                 title="My Recipes"
               >
@@ -562,10 +562,10 @@ function App() {
                   setSearchTerm('');
                   setSelectedTags([]);
                 }}
-                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
                   showCommunity
-                    ? 'bg-orange-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-terracotta-500 text-white shadow-sm'
+                    : 'text-gray-700 hover:bg-sage-100'
                 }`}
                 title="Community Recipes"
               >
@@ -580,10 +580,10 @@ function App() {
                   setShowAdmin(false);
                   setShowCommunity(false);
                 }}
-                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
                   showMeals
-                    ? 'bg-orange-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-terracotta-500 text-white shadow-sm'
+                    : 'text-gray-700 hover:bg-sage-100'
                 }`}
                 title="Meal Planning"
               >
@@ -598,10 +598,10 @@ function App() {
                   setShowAdmin(false);
                   setShowCommunity(false);
                 }}
-                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
                   showChat
-                    ? 'bg-orange-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-terracotta-500 text-white shadow-sm'
+                    : 'text-gray-700 hover:bg-sage-100'
                 }`}
                 title="AI Assistant"
               >
@@ -623,7 +623,7 @@ function App() {
                       setShowForm(true);
                     }
                   }}
-                  className="px-2 sm:px-3 py-2 min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-1 sm:gap-2 font-medium shadow-sm touch-manipulation"
+                  className="px-2 sm:px-3 py-2 min-h-[44px] bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium shadow-sm touch-manipulation"
                   title={showMeals ? 'New Meal' : 'New Recipe'}
                 >
                   <Plus className="w-5 h-5" />
@@ -707,7 +707,7 @@ function App() {
           <div>
             {loading ? (
               <div className="text-center py-12">
-                <Users className="w-12 h-12 text-orange-600 mx-auto mb-4 animate-pulse" />
+                <Users className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
                 <p className="text-gray-600">Loading community recipes...</p>
               </div>
             ) : (
@@ -746,7 +746,7 @@ function App() {
           <div>
             {loading ? (
               <div className="text-center py-12">
-                <Calendar className="w-12 h-12 text-orange-600 mx-auto mb-4 animate-pulse" />
+                <Calendar className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
                 <p className="text-gray-600">Loading your meals...</p>
               </div>
             ) : (
@@ -765,7 +765,7 @@ function App() {
           <div>
             {loading ? (
               <div className="text-center py-12">
-                <BookOpen className="w-12 h-12 text-orange-600 mx-auto mb-4 animate-pulse" />
+                <BookOpen className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
                 <p className="text-gray-600">Loading your recipes...</p>
               </div>
             ) : (
@@ -781,7 +781,7 @@ function App() {
                     <div className="flex gap-2 sm:gap-3">
                       <button
                         onClick={() => setShowPhotoModal(true)}
-                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-warmtan-500 hover:bg-warmtan-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
                         title="Import from Photo"
                       >
                         <Camera className="w-5 h-5" />
@@ -789,7 +789,7 @@ function App() {
                       </button>
                       <button
                         onClick={() => setShowImportModal(true)}
-                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-sage-500 hover:bg-sage-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
                         title="Import from Web"
                       >
                         <Globe className="w-5 h-5" />
@@ -800,7 +800,7 @@ function App() {
                           setEditingRecipe(null);
                           setShowForm(true);
                         }}
-                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
                         title={`New ${recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}`}
                       >
                         <Plus className="w-5 h-5" />
@@ -809,7 +809,7 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 sm:gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+                  <div className="flex items-center gap-1 sm:gap-2 p-1 bg-sage-100 rounded-xl w-fit">
                     <button
                       onClick={() => {
                         setRecipeType('food');
@@ -817,9 +817,9 @@ function App() {
                         setSelectedTags([]);
                         setSelectedTimeFilter('');
                       }}
-                      className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-md transition flex items-center gap-2 font-medium touch-manipulation ${
+                      className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${
                         recipeType === 'food'
-                          ? 'bg-white text-orange-600 shadow-sm'
+                          ? 'bg-cream-50 text-terracotta-600 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                       title="Food Recipes"
@@ -835,9 +835,9 @@ function App() {
                         setSelectedTags([]);
                         setSelectedTimeFilter('');
                       }}
-                      className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-md transition flex items-center gap-2 font-medium touch-manipulation ${
+                      className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${
                         recipeType === 'cocktail'
-                          ? 'bg-white text-orange-600 shadow-sm'
+                          ? 'bg-cream-50 text-terracotta-600 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                       title="Cocktails"

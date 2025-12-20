@@ -6,6 +6,31 @@
   .touch-manipulation {
     touch-action: manipulation;
   }
+
+  .texture-subtle {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.01) 2px,
+        rgba(0, 0, 0, 0.01) 4px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.01) 2px,
+        rgba(0, 0, 0, 0.01) 4px
+      );
+  }
+
+  .texture-linen {
+    background-image:
+      radial-gradient(circle at 25% 50%, rgba(0, 0, 0, 0.015) 0.5px, transparent 0.5px),
+      radial-gradient(circle at 75% 50%, rgba(0, 0, 0, 0.015) 0.5px, transparent 0.5px);
+    background-size: 4px 4px;
+  }
 }
 
 .prose {

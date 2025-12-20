@@ -64,14 +64,14 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl my-8">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-900">
             {meal ? 'Edit Meal' : 'Create New Meal'}
           </h2>
           <button
             onClick={onCancel}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            className="p-2 hover:bg-sage-100 rounded-xl transition"
           >
             <X className="w-6 h-6 text-gray-500" />
           </button>
@@ -89,7 +89,7 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Passover Seder 2025"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                 required
               />
             </div>
@@ -103,7 +103,7 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                 required
               />
             </div>
@@ -118,7 +118,7 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Brief description of the meal..."
                 rows={2}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none"
               />
             </div>
 
@@ -132,15 +132,15 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
                   {selectedRecipeObjects.map(recipe => (
                     <div
                       key={recipe.id}
-                      className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-lg p-3"
+                      className="flex items-center justify-between bg-cream-50 border border-terracotta-200 rounded-xl p-3"
                     >
                       <span className="font-medium text-gray-900">{recipe.title}</span>
                       <button
                         type="button"
                         onClick={() => toggleRecipe(recipe.id)}
-                        className="p-1 hover:bg-orange-200 rounded transition"
+                        className="p-1 hover:bg-terracotta-200 rounded-xl transition"
                       >
-                        <Trash2 className="w-4 h-4 text-orange-700" />
+                        <Trash2 className="w-4 h-4 text-terracotta-700" />
                       </button>
                     </div>
                   ))}
@@ -150,21 +150,21 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
               <button
                 type="button"
                 onClick={() => setShowRecipeSelector(!showRecipeSelector)}
-                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition text-gray-600 font-medium flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 border-2 border-dashed border-sage-300 rounded-xl hover:border-terracotta-400 hover:bg-cream-50 transition text-gray-600 font-medium flex items-center justify-center gap-2"
               >
                 <Plus className="w-5 h-5" />
                 Add Recipes
               </button>
 
               {showRecipeSelector && (
-                <div className="mt-3 border border-gray-300 rounded-lg overflow-hidden">
-                  <div className="p-3 bg-gray-50 border-b">
+                <div className="mt-3 border border-sage-300 rounded-xl overflow-hidden">
+                  <div className="p-3 bg-sage-50 border-b">
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Search recipes..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="w-full px-3 py-2 border border-sage-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
                     />
                   </div>
                   <div className="max-h-60 overflow-y-auto">
@@ -178,16 +178,16 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
                           key={recipe.id}
                           type="button"
                           onClick={() => toggleRecipe(recipe.id)}
-                          className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition border-b border-gray-100 ${
+                          className={`w-full px-4 py-3 text-left hover:bg-sage-50 transition border-b border-gray-100 ${
                             selectedRecipes.includes(recipe.id)
-                              ? 'bg-orange-50 font-medium text-orange-900'
+                              ? 'bg-cream-50 font-medium text-terracotta-900'
                               : 'text-gray-700'
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <span>{recipe.title}</span>
                             {selectedRecipes.includes(recipe.id) && (
-                              <span className="text-orange-600">✓</span>
+                              <span className="text-terracotta-600">✓</span>
                             )}
                           </div>
                         </button>
@@ -208,7 +208,7 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Additional planning notes, shopping lists, etc..."
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none"
               />
             </div>
           </div>
@@ -216,14 +216,14 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
           <div className="flex gap-3 mt-6 pt-6 border-t">
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium"
+              className="flex-1 px-6 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium"
             >
               {meal ? 'Update Meal' : 'Create Meal'}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+              className="flex-1 px-6 py-3 border border-sage-300 text-gray-700 rounded-xl hover:bg-sage-50 transition font-medium"
             >
               Cancel
             </button>

@@ -15,10 +15,10 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
   if (recipes.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-lg p-12">
+        <div className="max-w-2xl w-full bg-white rounded-3xl shadow-lg p-12 texture-subtle">
           <div className="text-center mb-8">
-            <div className="inline-flex p-4 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full mb-6">
-              <ChefHat className="w-16 h-16 text-orange-600" />
+            <div className="inline-flex p-4 bg-gradient-to-br from-terracotta-100 to-cream-100 rounded-full mb-6">
+              <ChefHat className="w-16 h-16 text-terracotta-600" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-3">
               Welcome to Your Recipe Collection
@@ -32,7 +32,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
             {onCreateNew && (
               <button
                 onClick={onCreateNew}
-                className="group relative bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
+                className="group relative bg-gradient-to-br from-terracotta-500 to-terracotta-600 hover:from-terracotta-600 hover:to-terracotta-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
               >
                 <div className="flex flex-col items-center gap-3">
                   <div className="p-3 bg-white/20 rounded-lg">
@@ -40,7 +40,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                   </div>
                   <div>
                     <h3 className="text-xl font-bold mb-1">Create Recipe</h3>
-                    <p className="text-sm text-orange-50">
+                    <p className="text-sm text-terracotta-50">
                       Start from scratch with your own recipe
                     </p>
                   </div>
@@ -52,7 +52,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
             {onImportFromWeb && (
               <button
                 onClick={onImportFromWeb}
-                className="group relative bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
+                className="group relative bg-gradient-to-br from-sage-500 to-sage-600 hover:from-sage-600 hover:to-sage-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
               >
                 <div className="flex flex-col items-center gap-3">
                   <div className="p-3 bg-white/20 rounded-lg">
@@ -60,7 +60,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                   </div>
                   <div>
                     <h3 className="text-xl font-bold mb-1">Import from Web</h3>
-                    <p className="text-sm text-green-50">
+                    <p className="text-sm text-sage-50">
                       Scrape a recipe from any website
                     </p>
                   </div>
@@ -72,7 +72,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
             {onOpenChat && (
               <button
                 onClick={onOpenChat}
-                className="group relative bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
+                className="group relative bg-gradient-to-br from-warmtan-500 to-warmtan-600 hover:from-warmtan-600 hover:to-warmtan-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
               >
                 <div className="flex flex-col items-center gap-3">
                   <div className="p-3 bg-white/20 rounded-lg relative">
@@ -81,7 +81,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                   </div>
                   <div>
                     <h3 className="text-xl font-bold mb-1">AI Assistant</h3>
-                    <p className="text-sm text-blue-50">
+                    <p className="text-sm text-warmtan-50">
                       Get recipe ideas and cooking tips
                     </p>
                   </div>
@@ -106,7 +106,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
       {recipes.map((recipe) => (
         <div
           key={recipe.id}
-          className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden group cursor-pointer"
+          className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden group cursor-pointer texture-subtle"
           onClick={() => onSelect(recipe)}
         >
           <div className="relative">
@@ -117,7 +117,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                 className="w-full h-48 object-cover"
               />
             ) : (
-              <div className="w-full h-48 bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
+              <div className="w-full h-48 bg-gradient-to-br from-terracotta-100 to-cream-100 flex items-center justify-center">
                 <span className="text-6xl">🍽️</span>
               </div>
             )}
@@ -152,7 +152,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                 {recipe.tags.slice(0, 3).map((tag, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-full"
+                    className="px-2 py-1 bg-terracotta-50 text-terracotta-700 text-xs rounded-full"
                   >
                     {tag}
                   </span>
@@ -171,7 +171,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                   e.stopPropagation();
                   onEdit(recipe);
                 }}
-                className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition flex items-center justify-center gap-2 text-sm font-medium"
+                className="flex-1 px-3 py-2 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-xl transition flex items-center justify-center gap-2 text-sm font-medium"
               >
                 <Edit2 className="w-4 h-4" />
                 Edit
@@ -183,7 +183,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                     onDelete(recipe.id);
                   }
                 }}
-                className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition flex items-center justify-center gap-2 text-sm font-medium"
+                className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition flex items-center justify-center gap-2 text-sm font-medium"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete

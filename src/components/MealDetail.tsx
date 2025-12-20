@@ -38,19 +38,19 @@ export function MealDetail({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
-        <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 text-white">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-r from-terracotta-500 to-warmtan-500 p-6 text-white">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <h1 className="text-3xl font-bold mb-2">{meal.name}</h1>
-              <div className="flex items-center gap-2 text-orange-100">
+              <div className="flex items-center gap-2 text-cream-100">
                 <Calendar className="w-5 h-5" />
                 <span className="text-lg">{formatDate(meal.date)}</span>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition"
+              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-xl transition"
             >
               <X className="w-6 h-6" />
             </button>
@@ -72,7 +72,7 @@ export function MealDetail({
 
         <div className="flex-1 overflow-y-auto p-6">
           {meal.description && (
-            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="mb-6 p-4 bg-cream-50 border border-warmtan-200 rounded-xl">
               <p className="text-gray-700">{meal.description}</p>
             </div>
           )}
@@ -82,7 +82,7 @@ export function MealDetail({
               <p className="text-gray-500 text-lg">No recipes added to this meal yet</p>
               <button
                 onClick={onEdit}
-                className="mt-4 px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium"
+                className="mt-4 px-6 py-2 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium"
               >
                 Add Recipes
               </button>
@@ -124,13 +124,13 @@ export function MealDetail({
                         <div className="flex flex-wrap gap-4 mb-4">
                           {totalTime > 0 && (
                             <div className="flex items-center gap-2 text-gray-700">
-                              <Clock className="w-5 h-5 text-orange-600" />
+                              <Clock className="w-5 h-5 text-terracotta-600" />
                               <span className="font-medium">{totalTime} min</span>
                             </div>
                           )}
                           {recipe.servings > 0 && (
                             <div className="flex items-center gap-2 text-gray-700">
-                              <Users className="w-5 h-5 text-orange-600" />
+                              <Users className="w-5 h-5 text-terracotta-600" />
                               <span className="font-medium">{recipe.servings} servings</span>
                             </div>
                           )}
@@ -142,7 +142,7 @@ export function MealDetail({
 
                         <button
                           onClick={() => onViewRecipe(recipe)}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium text-lg"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium text-lg"
                         >
                           <Eye className="w-5 h-5" />
                           View Full Recipe
@@ -164,7 +164,7 @@ export function MealDetail({
           )}
 
           {meal.notes && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-6 p-4 bg-sage-50 border border-sage-200 rounded-xl">
               <h3 className="font-semibold text-gray-900 mb-2">Planning Notes</h3>
               <p className="text-gray-700 whitespace-pre-wrap">{meal.notes}</p>
             </div>
@@ -175,21 +175,21 @@ export function MealDetail({
           <div className="flex gap-3">
             <button
               onClick={onEdit}
-              className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2"
             >
               <Edit2 className="w-5 h-5" />
               Edit Meal
             </button>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="px-6 py-3 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition font-medium flex items-center gap-2"
+              className="px-6 py-3 border border-red-300 text-red-700 rounded-xl hover:bg-red-50 transition font-medium flex items-center gap-2"
             >
               <Trash2 className="w-5 h-5" />
               Delete
             </button>
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition font-medium"
+              className="flex-1 px-6 py-3 border border-sage-300 text-gray-700 rounded-xl hover:bg-sage-100 transition font-medium"
             >
               Close
             </button>
@@ -210,13 +210,13 @@ export function MealDetail({
                   onDelete();
                   setConfirmDelete(false);
                 }}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium"
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition font-medium"
               >
                 Delete Meal
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+                className="flex-1 px-4 py-2 border border-sage-300 text-gray-700 rounded-xl hover:bg-sage-50 transition font-medium"
               >
                 Cancel
               </button>

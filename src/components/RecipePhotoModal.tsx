@@ -181,11 +181,11 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Camera className="w-6 h-6 text-orange-600" />
+            <div className="p-2 bg-terracotta-100 rounded-xl">
+              <Camera className="w-6 h-6 text-terracotta-600" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Import from Photo</h2>
@@ -212,19 +212,19 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">What can you capture?</h3>
                   <ul className="text-sm text-gray-600 space-y-2 text-left max-w-md mx-auto">
                     <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-0.5">•</span>
+                      <span className="text-terracotta-600 mt-0.5">•</span>
                       <span>Restaurant menu items with descriptions</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-0.5">•</span>
+                      <span className="text-terracotta-600 mt-0.5">•</span>
                       <span>Plated dishes to identify and create recipes</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-0.5">•</span>
+                      <span className="text-terracotta-600 mt-0.5">•</span>
                       <span>Recipe cards or screenshots</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-orange-600 mt-0.5">•</span>
+                      <span className="text-terracotta-600 mt-0.5">•</span>
                       <span>Handwritten recipes</span>
                     </li>
                   </ul>
@@ -234,10 +234,10 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   onClick={() => cameraInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all group"
+                  className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-sage-300 rounded-xl hover:border-terracotta-500 hover:bg-cream-50 transition-all group"
                 >
-                  <Camera className="w-12 h-12 text-gray-400 group-hover:text-orange-600 mb-3 transition" />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600 transition">
+                  <Camera className="w-12 h-12 text-sage-400 group-hover:text-terracotta-600 mb-3 transition" />
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-terracotta-600 transition">
                     Take Photo
                   </span>
                   <span className="text-xs text-gray-500 mt-1">Use camera</span>
@@ -245,10 +245,10 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all group"
+                  className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-sage-300 rounded-xl hover:border-terracotta-500 hover:bg-cream-50 transition-all group"
                 >
-                  <Upload className="w-12 h-12 text-gray-400 group-hover:text-orange-600 mb-3 transition" />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600 transition">
+                  <Upload className="w-12 h-12 text-sage-400 group-hover:text-terracotta-600 mb-3 transition" />
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-terracotta-600 transition">
                     Upload Image
                   </span>
                   <span className="text-xs text-gray-500 mt-1">From gallery or files</span>
@@ -292,7 +292,7 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
                 {status === 'idle' && (
                   <button
                     onClick={handleRetake}
-                    className="w-full px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 border-2 border-sage-300 text-gray-700 rounded-xl hover:bg-sage-50 transition font-medium flex items-center justify-center gap-2"
                   >
                     <RotateCcw className="w-5 h-5" />
                     Choose Different Image
@@ -330,7 +330,7 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
         <div className="p-6 border-t border-gray-200 flex gap-3 sticky bottom-0 bg-white">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+            className="flex-1 px-4 py-3 border border-sage-300 text-gray-700 rounded-xl hover:bg-sage-50 transition font-medium"
             disabled={status === 'processing'}
           >
             Cancel
@@ -339,7 +339,7 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
             <button
               onClick={handleExtractRecipe}
               disabled={status === 'processing' || status === 'done'}
-              className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {status === 'processing' ? (
                 <>
