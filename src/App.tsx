@@ -712,22 +712,26 @@ function App() {
               </div>
             ) : (
               <>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Community Recipes</h2>
-                  <p className="text-gray-600">
-                    Discover and copy recipes shared by other users
-                  </p>
-                </div>
-                <RecipeSearch
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  selectedTags={selectedTags}
-                  onTagToggle={toggleTag}
-                  availableTags={getAllTags()}
-                  recipeType={recipeType}
-                  selectedTimeFilter={selectedTimeFilter}
-                  onTimeFilterChange={setSelectedTimeFilter}
-                />
+                {communityRecipes.length > 0 && (
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Community Recipes</h2>
+                    <p className="text-gray-600">
+                      Discover and copy recipes shared by other users
+                    </p>
+                  </div>
+                )}
+                {communityRecipes.length > 0 && (
+                  <RecipeSearch
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    selectedTags={selectedTags}
+                    onTagToggle={toggleTag}
+                    availableTags={getAllTags()}
+                    recipeType={recipeType}
+                    selectedTimeFilter={selectedTimeFilter}
+                    onTimeFilterChange={setSelectedTimeFilter}
+                  />
+                )}
                 <CommunityRecipes
                   recipes={filteredCommunityRecipes}
                   onSelect={setSelectedRecipe}
@@ -770,93 +774,97 @@ function App() {
               </div>
             ) : (
               <>
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">My Recipes</h2>
-                      <p className="text-gray-600 mt-1">
-                        {filteredRecipes.length} {filteredRecipes.length === 1 ? (recipeType === 'cocktail' ? 'cocktail' : 'recipe') : (recipeType === 'cocktail' ? 'cocktails' : 'recipes')}
-                      </p>
+                {recipes.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900">My Recipes</h2>
+                        <p className="text-gray-600 mt-1">
+                          {filteredRecipes.length} {filteredRecipes.length === 1 ? (recipeType === 'cocktail' ? 'cocktail' : 'recipe') : (recipeType === 'cocktail' ? 'cocktails' : 'recipes')}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 sm:gap-3">
+                        <button
+                          onClick={() => setShowPhotoModal(true)}
+                          className="px-3 sm:px-4 py-2 min-h-[44px] bg-warmtan-500 hover:bg-warmtan-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                          title="Import from Photo"
+                        >
+                          <Camera className="w-5 h-5" />
+                          <span className="hidden sm:inline">Photo</span>
+                        </button>
+                        <button
+                          onClick={() => setShowImportModal(true)}
+                          className="px-3 sm:px-4 py-2 min-h-[44px] bg-sage-500 hover:bg-sage-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                          title="Import from Web"
+                        >
+                          <Globe className="w-5 h-5" />
+                          <span className="hidden sm:inline">Web</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingRecipe(null);
+                            setShowForm(true);
+                          }}
+                          className="px-3 sm:px-4 py-2 min-h-[44px] bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
+                          title={`New ${recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}`}
+                        >
+                          <Plus className="w-5 h-5" />
+                          <span className="hidden sm:inline">New</span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-2 sm:gap-3">
+
+                    <div className="flex items-center gap-1 sm:gap-2 p-1 bg-sage-100 rounded-xl w-fit">
                       <button
-                        onClick={() => setShowPhotoModal(true)}
-                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-warmtan-500 hover:bg-warmtan-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
-                        title="Import from Photo"
+                        onClick={() => {
+                          setRecipeType('food');
+                          setSearchTerm('');
+                          setSelectedTags([]);
+                          setSelectedTimeFilter('');
+                        }}
+                        className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${
+                          recipeType === 'food'
+                            ? 'bg-cream-50 text-terracotta-600 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="Food Recipes"
                       >
-                        <Camera className="w-5 h-5" />
-                        <span className="hidden sm:inline">Photo</span>
-                      </button>
-                      <button
-                        onClick={() => setShowImportModal(true)}
-                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-sage-500 hover:bg-sage-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
-                        title="Import from Web"
-                      >
-                        <Globe className="w-5 h-5" />
-                        <span className="hidden sm:inline">Web</span>
+                        <ChefHat className="w-4 h-4" />
+                        <span className="hidden sm:inline">Food Recipes</span>
+                        <span className="sm:hidden">Food</span>
                       </button>
                       <button
                         onClick={() => {
-                          setEditingRecipe(null);
-                          setShowForm(true);
+                          setRecipeType('cocktail');
+                          setSearchTerm('');
+                          setSelectedTags([]);
+                          setSelectedTimeFilter('');
                         }}
-                        className="px-3 sm:px-4 py-2 min-h-[44px] bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm touch-manipulation"
-                        title={`New ${recipeType === 'cocktail' ? 'Cocktail' : 'Recipe'}`}
+                        className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${
+                          recipeType === 'cocktail'
+                            ? 'bg-cream-50 text-terracotta-600 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="Cocktails"
                       >
-                        <Plus className="w-5 h-5" />
-                        <span className="hidden sm:inline">New</span>
+                        <Wine className="w-4 h-4" />
+                        Cocktails
                       </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1 sm:gap-2 p-1 bg-sage-100 rounded-xl w-fit">
-                    <button
-                      onClick={() => {
-                        setRecipeType('food');
-                        setSearchTerm('');
-                        setSelectedTags([]);
-                        setSelectedTimeFilter('');
-                      }}
-                      className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${
-                        recipeType === 'food'
-                          ? 'bg-cream-50 text-terracotta-600 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                      title="Food Recipes"
-                    >
-                      <ChefHat className="w-4 h-4" />
-                      <span className="hidden sm:inline">Food Recipes</span>
-                      <span className="sm:hidden">Food</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setRecipeType('cocktail');
-                        setSearchTerm('');
-                        setSelectedTags([]);
-                        setSelectedTimeFilter('');
-                      }}
-                      className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${
-                        recipeType === 'cocktail'
-                          ? 'bg-cream-50 text-terracotta-600 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                      title="Cocktails"
-                    >
-                      <Wine className="w-4 h-4" />
-                      Cocktails
-                    </button>
-                  </div>
-                </div>
-                <RecipeSearch
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  selectedTags={selectedTags}
-                  onTagToggle={toggleTag}
-                  availableTags={getAllTags()}
-                  recipeType={recipeType}
-                  selectedTimeFilter={selectedTimeFilter}
-                  onTimeFilterChange={setSelectedTimeFilter}
-                />
+                )}
+                {recipes.length > 0 && (
+                  <RecipeSearch
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    selectedTags={selectedTags}
+                    onTagToggle={toggleTag}
+                    availableTags={getAllTags()}
+                    recipeType={recipeType}
+                    selectedTimeFilter={selectedTimeFilter}
+                    onTimeFilterChange={setSelectedTimeFilter}
+                  />
+                )}
                 <RecipeList
                   recipes={filteredRecipes}
                   onEdit={(recipe) => {
