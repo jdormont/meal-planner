@@ -22,6 +22,9 @@ export default function CuisineProfileManager() {
   const [editMode, setEditMode] = useState<'form' | 'json'>('form');
   const [jsonError, setJsonError] = useState('');
   const [keywordText, setKeywordText] = useState('');
+  const [philosophyText, setPhilosophyText] = useState('');
+  const [commonIngredientsText, setCommonIngredientsText] = useState('');
+  const [techniquesText, setTechniquesText] = useState('');
 
   useEffect(() => {
     loadProfiles();
@@ -96,6 +99,7 @@ export default function CuisineProfileManager() {
   }
 
   function startCreate() {
+    const maxOrder = profiles.length > 0 ? Math.max(...profiles.map(p => p.display_order)) : 0;
     setEditingProfile({
       id: '',
       cuisine_name: '',
@@ -111,11 +115,14 @@ export default function CuisineProfileManager() {
       },
       is_active: true,
       keywords: [],
-      display_order: profiles.length,
+      display_order: maxOrder + 1,
       created_at: '',
       updated_at: ''
     });
     setKeywordText('');
+    setPhilosophyText('');
+    setCommonIngredientsText('');
+    setTechniquesText('');
     setIsCreating(true);
     setEditMode('form');
     setJsonError('');
@@ -124,6 +131,9 @@ export default function CuisineProfileManager() {
   function startEdit(profile: CuisineProfile) {
     setEditingProfile({ ...profile });
     setKeywordText(profile.keywords.join(', '));
+    setPhilosophyText((profile.profile_data.culinary_philosophy || []).join('\n'));
+    setCommonIngredientsText((profile.profile_data.ingredient_boundaries?.common || []).join(', '));
+    setTechniquesText((profile.profile_data.technique_defaults || []).join('\n'));
     setIsCreating(false);
     setEditMode('form');
     setJsonError('');
@@ -145,13 +155,24 @@ export default function CuisineProfileManager() {
 
     const keywords = keywordText.split(',').map(k => k.trim()).filter(k => k);
 
+    // Parse text fields and update profile_data
+    const updatedProfileData = {
+      ...editingProfile.profile_data,
+      culinary_philosophy: philosophyText.split('\n').filter(l => l.trim()),
+      ingredient_boundaries: {
+        ...editingProfile.profile_data.ingredient_boundaries,
+        common: commonIngredientsText.split(',').map(i => i.trim()).filter(i => i)
+      },
+      technique_defaults: techniquesText.split('\n').filter(l => l.trim())
+    };
+
     if (isCreating) {
       const { error } = await supabase
         .from('cuisine_profiles')
         .insert({
           cuisine_name: editingProfile.cuisine_name,
           style_focus: editingProfile.style_focus,
-          profile_data: editingProfile.profile_data,
+          profile_data: updatedProfileData,
           is_active: editingProfile.is_active,
           keywords: keywords,
           display_order: editingProfile.display_order
@@ -168,7 +189,7 @@ export default function CuisineProfileManager() {
         .update({
           cuisine_name: editingProfile.cuisine_name,
           style_focus: editingProfile.style_focus,
-          profile_data: editingProfile.profile_data,
+          profile_data: updatedProfileData,
           is_active: editingProfile.is_active,
           keywords: keywords,
           display_order: editingProfile.display_order
