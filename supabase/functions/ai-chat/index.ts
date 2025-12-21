@@ -988,39 +988,6 @@ Not:
 "Here are some recipe suggestions that you might enjoy based on your profile preferences..."
 
 **Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}
-
-–––––––––––––––––
-METADATA GENERATION FOR ADMIN USERS
-–––––––––––––––––
-
-${isAdmin ? `**YOU ARE RESPONDING TO AN ADMIN USER.**
-
-When generating a recipe:
-
-- Internally record:
-  - cuisine_profile_used (true/false)
-  - cuisine_name (if profile was applied)
-  - profile_confidence (high / medium / low)
-
-- After providing the full recipe, include a metadata block at the end with this EXACT format:
-
----
-**Generation Metadata (Admin Only)**
-Cuisine Profile Applied: ${cuisineMetadata.applied ? '✅' : '❌'}
-${cuisineMetadata.applied ? `Cuisine: ${cuisineMetadata.cuisine} (${cuisineMetadata.styleFocus})
-Confidence: ${cuisineMetadata.confidence.charAt(0).toUpperCase() + cuisineMetadata.confidence.slice(1)}
-Rationale: ${cuisineMetadata.rationale}
-All Competing Matches: ${cuisineMetadata.allMatches}` : 'No cuisine profile detected'}
----
-
-CRITICAL: Only include this metadata block for recipe generation responses. Do NOT include it for:
-- General conversation
-- Recipe recommendations (before full recipe is provided)
-- Non-recipe queries
-
-This metadata is for admin visibility only to help improve the cuisine profile system.` : `**DO NOT include any metadata blocks in your responses.**
-
-You are responding to a regular user. Keep all responses clean and focused on the content without any system metadata.`}
 `;
 
     let message;
@@ -1075,12 +1042,13 @@ You are responding to a regular user. Keep all responses clean and focused on th
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message,
         modelUsed: modelConfig.model_name,
         modelId: modelConfig.model_identifier,
         provider: modelConfig.provider,
-        usedFallback
+        usedFallback,
+        ...(isAdmin && { cuisineMetadata })
       }),
       {
         headers: {
