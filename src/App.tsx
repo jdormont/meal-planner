@@ -436,33 +436,49 @@ function App() {
       }
     });
 
-    const isCocktail = title.toLowerCase().includes('cocktail') ||
-                       title.toLowerCase().includes('martini') ||
-                       title.toLowerCase().includes('margarita') ||
-                       title.toLowerCase().includes('mojito') ||
-                       title.toLowerCase().includes('old fashioned') ||
-                       title.toLowerCase().includes('negroni') ||
-                       ingredients.some(ing => {
-                         const ingLower = ing.name.toLowerCase();
-                         return ingLower.includes('vodka') ||
-                           ingLower.includes('gin') ||
-                           ingLower.includes('rum') ||
-                           ingLower.includes('tequila') ||
-                           ingLower.includes('whiskey') ||
-                           ingLower.includes('whisky') ||
-                           ingLower.includes('bourbon') ||
-                           ingLower.includes('scotch') ||
-                           ingLower.includes('cognac') ||
-                           ingLower.includes('brandy') ||
-                           ingLower.includes('vermouth') ||
-                           ingLower.includes('aperol') ||
-                           ingLower.includes('campari') ||
-                           ingLower.includes('bitters') ||
-                           ingLower.includes('liqueur') ||
-                           ingLower.includes('amaretto') ||
-                           ingLower.includes('benedictine') ||
-                           ingLower.includes('chartreuse');
-                       });
+    const titleLower = title.toLowerCase();
+    const descLower = description.toLowerCase();
+
+    // Strong cocktail indicators in title or description
+    const hasCocktailTitle = titleLower.includes('cocktail') ||
+                              titleLower.includes('martini') ||
+                              titleLower.includes('margarita') ||
+                              titleLower.includes('mojito') ||
+                              titleLower.includes('daiquiri') ||
+                              titleLower.includes('old fashioned') ||
+                              titleLower.includes('negroni') ||
+                              titleLower.includes('manhattan') ||
+                              titleLower.includes('gimlet') ||
+                              titleLower.match(/\b(drink|beverage|libation|shot)\b/) !== null;
+
+    // Count spirit-based ingredients
+    const spiritKeywords = [
+      'vodka', 'gin', 'rum', 'tequila', 'whiskey', 'whisky',
+      'bourbon', 'scotch', 'cognac', 'brandy', 'vermouth',
+      'aperol', 'campari', 'liqueur', 'amaretto',
+      'benedictine', 'chartreuse', 'mezcal', 'pisco'
+    ];
+
+    const spiritCount = ingredients.filter(ing => {
+      const ingLower = ing.name.toLowerCase();
+      return spiritKeywords.some(spirit => ingLower.includes(spirit));
+    }).length;
+
+    // Also check for common cocktail-only ingredients
+    const hasCocktailIngredients = ingredients.some(ing => {
+      const ingLower = ing.name.toLowerCase();
+      return ingLower.includes('simple syrup') ||
+             ingLower.includes('bitters') ||
+             ingLower.match(/\b(maraschino|orgeat|falernum)\b/) !== null;
+    });
+
+    // Recipe is a cocktail if:
+    // 1. Title/description clearly indicates it's a drink, OR
+    // 2. Has 2+ spirit ingredients, OR
+    // 3. Has 1 spirit ingredient AND cocktail-specific ingredients
+    const isCocktail = hasCocktailTitle ||
+                       spiritCount >= 2 ||
+                       (spiritCount >= 1 && hasCocktailIngredients);
 
     const parsedRecipe: Recipe = {
       id: 'temp-ai-recipe',
