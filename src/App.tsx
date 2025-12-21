@@ -393,8 +393,10 @@ function App() {
     let section: 'none' | 'ingredients' | 'instructions' = 'none';
     let prepTime = 0;
     let cookTime = 0;
+    let titleFound = false;
+    const descriptionLines: string[] = [];
 
-    lines.forEach((line) => {
+    lines.forEach((line, index) => {
       const lowerLine = line.toLowerCase();
 
       // Parse prep time - handle formats like "**Prep Time:** 10 minutes" or "Prep Time: 10 minutes"
@@ -411,10 +413,19 @@ function App() {
         return;
       }
 
-      if (lines.indexOf(line) === 0 && !lowerLine.includes('ingredient') && !lowerLine.includes('instruction')) {
-        title = line.replace(/^#+ /, '').replace(/^\*\*/, '').replace(/\*\*$/, '').trim();
-      } else if (lowerLine.includes('ingredient')) {
+      // Look for the first markdown heading as the recipe title
+      if (!titleFound && line.match(/^#{1,3}\s+/)) {
+        title = line.replace(/^#+\s+/, '').replace(/^\*\*/, '').replace(/\*\*$/, '').trim();
+        titleFound = true;
+        return;
+      }
+
+      if (lowerLine.includes('ingredient')) {
         section = 'ingredients';
+        // Convert accumulated description lines to description
+        if (descriptionLines.length > 0) {
+          description = descriptionLines.join(' ').trim();
+        }
       } else if (lowerLine.includes('instruction') || lowerLine.includes('direction') || lowerLine.includes('step')) {
         section = 'instructions';
       } else if (section === 'ingredients' && line.match(/^[-*•]\s/)) {
@@ -431,8 +442,9 @@ function App() {
         }
       } else if (section === 'instructions' && line.match(/^(\d+\.|-|\*|•)/)) {
         instructions.push(line.replace(/^(\d+\.|-|\*|•)\s*/, '').trim());
-      } else if (section === 'none' && !lowerLine.includes('recipe') && !lowerLine.includes('prep time') && !lowerLine.includes('cook time')) {
-        description += (description ? ' ' : '') + line.trim();
+      } else if (section === 'none' && titleFound && !lowerLine.includes('prep time') && !lowerLine.includes('cook time') && !lowerLine.includes('servings')) {
+        // Collect lines after the title but before ingredients as description
+        descriptionLines.push(line.trim());
       }
     });
 
