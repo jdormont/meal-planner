@@ -10,7 +10,7 @@ type Message = {
 };
 
 type AIChatProps = {
-  onSaveRecipe?: (recipeText: string) => void;
+  onSaveRecipe?: (recipeText: string, userQuery?: string) => void;
 };
 
 type Chat = {
@@ -400,7 +400,12 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
               />
               {message.role === 'assistant' && onSaveRecipe && idx > 0 && message.content.includes('FULL_RECIPE') && (
                 <button
-                  onClick={() => onSaveRecipe(message.content.replace('FULL_RECIPE', '').trim())}
+                  onClick={() => {
+                    const userQuery = idx > 0 && messages[idx - 1]?.role === 'user'
+                      ? messages[idx - 1].content
+                      : '';
+                    onSaveRecipe(message.content.replace('FULL_RECIPE', '').trim(), userQuery);
+                  }}
                   className="mt-3 px-4 py-2 min-h-[44px] bg-white hover:bg-sage-50 text-terracotta-600 rounded-xl text-sm font-medium flex items-center gap-2 transition touch-manipulation"
                 >
                   <Save className="w-4 h-4" />
