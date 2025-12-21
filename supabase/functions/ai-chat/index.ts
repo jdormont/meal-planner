@@ -154,6 +154,192 @@ async function callGemini(apiKey: string, model: string, messages: any[], system
   return data.candidates[0].content.parts[0].text;
 }
 
+async function detectCuisineFromMessages(
+  messages: any[],
+  userPreferences: any,
+  supabaseClient: any
+): Promise<string | null> {
+  try {
+    // Get all active cuisine profiles with their keywords
+    const { data: profiles, error } = await supabaseClient
+      .from("cuisine_profiles")
+      .select("cuisine_name, keywords")
+      .eq("is_active", true);
+
+    if (error || !profiles || profiles.length === 0) {
+      return null;
+    }
+
+    // Get the last 3 messages for context (most recent first)
+    const recentMessages = messages.slice(-3);
+
+    // Combine message content into searchable text
+    const messageText = recentMessages
+      .map((m: any) => m.content)
+      .join(" ")
+      .toLowerCase();
+
+    // Check each cuisine's keywords for matches
+    const matches: { cuisine: string; score: number }[] = [];
+
+    for (const profile of profiles) {
+      let score = 0;
+
+      for (const keyword of profile.keywords) {
+        const keywordLower = keyword.toLowerCase();
+
+        // Count occurrences of this keyword
+        const regex = new RegExp(`\\b${keywordLower}\\b`, "gi");
+        const occurrences = (messageText.match(regex) || []).length;
+
+        if (occurrences > 0) {
+          // Give higher weight to exact cuisine name matches
+          const isCuisineName = keywordLower === profile.cuisine_name.toLowerCase();
+          score += occurrences * (isCuisineName ? 3 : 1);
+        }
+      }
+
+      if (score > 0) {
+        matches.push({ cuisine: profile.cuisine_name, score });
+      }
+    }
+
+    // If we have matches, return the highest scoring one
+    if (matches.length > 0) {
+      matches.sort((a, b) => b.score - a.score);
+
+      // Only return if we have a clear winner (score > 0)
+      if (matches[0].score > 0) {
+        console.log(`Detected cuisine: ${matches[0].cuisine} (score: ${matches[0].score})`);
+        return matches[0].cuisine;
+      }
+    }
+
+    // Check user's favorite cuisines as a fallback
+    if (userPreferences?.favorite_cuisines && userPreferences.favorite_cuisines.length > 0) {
+      for (const favCuisine of userPreferences.favorite_cuisines) {
+        const profile = profiles.find(
+          (p: any) => p.cuisine_name.toLowerCase() === favCuisine.toLowerCase()
+        );
+        if (profile) {
+          console.log(`Using favorite cuisine: ${profile.cuisine_name}`);
+          return profile.cuisine_name;
+        }
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error detecting cuisine:", error);
+    return null;
+  }
+}
+
+async function getCuisineProfile(
+  cuisineName: string,
+  supabaseClient: any
+): Promise<any | null> {
+  try {
+    const { data: profile, error } = await supabaseClient
+      .from("cuisine_profiles")
+      .select("*")
+      .eq("cuisine_name", cuisineName)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching cuisine profile:", error);
+      return null;
+    }
+
+    return profile;
+  } catch (error) {
+    console.error("Error getting cuisine profile:", error);
+    return null;
+  }
+}
+
+function formatCuisineProfile(profile: any): string {
+  if (!profile || !profile.profile_data) {
+    return "";
+  }
+
+  const data = profile.profile_data;
+  let formatted = `\n\n**🌍 CUISINE MODE: ${profile.cuisine_name.toUpperCase()} COOKING**\n\n`;
+  formatted += `Style Focus: ${profile.style_focus}\n\n`;
+
+  if (data.culinary_philosophy && data.culinary_philosophy.length > 0) {
+    formatted += "**Culinary Philosophy:**\n";
+    data.culinary_philosophy.forEach((point: string) => {
+      formatted += `• ${point}\n`;
+    });
+    formatted += "\n";
+  }
+
+  if (data.ingredient_boundaries) {
+    formatted += "**Ingredient Guidelines:**\n";
+
+    if (data.ingredient_boundaries.common && data.ingredient_boundaries.common.length > 0) {
+      formatted += `Common ingredients: ${data.ingredient_boundaries.common.slice(0, 10).join(", ")}`;
+      if (data.ingredient_boundaries.common.length > 10) {
+        formatted += ", and more";
+      }
+      formatted += "\n\n";
+    }
+
+    if (data.ingredient_boundaries.avoid && data.ingredient_boundaries.avoid.length > 0) {
+      formatted += `Avoid (unless confirmed available): ${data.ingredient_boundaries.avoid.join(", ")}\n\n`;
+    }
+  }
+
+  if (data.technique_defaults && data.technique_defaults.length > 0) {
+    formatted += "**Technique Approach:**\n";
+    data.technique_defaults.forEach((technique: string) => {
+      formatted += `• ${technique}\n`;
+    });
+    formatted += "\n";
+  }
+
+  if (data.flavor_balance_norms) {
+    formatted += "**Flavor Balance:**\n";
+    Object.entries(data.flavor_balance_norms).forEach(([key, value]) => {
+      const label = key.replace(/_/g, " ");
+      formatted += `• ${label}: ${value}\n`;
+    });
+    formatted += "\n";
+  }
+
+  if (data.canonical_recipe_structure) {
+    formatted += "**Recipe Structure:**\n";
+    if (data.canonical_recipe_structure.timing_target) {
+      formatted += `Target timing: ${data.canonical_recipe_structure.timing_target}\n`;
+    }
+    formatted += "\n";
+  }
+
+  if (data.generation_guardrails) {
+    if (data.generation_guardrails.do_suggest && data.generation_guardrails.do_suggest.length > 0) {
+      formatted += "**Good Options:**\n";
+      data.generation_guardrails.do_suggest.forEach((item: string) => {
+        formatted += `• ${item}\n`;
+      });
+      formatted += "\n";
+    }
+
+    if (data.generation_guardrails.dont_suggest && data.generation_guardrails.dont_suggest.length > 0) {
+      formatted += "**Avoid:**\n";
+      data.generation_guardrails.dont_suggest.forEach((item: string) => {
+        formatted += `• ${item}\n`;
+      });
+      formatted += "\n";
+    }
+  }
+
+  formatted += "**IMPORTANT:** Apply this cuisine's specific approach to ALL recipe suggestions and details. These guidelines override generic defaults while still respecting user allergies and preferences.\n";
+
+  return formatted;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -381,6 +567,18 @@ Deno.serve(async (req: Request) => {
       weeklyBriefContext += '• Make the questions feel optional and human, not like a form\n';
       weeklyBriefContext += '• DO NOT provide meal recommendations yet - wait for their answers first\n\n';
       weeklyBriefContext += 'Remember: Be conversational, warm, and collaborative. You\'re gathering context to help plan together, not executing a checklist.';
+    }
+
+    // Detect cuisine and inject profile if relevant
+    let cuisineProfileContext = '';
+    const detectedCuisine = await detectCuisineFromMessages(messages, userPreferences, supabaseClient);
+
+    if (detectedCuisine) {
+      const cuisineProfile = await getCuisineProfile(detectedCuisine, supabaseClient);
+      if (cuisineProfile) {
+        cuisineProfileContext = formatCuisineProfile(cuisineProfile);
+        console.log(`Injecting ${detectedCuisine} cuisine profile into system prompt`);
+      }
     }
 
     const systemPrompt = `You are CookFlow — an expert home-cooking partner, not a recipe database.
@@ -736,7 +934,7 @@ Example tone:
 Not:
 "Here are some recipe suggestions that you might enjoy based on your profile preferences..."
 
-**Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}${weeklyBriefContext}`;
+**Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}`;
 
     let message;
     let usedFallback = false;
