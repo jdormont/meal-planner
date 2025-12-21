@@ -171,6 +171,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
     try {
       let ratingHistory = [];
       let userPreferences = null;
+      let isAdmin = false;
 
       if (user) {
         const { data: ratingsData } = await supabase
@@ -196,6 +197,14 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
           .maybeSingle();
 
         userPreferences = prefsData;
+
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('is_admin')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        isAdmin = profileData?.is_admin || false;
       }
 
       // Get the user's session token for authenticated requests
@@ -216,6 +225,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
             userPreferences,
             userId: user?.id,
             weeklyBrief: weeklyBrief || false,
+            isAdmin,
           }),
         }
       );

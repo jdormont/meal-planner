@@ -158,12 +158,12 @@ async function detectCuisineFromMessages(
   messages: any[],
   userPreferences: any,
   supabaseClient: any
-): Promise<string | null> {
+): Promise<{ cuisine: string; confidence: string } | null> {
   try {
     // Get all active cuisine profiles with their keywords
     const { data: profiles, error } = await supabaseClient
       .from("cuisine_profiles")
-      .select("cuisine_name, keywords")
+      .select("cuisine_name, keywords, style_focus")
       .eq("is_active", true);
 
     if (error || !profiles || profiles.length === 0) {
@@ -180,7 +180,7 @@ async function detectCuisineFromMessages(
       .toLowerCase();
 
     // Check each cuisine's keywords for matches
-    const matches: { cuisine: string; score: number }[] = [];
+    const matches: { cuisine: string; styleFocus: string; score: number }[] = [];
 
     for (const profile of profiles) {
       let score = 0;
@@ -200,7 +200,7 @@ async function detectCuisineFromMessages(
       }
 
       if (score > 0) {
-        matches.push({ cuisine: profile.cuisine_name, score });
+        matches.push({ cuisine: profile.cuisine_name, styleFocus: profile.style_focus, score });
       }
     }
 
@@ -210,8 +210,16 @@ async function detectCuisineFromMessages(
 
       // Only return if we have a clear winner (score > 0)
       if (matches[0].score > 0) {
-        console.log(`Detected cuisine: ${matches[0].cuisine} (score: ${matches[0].score})`);
-        return matches[0].cuisine;
+        // Determine confidence based on score
+        let confidence = "low";
+        if (matches[0].score >= 5) {
+          confidence = "high";
+        } else if (matches[0].score >= 2) {
+          confidence = "medium";
+        }
+
+        console.log(`Detected cuisine: ${matches[0].cuisine} (score: ${matches[0].score}, confidence: ${confidence})`);
+        return { cuisine: matches[0].cuisine, confidence };
       }
     }
 
@@ -223,7 +231,7 @@ async function detectCuisineFromMessages(
         );
         if (profile) {
           console.log(`Using favorite cuisine: ${profile.cuisine_name}`);
-          return profile.cuisine_name;
+          return { cuisine: profile.cuisine_name, confidence: "medium" };
         }
       }
     }
@@ -349,7 +357,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief } = await req.json();
+    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief, isAdmin } = await req.json();
     
     // Get Authorization header for authenticated requests
     const authHeader = req.headers.get("Authorization");
@@ -571,13 +579,20 @@ Deno.serve(async (req: Request) => {
 
     // Detect cuisine and inject profile if relevant
     let cuisineProfileContext = '';
+    let cuisineMetadata = { applied: false, cuisine: '', styleFocus: '', confidence: '' };
     const detectedCuisine = await detectCuisineFromMessages(messages, userPreferences, supabaseClient);
 
     if (detectedCuisine) {
-      const cuisineProfile = await getCuisineProfile(detectedCuisine, supabaseClient);
+      const cuisineProfile = await getCuisineProfile(detectedCuisine.cuisine, supabaseClient);
       if (cuisineProfile) {
         cuisineProfileContext = formatCuisineProfile(cuisineProfile);
-        console.log(`Injecting ${detectedCuisine} cuisine profile into system prompt`);
+        cuisineMetadata = {
+          applied: true,
+          cuisine: cuisineProfile.cuisine_name,
+          styleFocus: cuisineProfile.style_focus,
+          confidence: detectedCuisine.confidence
+        };
+        console.log(`Injecting ${detectedCuisine.cuisine} cuisine profile into system prompt`);
       }
     }
 
@@ -934,7 +949,39 @@ Example tone:
 Not:
 "Here are some recipe suggestions that you might enjoy based on your profile preferences..."
 
-**Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}`;
+**Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}
+
+–––––––––––––––––
+METADATA GENERATION FOR ADMIN USERS
+–––––––––––––––––
+
+${isAdmin ? `**YOU ARE RESPONDING TO AN ADMIN USER.**
+
+When generating a recipe:
+
+- Internally record:
+  - cuisine_profile_used (true/false)
+  - cuisine_name (if profile was applied)
+  - profile_confidence (high / medium / low)
+
+- After providing the full recipe, include a metadata block at the end with this EXACT format:
+
+---
+**Generation Metadata (Admin Only)**
+Cuisine Profile Applied: ${cuisineMetadata.applied ? '✅' : '❌'}
+${cuisineMetadata.applied ? `Cuisine: ${cuisineMetadata.cuisine} (${cuisineMetadata.styleFocus})
+Confidence: ${cuisineMetadata.confidence.charAt(0).toUpperCase() + cuisineMetadata.confidence.slice(1)}` : 'No cuisine profile detected'}
+---
+
+CRITICAL: Only include this metadata block for recipe generation responses. Do NOT include it for:
+- General conversation
+- Recipe recommendations (before full recipe is provided)
+- Non-recipe queries
+
+This metadata is for admin visibility only to help improve the cuisine profile system.` : `**DO NOT include any metadata blocks in your responses.**
+
+You are responding to a regular user. Keep all responses clean and focused on the content without any system metadata.`}
+`;
 
     let message;
     let usedFallback = false;
