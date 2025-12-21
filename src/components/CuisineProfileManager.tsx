@@ -356,14 +356,8 @@ export default function CuisineProfileManager() {
               <div>
                 <label className="block font-medium text-slate-700 mb-2">Culinary Philosophy</label>
                 <textarea
-                  value={(editingProfile.profile_data.culinary_philosophy || []).join('\n')}
-                  onChange={(e) => setEditingProfile({
-                    ...editingProfile,
-                    profile_data: {
-                      ...editingProfile.profile_data,
-                      culinary_philosophy: e.target.value.split('\n').filter(l => l.trim())
-                    }
-                  })}
+                  value={philosophyText}
+                  onChange={(e) => setPhilosophyText(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   rows={5}
                   placeholder="One principle per line"
@@ -373,17 +367,8 @@ export default function CuisineProfileManager() {
               <div>
                 <label className="block font-medium text-slate-700 mb-2">Common Ingredients (comma-separated)</label>
                 <textarea
-                  value={(editingProfile.profile_data.ingredient_boundaries?.common || []).join(', ')}
-                  onChange={(e) => setEditingProfile({
-                    ...editingProfile,
-                    profile_data: {
-                      ...editingProfile.profile_data,
-                      ingredient_boundaries: {
-                        ...editingProfile.profile_data.ingredient_boundaries,
-                        common: e.target.value.split(',').map(i => i.trim()).filter(i => i)
-                      }
-                    }
-                  })}
+                  value={commonIngredientsText}
+                  onChange={(e) => setCommonIngredientsText(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   rows={3}
                 />
@@ -392,14 +377,8 @@ export default function CuisineProfileManager() {
               <div>
                 <label className="block font-medium text-slate-700 mb-2">Technique Defaults</label>
                 <textarea
-                  value={(editingProfile.profile_data.technique_defaults || []).join('\n')}
-                  onChange={(e) => setEditingProfile({
-                    ...editingProfile,
-                    profile_data: {
-                      ...editingProfile.profile_data,
-                      technique_defaults: e.target.value.split('\n').filter(l => l.trim())
-                    }
-                  })}
+                  value={techniquesText}
+                  onChange={(e) => setTechniquesText(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   rows={5}
                   placeholder="One technique per line"
