@@ -21,6 +21,7 @@ export default function CuisineProfileManager() {
   const [isCreating, setIsCreating] = useState(false);
   const [editMode, setEditMode] = useState<'form' | 'json'>('form');
   const [jsonError, setJsonError] = useState('');
+  const [keywordText, setKeywordText] = useState('');
 
   useEffect(() => {
     loadProfiles();
@@ -114,6 +115,7 @@ export default function CuisineProfileManager() {
       created_at: '',
       updated_at: ''
     });
+    setKeywordText('');
     setIsCreating(true);
     setEditMode('form');
     setJsonError('');
@@ -121,6 +123,7 @@ export default function CuisineProfileManager() {
 
   function startEdit(profile: CuisineProfile) {
     setEditingProfile({ ...profile });
+    setKeywordText(profile.keywords.join(', '));
     setIsCreating(false);
     setEditMode('form');
     setJsonError('');
@@ -140,6 +143,8 @@ export default function CuisineProfileManager() {
       return;
     }
 
+    const keywords = keywordText.split(',').map(k => k.trim()).filter(k => k);
+
     if (isCreating) {
       const { error } = await supabase
         .from('cuisine_profiles')
@@ -148,7 +153,7 @@ export default function CuisineProfileManager() {
           style_focus: editingProfile.style_focus,
           profile_data: editingProfile.profile_data,
           is_active: editingProfile.is_active,
-          keywords: editingProfile.keywords,
+          keywords: keywords,
           display_order: editingProfile.display_order
         });
 
@@ -165,7 +170,7 @@ export default function CuisineProfileManager() {
           style_focus: editingProfile.style_focus,
           profile_data: editingProfile.profile_data,
           is_active: editingProfile.is_active,
-          keywords: editingProfile.keywords,
+          keywords: keywords,
           display_order: editingProfile.display_order
         })
         .eq('id', editingProfile.id);
@@ -206,11 +211,6 @@ export default function CuisineProfileManager() {
     } catch (error) {
       setJsonError('Invalid JSON');
     }
-  }
-
-  function updateKeywords(value: string) {
-    const keywords = value.split(',').map(k => k.trim()).filter(k => k);
-    setEditingProfile(prev => prev ? { ...prev, keywords } : null);
   }
 
   if (loading) {
@@ -265,8 +265,8 @@ export default function CuisineProfileManager() {
                 Detection Keywords (comma-separated)
               </label>
               <textarea
-                value={editingProfile.keywords.join(', ')}
-                onChange={(e) => updateKeywords(e.target.value)}
+                value={keywordText}
+                onChange={(e) => setKeywordText(e.target.value)}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 rows={3}
                 placeholder="e.g., chinese, stir fry, wok, soy sauce, ginger"
