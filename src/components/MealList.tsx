@@ -27,16 +27,16 @@ export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
   if (meals.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="max-w-xl w-full bg-cream-50 rounded-3xl shadow-lg p-12 texture-subtle">
-          <div className="text-center mb-8">
-            <div className="inline-flex p-4 bg-gradient-to-br from-terracotta-100 to-cream-100 rounded-full mb-6">
-              <Calendar className="w-16 h-16 text-terracotta-600" />
+        <div className="max-w-2xl w-full bg-cream-50 rounded-3xl shadow-xl p-12 border border-sage-200">
+          <div className="text-center mb-10">
+            <div className="inline-flex p-5 bg-gradient-to-br from-warmtan-100 to-cream-100 rounded-full mb-6 shadow-sm">
+              <Calendar className="w-16 h-16 text-warmtan-600" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              Start Planning Your Meals
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Ready to plan your first meal?
             </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Organize your recipes into meal plans to stay on track with your cooking goals
+            <p className="text-xl text-gray-600 leading-relaxed mb-8">
+              Group recipes together for dinner parties, weekly meal prep, or special occasions.
             </p>
 
             {onCreateNew && (
@@ -45,28 +45,28 @@ export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
                 className="group relative inline-flex items-center gap-3 bg-gradient-to-br from-terracotta-500 to-terracotta-600 hover:from-terracotta-600 hover:to-terracotta-700 text-white rounded-xl px-8 py-4 transition-all transform hover:scale-105 hover:shadow-xl font-semibold text-lg"
               >
                 <Plus className="w-6 h-6" />
-                Create Your First Meal
-                <Sparkles className="w-5 h-5" />
+                Create Your First Meal Plan
+                <Sparkles className="w-5 h-5 animate-pulse" />
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-xl transition-colors" />
               </button>
             )}
           </div>
 
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <div className="text-sm text-gray-600 space-y-2">
-              <p className="font-medium text-gray-900 mb-3">With meal planning you can:</p>
-              <ul className="space-y-2 text-left max-w-md mx-auto">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span>Organize recipes for specific dates and events</span>
+          <div className="mt-10 pt-8 border-t border-sage-200">
+            <div className="text-sm text-gray-600 space-y-3">
+              <p className="font-semibold text-gray-900 mb-4 text-center">With meal planning you can:</p>
+              <ul className="space-y-3 text-left max-w-lg mx-auto">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-sage-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">Organize multiple recipes for specific dates and events</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span>Track which recipes you've completed</span>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-sage-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">Track cooking progress as you prepare each dish</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span>Stay organized with your cooking schedule</span>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-sage-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">Plan ahead for stress-free hosting and meal prep</span>
                 </li>
               </ul>
             </div>

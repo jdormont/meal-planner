@@ -1,5 +1,5 @@
 import { Recipe } from '../lib/supabase';
-import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe } from 'lucide-react';
+import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe, Camera } from 'lucide-react';
 
 type RecipeListProps = {
   recipes: Recipe[];
@@ -15,84 +15,91 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
   if (recipes.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="max-w-2xl w-full bg-white rounded-3xl shadow-lg p-12 texture-subtle">
-          <div className="text-center mb-8">
-            <div className="inline-flex p-4 bg-gradient-to-br from-terracotta-100 to-cream-100 rounded-full mb-6">
+        <div className="max-w-3xl w-full bg-cream-50 rounded-3xl shadow-xl p-12 border border-sage-200">
+          <div className="text-center mb-12">
+            <div className="inline-flex p-5 bg-gradient-to-br from-terracotta-100 to-cream-100 rounded-full mb-6 shadow-sm">
               <ChefHat className="w-16 h-16 text-terracotta-600" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              Welcome to Your Recipe Collection
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Your recipe collection starts here
             </h2>
-            <p className="text-lg text-gray-600">
-              Get started by creating your first recipe or let our AI assistant help you brainstorm ideas
+            <p className="text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
+              Save your favorite recipes, import them from the web or photos, and plan meals with help from AI.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            {onCreateNew && (
+          <div className="grid md:grid-cols-3 gap-5">
+            {onOpenChat && (
               <button
-                onClick={onCreateNew}
-                className="group relative bg-gradient-to-br from-terracotta-500 to-terracotta-600 hover:from-terracotta-600 hover:to-terracotta-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
+                onClick={onOpenChat}
+                className="group relative bg-white hover:bg-gradient-to-br hover:from-warmtan-50 hover:to-cream-50 border-2 border-warmtan-200 hover:border-warmtan-300 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                style={{ animationDelay: '0ms' }}
               >
-                <div className="flex flex-col items-center gap-3">
-                  <div className="p-3 bg-white/20 rounded-lg">
-                    <Plus className="w-8 h-8" />
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white text-xs font-semibold rounded-full shadow-md">
+                    <Sparkles className="w-3 h-3" />
+                    Suggested starting point
+                  </span>
+                </div>
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="p-4 bg-gradient-to-br from-warmtan-100 to-warmtan-200 rounded-2xl group-hover:scale-110 transition-transform duration-300 relative">
+                    <MessageSquare className="w-10 h-10 text-warmtan-700" />
+                    <Sparkles className="w-5 h-5 absolute -top-1 -right-1 text-warmtan-600 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-1">Create Recipe</h3>
-                    <p className="text-sm text-terracotta-50">
-                      Start from scratch with your own recipe
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Ask the AI</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Get recipe ideas, cooking tips, or meal-planning help.
                     </p>
                   </div>
                 </div>
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-xl transition-colors" />
               </button>
             )}
 
             {onImportFromWeb && (
               <button
                 onClick={onImportFromWeb}
-                className="group relative bg-gradient-to-br from-sage-500 to-sage-600 hover:from-sage-600 hover:to-sage-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
+                className="group relative bg-white hover:bg-gradient-to-br hover:from-sage-50 hover:to-cream-50 border-2 border-sage-200 hover:border-sage-300 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                style={{ animationDelay: '100ms' }}
               >
-                <div className="flex flex-col items-center gap-3">
-                  <div className="p-3 bg-white/20 rounded-lg">
-                    <Globe className="w-8 h-8" />
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="p-4 bg-gradient-to-br from-sage-100 to-sage-200 rounded-2xl group-hover:scale-110 transition-transform duration-300 relative">
+                    <Globe className="w-10 h-10 text-sage-700" />
+                    <Camera className="w-5 h-5 text-sage-600 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-1">Import from Web</h3>
-                    <p className="text-sm text-sage-50">
-                      Scrape a recipe from any website
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Import from Web or Photo</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Paste a link or upload a photo and we'll do the parsing.
                     </p>
                   </div>
                 </div>
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-xl transition-colors" />
               </button>
             )}
 
-            {onOpenChat && (
+            {onCreateNew && (
               <button
-                onClick={onOpenChat}
-                className="group relative bg-gradient-to-br from-warmtan-500 to-warmtan-600 hover:from-warmtan-600 hover:to-warmtan-700 text-white rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-xl"
+                onClick={onCreateNew}
+                className="group relative bg-white hover:bg-gradient-to-br hover:from-terracotta-50 hover:to-cream-50 border-2 border-terracotta-200 hover:border-terracotta-300 rounded-2xl p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                style={{ animationDelay: '200ms' }}
               >
-                <div className="flex flex-col items-center gap-3">
-                  <div className="p-3 bg-white/20 rounded-lg relative">
-                    <MessageSquare className="w-8 h-8" />
-                    <Sparkles className="w-4 h-4 absolute -top-1 -right-1 text-yellow-300" />
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="p-4 bg-gradient-to-br from-terracotta-100 to-terracotta-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                    <Plus className="w-10 h-10 text-terracotta-700" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-1">AI Assistant</h3>
-                    <p className="text-sm text-warmtan-50">
-                      Get recipe ideas and cooking tips
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Create a Recipe</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Add a recipe from scratch — food or cocktails.
                     </p>
                   </div>
                 </div>
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-xl transition-colors" />
               </button>
             )}
           </div>
 
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-500 text-center">
+          <div className="mt-10 pt-8 border-t border-sage-200">
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
               Once you add recipes, they'll appear here for easy access and organization
             </p>
           </div>

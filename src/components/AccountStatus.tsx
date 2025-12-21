@@ -6,8 +6,8 @@ export function AccountStatus() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-sage-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md">
+      <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center p-4">
+        <div className="bg-cream-50 rounded-3xl shadow-xl p-8 w-full max-w-md border border-sage-200">
           <div className="text-center">
             <ChefHat className="w-12 h-12 text-terracotta-600 mx-auto mb-4 animate-pulse" />
             <p className="text-gray-600">Loading your account status...</p>
@@ -21,11 +21,11 @@ export function AccountStatus() {
   const isRejected = userProfile.status === 'REJECTED';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-sage-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center p-4">
+      <div className="bg-cream-50 rounded-3xl shadow-xl p-8 w-full max-w-md border border-sage-200">
         <div className="text-center mb-6">
-          <div className={`inline-flex p-4 rounded-full mb-4 ${
-            isPending ? 'bg-cream-100' : 'bg-red-100'
+          <div className={`inline-flex p-4 rounded-2xl mb-4 ${
+            isPending ? 'bg-warmtan-100' : 'bg-red-100'
           }`}>
             {isPending ? (
               <Clock className="w-12 h-12 text-warmtan-600" />
@@ -45,7 +45,7 @@ export function AccountStatus() {
           </p>
         </div>
 
-        <div className="bg-sage-50 rounded-xl p-4 mb-6 space-y-2">
+        <div className="bg-sage-50 border border-sage-200 rounded-xl p-4 mb-6 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Email:</span>
             <span className="font-medium text-gray-900">{user?.email}</span>
@@ -71,8 +71,8 @@ export function AccountStatus() {
         </div>
 
         {isPending && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800">
+          <div className="bg-warmtan-50 border border-warmtan-200 rounded-xl p-4 mb-6">
+            <p className="text-sm text-warmtan-900">
               Your account is in the approval queue. This process typically takes 1-2 business days.
               Please check back later or contact support if you have questions.
             </p>
