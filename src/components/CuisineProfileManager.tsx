@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Edit2, Trash2, ChevronUp, ChevronDown, Save, X, Upload } from 'lucide-react';
+import { Plus, CreditCard as Edit2, Trash2, ChevronUp, ChevronDown, Save, X, Upload } from 'lucide-react';
 
 type CuisineProfile = {
   id: string;
