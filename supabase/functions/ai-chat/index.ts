@@ -158,7 +158,7 @@ async function detectCuisineFromMessages(
   messages: any[],
   userPreferences: any,
   supabaseClient: any
-): Promise<{ cuisine: string; confidence: string } | null> {
+): Promise<{ cuisine: string; confidence: string; rationale: string; allMatches: string } | null> {
   try {
     // Get all active cuisine profiles with their keywords
     const { data: profiles, error } = await supabaseClient
@@ -180,10 +180,11 @@ async function detectCuisineFromMessages(
       .toLowerCase();
 
     // Check each cuisine's keywords for matches
-    const matches: { cuisine: string; styleFocus: string; score: number }[] = [];
+    const matches: { cuisine: string; styleFocus: string; score: number; matchedKeywords: string[] }[] = [];
 
     for (const profile of profiles) {
       let score = 0;
+      const matchedKeywords: string[] = [];
 
       for (const keyword of profile.keywords) {
         const keywordLower = keyword.toLowerCase();
@@ -195,12 +196,19 @@ async function detectCuisineFromMessages(
         if (occurrences > 0) {
           // Give higher weight to exact cuisine name matches
           const isCuisineName = keywordLower === profile.cuisine_name.toLowerCase();
-          score += occurrences * (isCuisineName ? 3 : 1);
+          const points = occurrences * (isCuisineName ? 3 : 1);
+          score += points;
+          matchedKeywords.push(`${keyword} (${occurrences}x, +${points}pts)`);
         }
       }
 
       if (score > 0) {
-        matches.push({ cuisine: profile.cuisine_name, styleFocus: profile.style_focus, score });
+        matches.push({
+          cuisine: profile.cuisine_name,
+          styleFocus: profile.style_focus,
+          score,
+          matchedKeywords
+        });
       }
     }
 
@@ -218,8 +226,24 @@ async function detectCuisineFromMessages(
           confidence = "medium";
         }
 
+        // Build rationale
+        const rationale = `Matched keywords: ${matches[0].matchedKeywords.join(", ")}. Total score: ${matches[0].score}`;
+
+        // Build all matches summary
+        const allMatchesSummary = matches.slice(0, 3).map(m =>
+          `${m.cuisine} (${m.score}pts): ${m.matchedKeywords.slice(0, 3).join(", ")}`
+        ).join(" | ");
+
         console.log(`Detected cuisine: ${matches[0].cuisine} (score: ${matches[0].score}, confidence: ${confidence})`);
-        return { cuisine: matches[0].cuisine, confidence };
+        console.log(`Rationale: ${rationale}`);
+        console.log(`All matches: ${allMatchesSummary}`);
+
+        return {
+          cuisine: matches[0].cuisine,
+          confidence,
+          rationale,
+          allMatches: allMatchesSummary
+        };
       }
     }
 
@@ -231,7 +255,12 @@ async function detectCuisineFromMessages(
         );
         if (profile) {
           console.log(`Using favorite cuisine: ${profile.cuisine_name}`);
-          return { cuisine: profile.cuisine_name, confidence: "medium" };
+          return {
+            cuisine: profile.cuisine_name,
+            confidence: "medium",
+            rationale: "Based on user's favorite cuisines",
+            allMatches: "N/A"
+          };
         }
       }
     }
@@ -579,7 +608,14 @@ Deno.serve(async (req: Request) => {
 
     // Detect cuisine and inject profile if relevant
     let cuisineProfileContext = '';
-    let cuisineMetadata = { applied: false, cuisine: '', styleFocus: '', confidence: '' };
+    let cuisineMetadata = {
+      applied: false,
+      cuisine: '',
+      styleFocus: '',
+      confidence: '',
+      rationale: '',
+      allMatches: ''
+    };
     const detectedCuisine = await detectCuisineFromMessages(messages, userPreferences, supabaseClient);
 
     if (detectedCuisine) {
@@ -590,7 +626,9 @@ Deno.serve(async (req: Request) => {
           applied: true,
           cuisine: cuisineProfile.cuisine_name,
           styleFocus: cuisineProfile.style_focus,
-          confidence: detectedCuisine.confidence
+          confidence: detectedCuisine.confidence,
+          rationale: detectedCuisine.rationale,
+          allMatches: detectedCuisine.allMatches
         };
         console.log(`Injecting ${detectedCuisine.cuisine} cuisine profile into system prompt`);
       }
@@ -970,7 +1008,9 @@ When generating a recipe:
 **Generation Metadata (Admin Only)**
 Cuisine Profile Applied: ${cuisineMetadata.applied ? '✅' : '❌'}
 ${cuisineMetadata.applied ? `Cuisine: ${cuisineMetadata.cuisine} (${cuisineMetadata.styleFocus})
-Confidence: ${cuisineMetadata.confidence.charAt(0).toUpperCase() + cuisineMetadata.confidence.slice(1)}` : 'No cuisine profile detected'}
+Confidence: ${cuisineMetadata.confidence.charAt(0).toUpperCase() + cuisineMetadata.confidence.slice(1)}
+Rationale: ${cuisineMetadata.rationale}
+All Competing Matches: ${cuisineMetadata.allMatches}` : 'No cuisine profile detected'}
 ---
 
 CRITICAL: Only include this metadata block for recipe generation responses. Do NOT include it for:
