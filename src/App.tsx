@@ -397,15 +397,15 @@ function App() {
     lines.forEach((line) => {
       const lowerLine = line.toLowerCase();
 
-      // Parse prep time
-      const prepMatch = line.match(/\*?\*?prep\s+time\*?\*?:?\s*(\d+)\s*(?:min|minutes?)/i);
+      // Parse prep time - handle formats like "**Prep Time:** 10 minutes" or "Prep Time: 10 minutes"
+      const prepMatch = line.match(/\*?\*?prep\s+time:?\*?\*?\s*(\d+)/i);
       if (prepMatch) {
         prepTime = parseInt(prepMatch[1]);
         return;
       }
 
-      // Parse cook time
-      const cookMatch = line.match(/\*?\*?cook\s+time\*?\*?:?\s*(\d+)\s*(?:min|minutes?)/i);
+      // Parse cook time - handle formats like "**Cook Time:** 30 minutes" or "Cook Time: 30 minutes"
+      const cookMatch = line.match(/\*?\*?cook\s+time:?\*?\*?\s*(\d+)/i);
       if (cookMatch) {
         cookTime = parseInt(cookMatch[1]);
         return;
@@ -491,14 +491,6 @@ function App() {
       // Only classify as cocktail if it's very obvious
       isCocktail = hasCocktailTitle || (hasSpirit && hasCocktailIngredients);
     }
-
-    console.log('Recipe classification:', {
-      title,
-      userQuery,
-      userAskedForDrink,
-      isCocktail,
-      ingredients: ingredients.map(i => i.name)
-    });
 
     const parsedRecipe: Recipe = {
       id: 'temp-ai-recipe',
