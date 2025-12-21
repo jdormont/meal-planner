@@ -154,7 +154,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = async (messageText?: string) => {
+  const sendMessage = async (messageText?: string, weeklyBrief?: boolean) => {
     const userMessage = (messageText || input).trim();
     if (!userMessage || loading) return;
 
@@ -215,6 +215,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
             ratingHistory,
             userPreferences,
             userId: user?.id,
+            weeklyBrief: weeklyBrief || false,
           }),
         }
       );
@@ -260,22 +261,26 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
     {
       icon: '🥘',
       text: 'Quick weeknight dinner ideas',
-      prompt: 'What are some easy 30-40 minute dinner recipes I can make with common pantry ingredients?'
+      prompt: 'What are some easy 30-40 minute dinner recipes I can make with common pantry ingredients?',
+      weeklyBrief: false
     },
     {
       icon: '🛒',
       text: 'Recipe with my ingredients',
-      prompt: 'I have [list your ingredients]. What can I make for dinner tonight?'
+      prompt: 'I have [list your ingredients]. What can I make for dinner tonight?',
+      weeklyBrief: false
     },
     {
       icon: '📅',
       text: 'Help me meal plan',
-      prompt: 'Help me plan 5 weeknight dinners for this week that are quick and easy'
+      prompt: 'Help me plan dinners for this week',
+      weeklyBrief: true
     },
     {
       icon: '💡',
       text: 'Recipe suggestions for me',
-      prompt: 'Based on my preferences and what I\'ve liked before, suggest some recipes I would enjoy'
+      prompt: 'Based on my preferences and what I\'ve liked before, suggest some recipes I would enjoy',
+      weeklyBrief: false
     }
   ];
 
@@ -355,7 +360,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
               {quickPrompts.map((prompt, idx) => (
                 <button
                   key={idx}
-                  onClick={() => sendMessage(prompt.prompt)}
+                  onClick={() => sendMessage(prompt.prompt, prompt.weeklyBrief)}
                   disabled={loading}
                   className="p-4 bg-white border-2 border-sage-200 rounded-xl hover:border-terracotta-500 hover:shadow-md transition text-left disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                 >

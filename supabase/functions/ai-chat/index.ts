@@ -163,7 +163,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId } = await req.json();
+    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief } = await req.json();
     
     // Get Authorization header for authenticated requests
     const authHeader = req.headers.get("Authorization");
@@ -365,6 +365,21 @@ Deno.serve(async (req: Request) => {
         }
         ratingContext += '\n\nUse this information to personalize recommendations and avoid suggesting similar recipes to ones they disliked.';
       }
+    }
+
+    let weeklyBriefContext = '';
+    if (weeklyBrief) {
+      weeklyBriefContext = '\n\n**IMPORTANT INSTRUCTION - WEEKLY COOKING BRIEF MODE:**\n\n';
+      weeklyBriefContext += 'The user has requested help with weekly meal planning. You MUST immediately enter "Weekly Cooking Brief" mode as described in your core instructions.\n\n';
+      weeklyBriefContext += '**DO NOT ask clarifying questions first.** Instead, proceed directly to suggesting 4-6 well-balanced meal ideas for the week that work together.\n\n';
+      weeklyBriefContext += 'Use what you know from their preferences, rating history, and the context provided to make thoughtful suggestions.\n\n';
+      weeklyBriefContext += 'Your response should:\n';
+      weeklyBriefContext += '• Briefly acknowledge their week-planning request (1 sentence)\n';
+      weeklyBriefContext += '• Present 4-6 meal ideas that balance effort, variety, and their preferences\n';
+      weeklyBriefContext += '• Include a mix of: one flexible anchor dish, several fast weeknight meals, and at least one lighter option\n';
+      weeklyBriefContext += '• Explain briefly why this mix works for them\n';
+      weeklyBriefContext += '• End by inviting tweaks or asking if they want details on any specific meal\n\n';
+      weeklyBriefContext += 'Remember: Be conversational, supportive, and confident. Help them feel like "Yes — that sounds great."';
     }
 
     const systemPrompt = `You are CookFlow — an expert home-cooking partner, not a recipe database.
@@ -715,7 +730,7 @@ Example tone:
 Not:
 "Here are some recipe suggestions that you might enjoy based on your profile preferences..."
 
-**Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}`;
+**Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}${weeklyBriefContext}`;
 
     let message;
     let usedFallback = false;
