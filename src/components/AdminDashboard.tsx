@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase, UserProfile, LLMModel } from '../lib/supabase';
-import { Shield, Search, CheckCircle, XCircle, Users, Clock, UserCheck, UserX, Loader2, RotateCcw, Trash2, Settings, Cpu } from 'lucide-react';
+import { Shield, Search, CheckCircle, XCircle, Users, Clock, UserCheck, UserX, Loader2, RotateCcw, Trash2, Settings, Cpu, Globe } from 'lucide-react';
+import CuisineProfileManager from './CuisineProfileManager';
 
 type FilterStatus = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
-type TabType = 'users' | 'models';
+type TabType = 'users' | 'models' | 'cuisines';
 
 export function AdminDashboard() {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -337,7 +338,7 @@ export function AdminDashboard() {
         </div>
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Admin Dashboard</h2>
-          <p className="text-gray-600">Manage users and AI models</p>
+          <p className="text-gray-600">Manage users, AI models, and cuisine profiles</p>
         </div>
       </div>
 
@@ -363,6 +364,17 @@ export function AdminDashboard() {
         >
           <Cpu className="w-5 h-5" />
           LLM Models
+        </button>
+        <button
+          onClick={() => setActiveTab('cuisines')}
+          className={`px-4 py-3 font-medium transition flex items-center gap-2 ${
+            activeTab === 'cuisines'
+              ? 'text-terracotta-600 border-b-2 border-terracotta-600'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Globe className="w-5 h-5" />
+          Cuisine Profiles
         </button>
       </div>
 
@@ -675,6 +687,10 @@ export function AdminDashboard() {
             </div>
           </div>
         </>
+      )}
+
+      {activeTab === 'cuisines' && (
+        <CuisineProfileManager />
       )}
     </div>
   );
