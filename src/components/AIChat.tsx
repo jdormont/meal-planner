@@ -7,6 +7,14 @@ import { useAuth } from '../contexts/AuthContext';
 type Message = {
   role: 'user' | 'assistant';
   content: string;
+  cuisineMetadata?: {
+    applied: boolean;
+    cuisine: string;
+    styleFocus: string;
+    confidence: string;
+    rationale: string;
+    allMatches: string;
+  };
 };
 
 type AIChatProps = {
@@ -35,6 +43,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
   const [showChatList, setShowChatList] = useState(true);
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
   const [currentModel, setCurrentModel] = useState<string>('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,8 +56,23 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
   useEffect(() => {
     if (user) {
       loadChats();
+      checkAdminStatus();
     }
   }, [user]);
+
+  const checkAdminStatus = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('is_admin')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data) {
+      setIsAdmin(data.is_admin || false);
+    }
+  };
 
   const loadChats = async () => {
     if (!user) return;
@@ -171,6 +195,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
     try {
       let ratingHistory = [];
       let userPreferences = null;
+      let isAdmin = false;
 
       if (user) {
         const { data: ratingsData } = await supabase
@@ -196,6 +221,14 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
           .maybeSingle();
 
         userPreferences = prefsData;
+
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('is_admin')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        isAdmin = profileData?.is_admin || false;
       }
 
       // Get the user's session token for authenticated requests
@@ -216,6 +249,7 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
             userPreferences,
             userId: user?.id,
             weeklyBrief: weeklyBrief || false,
+            isAdmin,
           }),
         }
       );
@@ -225,7 +259,11 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
       }
 
       const data = await response.json();
-      const assistantMessage = { role: 'assistant' as const, content: data.message };
+      const assistantMessage = {
+        role: 'assistant' as const,
+        content: data.message,
+        ...(data.cuisineMetadata && { cuisineMetadata: data.cuisineMetadata })
+      };
       setMessages((prev) => [...prev, assistantMessage]);
 
       if (data.modelUsed) {
@@ -416,6 +454,37 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
                   <Save className="w-4 h-4" />
                   Save as Recipe
                 </button>
+              )}
+              {message.role === 'assistant' && isAdmin && message.cuisineMetadata && message.content.includes('FULL_RECIPE') && (
+                <div className="mt-4 pt-4 border-t border-sage-200">
+                  <div className="text-xs font-semibold text-gray-700 mb-2">Generation Metadata (Admin Only)</div>
+                  <div className="text-xs space-y-1 text-gray-600">
+                    <div>
+                      <span className="font-medium">Cuisine Profile Applied:</span>{' '}
+                      {message.cuisineMetadata.applied ? '✅ Yes' : '❌ No'}
+                    </div>
+                    {message.cuisineMetadata.applied && (
+                      <>
+                        <div>
+                          <span className="font-medium">Cuisine:</span>{' '}
+                          {message.cuisineMetadata.cuisine} ({message.cuisineMetadata.styleFocus})
+                        </div>
+                        <div>
+                          <span className="font-medium">Confidence:</span>{' '}
+                          {message.cuisineMetadata.confidence.charAt(0).toUpperCase() + message.cuisineMetadata.confidence.slice(1)}
+                        </div>
+                        <div>
+                          <span className="font-medium">Rationale:</span>{' '}
+                          {message.cuisineMetadata.rationale}
+                        </div>
+                        <div>
+                          <span className="font-medium">All Competing Matches:</span>{' '}
+                          {message.cuisineMetadata.allMatches}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
             {message.role === 'user' && (
