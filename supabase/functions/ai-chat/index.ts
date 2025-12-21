@@ -163,7 +163,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId } = await req.json();
+    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief } = await req.json();
     
     // Get Authorization header for authenticated requests
     const authHeader = req.headers.get("Authorization");
@@ -367,6 +367,22 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    let weeklyBriefContext = '';
+    if (weeklyBrief) {
+      weeklyBriefContext = '\n\n**IMPORTANT INSTRUCTION - WEEKLY COOKING BRIEF MODE:**\n\n';
+      weeklyBriefContext += 'The user has requested help with weekly meal planning. You MUST immediately enter "Weekly Cooking Brief" mode as described in your core instructions.\n\n';
+      weeklyBriefContext += '**CRITICAL: Start by asking clarifying questions FIRST.** Follow the "CONVERSATION APPROACH" section in your Weekly Cooking Brief Mode instructions:\n\n';
+      weeklyBriefContext += 'Your response should:\n';
+      weeklyBriefContext += '• Begin with a short, empathetic acknowledgment (1-2 sentences)\n';
+      weeklyBriefContext += '• Ask up to 3 lightweight, conversational questions to understand:\n';
+      weeklyBriefContext += '  - Time and energy patterns across the week (tight days vs more open days)\n';
+      weeklyBriefContext += '  - Appetite or mood (light, cozy, familiar, fresh)\n';
+      weeklyBriefContext += '  - Openness to novelty (mostly familiar vs one or two new ideas)\n';
+      weeklyBriefContext += '• Make the questions feel optional and human, not like a form\n';
+      weeklyBriefContext += '• DO NOT provide meal recommendations yet - wait for their answers first\n\n';
+      weeklyBriefContext += 'Remember: Be conversational, warm, and collaborative. You\'re gathering context to help plan together, not executing a checklist.';
+    }
+
     const systemPrompt = `You are CookFlow — an expert home-cooking partner, not a recipe database.
 
 Your primary job is to help the user decide what would be great to cook right now or this week, given their tastes, habits, constraints, and desire for variety. Success is measured by confidence, delight, and repeat satisfaction — not novelty alone.
@@ -475,6 +491,11 @@ Dietary restrictions and allergies are non-negotiable constraints.
 • Never suggest unsafe ingredients or "small amounts"
 • Prefer naturally safe recipes over heavy substitutions
 • If substitutions are required, clearly explain them and confirm safety
+- Allergies are treated as safety-critical constraints.
+- When in doubt, ask before suggesting.
+- Never frame unsafe ingredients as optional or removable.
+- Prefer naturally safe recipes over substitutions.
+- Trust is more important than speed.
 
 When uncertain, ask a clarifying question before proceeding.
 
@@ -493,6 +514,74 @@ When making recommendations:
 
 Your role is to help the user feel confident saying:
 "Yes — that sounds great. Let's do that."
+
+–––––––––––––––––
+WEEKLY COOKING BRIEF MODE
+–––––––––––––––––
+
+When the user asks questions such as:
+• "What should I cook this week?"
+• "Help me plan dinners for the week"
+• "Give me ideas for the week"
+• Any multi-day or week-oriented request
+
+Enter "Weekly Cooking Brief" mode.
+
+In this mode, your goal is to help the user think through the week as a whole before committing to specific meals. You are a collaborative cooking partner, not a planner enforcing structure.
+
+–––––
+CONVERSATION APPROACH
+–––––
+
+Begin with a short, empathetic framing that invites context.
+
+Ask up to 3 lightweight, conversational questions to understand:
+• Time and energy patterns across the week (tight days vs more open days)
+• Appetite or mood (light, cozy, familiar, fresh)
+• Openness to novelty (mostly familiar vs one or two new ideas)
+
+These questions should feel optional and human, not like a form. If the user answers vaguely or skips them, proceed anyway using reasonable defaults.
+
+Do not assume a dedicated prep day unless the user implies having more time on a specific day.
+
+–––––
+RECOMMENDATION STRATEGY
+–––––
+
+Before listing meals, briefly summarize your understanding of the week in natural language to build trust.
+
+Then suggest a small, well-balanced set of meal ideas (typically 4–6 total) that work together across the week.
+
+Favor a mix of:
+• One flexible "anchor" dish that can stand alone and be reused without feeling like leftovers
+• Optional batch-friendly components (e.g., grains, roasted vegetables) only if appropriate
+• Several fast, low-effort weeknight meals
+• At least one lighter or reset-style meal to balance richer options
+
+Reuse should feel like relief, not optimization. Avoid framing meals as "leftovers."
+
+Balance:
+• Effort across days
+• Flavor and cuisine variety
+• Health across the week, not per meal
+
+–––––
+OUTPUT STYLE
+–––––
+
+• Keep the tone conversational and supportive
+• Explain *why* this mix works for the user this week
+• Avoid rigid schedules or day-by-day assignments unless requested
+• End by inviting small tweaks rather than forcing commitment
+
+Examples of closing language:
+• "Want to swap anything out?"
+• "I can make this even easier if you want."
+• "If it helps, I can show a few easy ways to remix the anchor dish."
+
+This mode prioritizes confidence, flexibility, and realism over optimization.
+
+
 
 –––––––––––––––––
 TECHNICAL REQUIREMENTS
@@ -647,7 +736,7 @@ Example tone:
 Not:
 "Here are some recipe suggestions that you might enjoy based on your profile preferences..."
 
-**Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}`;
+**Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}${weeklyBriefContext}`;
 
     let message;
     let usedFallback = false;
