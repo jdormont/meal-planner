@@ -412,7 +412,7 @@ function App() {
       }
 
       if (lines.indexOf(line) === 0 && !lowerLine.includes('ingredient') && !lowerLine.includes('instruction')) {
-        title = line.replace(/^#+ /, '').trim();
+        title = line.replace(/^#+ /, '').replace(/^\*\*/, '').replace(/\*\*$/, '').trim();
       } else if (lowerLine.includes('ingredient')) {
         section = 'ingredients';
       } else if (lowerLine.includes('instruction') || lowerLine.includes('direction') || lowerLine.includes('step')) {
@@ -437,9 +437,8 @@ function App() {
     });
 
     const titleLower = title.toLowerCase();
-    const descLower = description.toLowerCase();
 
-    // Strong cocktail indicators in title or description
+    // Only classify as cocktail if there's explicit cocktail terminology in the title
     const hasCocktailTitle = titleLower.includes('cocktail') ||
                               titleLower.includes('martini') ||
                               titleLower.includes('margarita') ||
@@ -449,36 +448,45 @@ function App() {
                               titleLower.includes('negroni') ||
                               titleLower.includes('manhattan') ||
                               titleLower.includes('gimlet') ||
-                              titleLower.match(/\b(drink|beverage|libation|shot)\b/) !== null;
+                              titleLower.includes('cosmopolitan') ||
+                              titleLower.includes('sidecar') ||
+                              titleLower.includes('mai tai');
 
-    // Count spirit-based ingredients
+    // Count spirit-based ingredients (be very specific to avoid false positives)
     const spiritKeywords = [
       'vodka', 'gin', 'rum', 'tequila', 'whiskey', 'whisky',
       'bourbon', 'scotch', 'cognac', 'brandy', 'vermouth',
-      'aperol', 'campari', 'liqueur', 'amaretto',
+      'aperol', 'campari', 'amaretto',
       'benedictine', 'chartreuse', 'mezcal', 'pisco'
     ];
 
-    const spiritCount = ingredients.filter(ing => {
+    const hasSpirit = ingredients.some(ing => {
       const ingLower = ing.name.toLowerCase();
-      return spiritKeywords.some(spirit => ingLower.includes(spirit));
-    }).length;
+      return spiritKeywords.some(spirit => {
+        const regex = new RegExp(`\\b${spirit}\\b`, 'i');
+        return regex.test(ingLower);
+      });
+    });
 
-    // Also check for common cocktail-only ingredients
+    // Check for classic cocktail-only ingredients
     const hasCocktailIngredients = ingredients.some(ing => {
       const ingLower = ing.name.toLowerCase();
       return ingLower.includes('simple syrup') ||
-             ingLower.includes('bitters') ||
-             ingLower.match(/\b(maraschino|orgeat|falernum)\b/) !== null;
+             ingLower.match(/\b(bitters?|maraschino|orgeat|falernum)\b/) !== null;
     });
 
-    // Recipe is a cocktail if:
-    // 1. Title/description clearly indicates it's a drink, OR
-    // 2. Has 2+ spirit ingredients, OR
-    // 3. Has 1 spirit ingredient AND cocktail-specific ingredients
-    const isCocktail = hasCocktailTitle ||
-                       spiritCount >= 2 ||
-                       (spiritCount >= 1 && hasCocktailIngredients);
+    // Be very conservative: only classify as cocktail if it's very obvious
+    // Must have BOTH a cocktail title OR (spirit + cocktail ingredients)
+    const isCocktail = hasCocktailTitle || (hasSpirit && hasCocktailIngredients);
+
+    console.log('Recipe classification:', {
+      title,
+      hasCocktailTitle,
+      hasSpirit,
+      hasCocktailIngredients,
+      isCocktail,
+      ingredients: ingredients.map(i => i.name)
+    });
 
     const parsedRecipe: Recipe = {
       id: 'temp-ai-recipe',
