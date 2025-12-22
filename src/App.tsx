@@ -15,6 +15,7 @@ import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
 import { RecipeImportModal } from './components/RecipeImportModal';
 import { RecipePhotoModal } from './components/RecipePhotoModal';
+import { OnboardingInterstitial } from './components/OnboardingInterstitial';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
 import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine, Camera } from 'lucide-react';
 
@@ -45,6 +46,7 @@ function App() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [recipeType, setRecipeType] = useState<'food' | 'cocktail'>('food');
+  const [showOnboardingInterstitial, setShowOnboardingInterstitial] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -111,6 +113,28 @@ function App() {
       setCommunityRecipes(data || []);
     } catch (error) {
       console.error('Error loading community recipes:', error);
+    }
+  };
+
+  const checkAndShowOnboarding = async () => {
+    if (!user || !userProfile) return;
+
+    if (userProfile.has_seen_onboarding === false) {
+      setShowOnboardingInterstitial(true);
+      await markOnboardingSeen();
+    }
+  };
+
+  const markOnboardingSeen = async () => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from('user_profiles')
+        .update({ has_seen_onboarding: true })
+        .eq('user_id', user.id);
+    } catch (error) {
+      console.error('Error marking onboarding as seen:', error);
     }
   };
 
@@ -217,6 +241,8 @@ function App() {
 
   const saveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
+      const isNewRecipe = !editingRecipe || !editingRecipe.id || editingRecipe.id.startsWith('temp-');
+
       if (editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-')) {
         const { error } = await supabase
           .from('recipes')
@@ -236,6 +262,10 @@ function App() {
       await loadCommunityRecipes();
       setShowForm(false);
       setEditingRecipe(null);
+
+      if (isNewRecipe) {
+        await checkAndShowOnboarding();
+      }
     } catch (error) {
       console.error('Error saving recipe:', error);
       alert('Failed to save recipe. Please try again.');
@@ -761,7 +791,7 @@ function App() {
           <Settings />
         ) : showChat ? (
           <div className="h-[calc(100vh-10rem)]">
-            <AIChat onSaveRecipe={parseAIRecipe} />
+            <AIChat onSaveRecipe={parseAIRecipe} onFirstAction={checkAndShowOnboarding} />
           </div>
         ) : showCommunity ? (
           <div>
@@ -978,6 +1008,7 @@ function App() {
             setShowForm(true);
           }}
           onCopy={copyRecipe}
+          onFirstAction={checkAndShowOnboarding}
         />
       )}
 
@@ -1043,6 +1074,10 @@ function App() {
             setShowForm(true);
           }}
         />
+      )}
+
+      {showOnboardingInterstitial && (
+        <OnboardingInterstitial onClose={() => setShowOnboardingInterstitial(false)} />
       )}
     </div>
   );

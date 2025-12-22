@@ -87,6 +87,7 @@ export type UserProfile = {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   is_admin: boolean;
   assigned_model_id?: string | null;
+  has_seen_onboarding?: boolean;
   created_at: string;
   updated_at: string;
   login_count?: number;
