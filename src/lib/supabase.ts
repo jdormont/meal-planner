@@ -40,6 +40,7 @@ export type Recipe = {
   cocktail_metadata?: CocktailMetadata | null;
   created_at: string;
   updated_at: string;
+  rating?: 'thumbs_up' | 'thumbs_down' | null;
 };
 
 export type RecipeRating = {

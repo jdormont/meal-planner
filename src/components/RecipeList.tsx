@@ -1,5 +1,5 @@
 import { Recipe } from '../lib/supabase';
-import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe, Camera } from 'lucide-react';
+import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 type RecipeListProps = {
   recipes: Recipe[];
@@ -126,6 +126,19 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
             ) : (
               <div className="w-full h-48 bg-gradient-to-br from-terracotta-100 to-cream-100 flex items-center justify-center">
                 <span className="text-6xl">🍽️</span>
+              </div>
+            )}
+            {recipe.rating && (
+              <div className={`absolute top-2 left-2 p-1.5 rounded-full shadow-lg ${
+                recipe.rating === 'thumbs_up'
+                  ? 'bg-green-500'
+                  : 'bg-red-500'
+              }`}>
+                {recipe.rating === 'thumbs_up' ? (
+                  <ThumbsUp className="w-4 h-4 text-white" />
+                ) : (
+                  <ThumbsDown className="w-4 h-4 text-white" />
+                )}
               </div>
             )}
             {recipe.source_url && (

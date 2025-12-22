@@ -64,14 +64,34 @@ function App() {
 
   const loadRecipes = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: recipesData, error: recipesError } = await supabase
         .from('recipes')
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setRecipes(data || []);
+      if (recipesError) throw recipesError;
+
+      // Fetch ratings for all recipes
+      const { data: ratingsData, error: ratingsError } = await supabase
+        .from('recipe_ratings')
+        .select('recipe_id, rating')
+        .eq('user_id', user!.id);
+
+      if (ratingsError) throw ratingsError;
+
+      // Create a map of recipe_id to rating
+      const ratingsMap = new Map(
+        (ratingsData || []).map(r => [r.recipe_id, r.rating])
+      );
+
+      // Merge ratings with recipes
+      const recipesWithRatings = (recipesData || []).map(recipe => ({
+        ...recipe,
+        rating: ratingsMap.get(recipe.id) || null
+      }));
+
+      setRecipes(recipesWithRatings);
     } catch (error) {
       console.error('Error loading recipes:', error);
     } finally {
