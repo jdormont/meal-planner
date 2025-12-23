@@ -581,7 +581,7 @@ function App() {
     return (
       <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center">
         <div className="text-center">
-          <ChefHat className="w-16 h-16 text-terracotta-500 mx-auto mb-4 animate-pulse" />
+          <img src="/image.png" alt="Sous" className="h-16 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -596,7 +596,7 @@ function App() {
     return (
       <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center">
         <div className="text-center">
-          <ChefHat className="w-16 h-16 text-terracotta-500 mx-auto mb-4 animate-pulse" />
+          <img src="/image.png" alt="Sous" className="h-16 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading your profile...</p>
         </div>
       </div>
@@ -613,12 +613,10 @@ function App() {
         <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 lg:px-8 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="p-1.5 sm:p-2 bg-sage-200 rounded-2xl flex-shrink-0">
-                <ChefHat className="w-6 h-6 sm:w-8 sm:h-8 text-sage-700" />
-              </div>
+              <img src="/image.png" alt="Sous" className="h-8 sm:h-10 flex-shrink-0" />
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Recipe Manager</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Organize, plan, and discover recipes</p>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Sous</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Plan less. Cook smarter</p>
               </div>
             </div>
 
