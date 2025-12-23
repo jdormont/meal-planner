@@ -19,6 +19,7 @@ type Message = {
 
 type AIChatProps = {
   onSaveRecipe?: (recipeText: string, userQuery?: string) => void;
+  onFirstAction?: () => void;
 };
 
 type Chat = {
@@ -28,7 +29,7 @@ type Chat = {
   updated_at: string;
 };
 
-export function AIChat({ onSaveRecipe }: AIChatProps) {
+export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -274,6 +275,10 @@ export function AIChat({ onSaveRecipe }: AIChatProps) {
         await saveNewMessage(assistantMessage);
       } else {
         await saveCurrentChat();
+      }
+
+      if (onFirstAction) {
+        onFirstAction();
       }
     } catch (error) {
       setMessages((prev) => [

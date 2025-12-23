@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, UserPlus, Loader2, ChefHat, Globe, Calendar, Bot, Wine, Camera } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, ChefHat, Globe, Calendar, Bot } from 'lucide-react';
 
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -34,10 +34,7 @@ export function Auth() {
           <div className="max-w-xl w-full">
             <div className="mb-8 lg:mb-12">
               <div className="inline-flex items-center gap-3 mb-6">
-                <div className="p-2 bg-sage-200 rounded-2xl">
-                  <ChefHat className="w-8 h-8 text-sage-700" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900">Recipe Manager</span>
+                <img src="/image copy.png" alt="Sous" className="h-12" />
               </div>
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
                 Cook smarter.<br />Plan effortlessly.

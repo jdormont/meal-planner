@@ -15,6 +15,7 @@ import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
 import { RecipeImportModal } from './components/RecipeImportModal';
 import { RecipePhotoModal } from './components/RecipePhotoModal';
+import { OnboardingInterstitial } from './components/OnboardingInterstitial';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
 import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine, Camera } from 'lucide-react';
 
@@ -45,6 +46,7 @@ function App() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [recipeType, setRecipeType] = useState<'food' | 'cocktail'>('food');
+  const [showOnboardingInterstitial, setShowOnboardingInterstitial] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -64,14 +66,34 @@ function App() {
 
   const loadRecipes = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: recipesData, error: recipesError } = await supabase
         .from('recipes')
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setRecipes(data || []);
+      if (recipesError) throw recipesError;
+
+      // Fetch ratings for all recipes
+      const { data: ratingsData, error: ratingsError } = await supabase
+        .from('recipe_ratings')
+        .select('recipe_id, rating')
+        .eq('user_id', user!.id);
+
+      if (ratingsError) throw ratingsError;
+
+      // Create a map of recipe_id to rating
+      const ratingsMap = new Map(
+        (ratingsData || []).map(r => [r.recipe_id, r.rating])
+      );
+
+      // Merge ratings with recipes
+      const recipesWithRatings = (recipesData || []).map(recipe => ({
+        ...recipe,
+        rating: ratingsMap.get(recipe.id) || null
+      }));
+
+      setRecipes(recipesWithRatings);
     } catch (error) {
       console.error('Error loading recipes:', error);
     } finally {
@@ -91,6 +113,28 @@ function App() {
       setCommunityRecipes(data || []);
     } catch (error) {
       console.error('Error loading community recipes:', error);
+    }
+  };
+
+  const checkAndShowOnboarding = async () => {
+    if (!user || !userProfile) return;
+
+    if (userProfile.has_seen_onboarding === false) {
+      setShowOnboardingInterstitial(true);
+      await markOnboardingSeen();
+    }
+  };
+
+  const markOnboardingSeen = async () => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from('user_profiles')
+        .update({ has_seen_onboarding: true })
+        .eq('user_id', user.id);
+    } catch (error) {
+      console.error('Error marking onboarding as seen:', error);
     }
   };
 
@@ -197,6 +241,8 @@ function App() {
 
   const saveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
+      const isNewRecipe = !editingRecipe || !editingRecipe.id || editingRecipe.id.startsWith('temp-');
+
       if (editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-')) {
         const { error } = await supabase
           .from('recipes')
@@ -216,6 +262,10 @@ function App() {
       await loadCommunityRecipes();
       setShowForm(false);
       setEditingRecipe(null);
+
+      if (isNewRecipe) {
+        await checkAndShowOnboarding();
+      }
     } catch (error) {
       console.error('Error saving recipe:', error);
       alert('Failed to save recipe. Please try again.');
@@ -531,7 +581,7 @@ function App() {
     return (
       <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center">
         <div className="text-center">
-          <ChefHat className="w-16 h-16 text-terracotta-500 mx-auto mb-4 animate-pulse" />
+          <img src="/image copy.png" alt="Sous" className="h-16 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -546,7 +596,7 @@ function App() {
     return (
       <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center">
         <div className="text-center">
-          <ChefHat className="w-16 h-16 text-terracotta-500 mx-auto mb-4 animate-pulse" />
+          <img src="/image copy.png" alt="Sous" className="h-16 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading your profile...</p>
         </div>
       </div>
@@ -563,12 +613,10 @@ function App() {
         <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 lg:px-8 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="p-1.5 sm:p-2 bg-sage-200 rounded-2xl flex-shrink-0">
-                <ChefHat className="w-6 h-6 sm:w-8 sm:h-8 text-sage-700" />
-              </div>
+              <img src="/image copy.png" alt="Sous" className="h-8 sm:h-10 flex-shrink-0" />
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Recipe Manager</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Organize, plan, and discover recipes</p>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Sous</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Plan less. Cook smarter</p>
               </div>
             </div>
 
@@ -741,7 +789,7 @@ function App() {
           <Settings />
         ) : showChat ? (
           <div className="h-[calc(100vh-10rem)]">
-            <AIChat onSaveRecipe={parseAIRecipe} />
+            <AIChat onSaveRecipe={parseAIRecipe} onFirstAction={checkAndShowOnboarding} />
           </div>
         ) : showCommunity ? (
           <div>
@@ -958,6 +1006,7 @@ function App() {
             setShowForm(true);
           }}
           onCopy={copyRecipe}
+          onFirstAction={checkAndShowOnboarding}
         />
       )}
 
@@ -1023,6 +1072,10 @@ function App() {
             setShowForm(true);
           }}
         />
+      )}
+
+      {showOnboardingInterstitial && (
+        <OnboardingInterstitial onClose={() => setShowOnboardingInterstitial(false)} />
       )}
     </div>
   );

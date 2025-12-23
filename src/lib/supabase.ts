@@ -40,6 +40,7 @@ export type Recipe = {
   cocktail_metadata?: CocktailMetadata | null;
   created_at: string;
   updated_at: string;
+  rating?: 'thumbs_up' | 'thumbs_down' | null;
 };
 
 export type RecipeRating = {
@@ -86,6 +87,7 @@ export type UserProfile = {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   is_admin: boolean;
   assigned_model_id?: string | null;
+  has_seen_onboarding?: boolean;
   created_at: string;
   updated_at: string;
   login_count?: number;

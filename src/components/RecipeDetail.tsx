@@ -9,9 +9,10 @@ type RecipeDetailProps = {
   onClose: () => void;
   onEdit: () => void;
   onCopy?: (recipe: Recipe) => void;
+  onFirstAction?: () => void;
 };
 
-export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailProps) {
+export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }: RecipeDetailProps) {
   const { user } = useAuth();
   const isOwner = user?.id === recipe.user_id;
   const [currentRating, setCurrentRating] = useState<RecipeRating | null>(null);
@@ -116,6 +117,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
     if (!user || !pendingRating) return;
 
     setLoading(true);
+    const isFirstRating = !currentRating;
     try {
       if (currentRating) {
         await supabase
@@ -141,6 +143,10 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy }: RecipeDetailPr
       setShowFeedbackDialog(false);
       setPendingRating(null);
       setFeedback('');
+
+      if (isFirstRating && onFirstAction) {
+        onFirstAction();
+      }
     } catch (error) {
       console.error('Error saving rating:', error);
     } finally {

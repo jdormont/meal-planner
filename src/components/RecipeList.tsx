@@ -1,5 +1,5 @@
 import { Recipe } from '../lib/supabase';
-import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe, Camera } from 'lucide-react';
+import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 type RecipeListProps = {
   recipes: Recipe[];
@@ -18,7 +18,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
         <div className="max-w-3xl w-full bg-cream-50 rounded-3xl shadow-xl p-12 border border-sage-200">
           <div className="text-center mb-12">
             <div className="inline-flex p-5 bg-gradient-to-br from-terracotta-100 to-cream-100 rounded-full mb-6 shadow-sm">
-              <ChefHat className="w-16 h-16 text-terracotta-600" />
+              <img src="/image copy.png" alt="Sous" className="h-16" />
             </div>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Your recipe collection starts here
@@ -126,6 +126,19 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
             ) : (
               <div className="w-full h-48 bg-gradient-to-br from-terracotta-100 to-cream-100 flex items-center justify-center">
                 <span className="text-6xl">🍽️</span>
+              </div>
+            )}
+            {recipe.rating && (
+              <div className={`absolute top-2 left-2 p-1.5 rounded-full shadow-lg ${
+                recipe.rating === 'thumbs_up'
+                  ? 'bg-green-500'
+                  : 'bg-red-500'
+              }`}>
+                {recipe.rating === 'thumbs_up' ? (
+                  <ThumbsUp className="w-4 h-4 text-white" />
+                ) : (
+                  <ThumbsDown className="w-4 h-4 text-white" />
+                )}
               </div>
             )}
             {recipe.source_url && (
