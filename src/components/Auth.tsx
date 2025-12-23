@@ -34,7 +34,7 @@ export function Auth() {
           <div className="max-w-xl w-full">
             <div className="mb-8 lg:mb-12">
               <div className="inline-flex items-center gap-3 mb-6">
-                <img src="/image.png" alt="Sous" className="h-12" />
+                <img src="/image copy.png" alt="Sous" className="h-12" />
               </div>
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
                 Cook smarter.<br />Plan effortlessly.

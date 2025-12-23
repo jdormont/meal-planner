@@ -9,7 +9,7 @@ export function AccountStatus() {
       <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center p-4">
         <div className="bg-cream-50 rounded-3xl shadow-xl p-8 w-full max-w-md border border-sage-200">
           <div className="text-center">
-            <img src="/image.png" alt="Sous" className="h-12 mx-auto mb-4 animate-pulse" />
+            <img src="/image copy.png" alt="Sous" className="h-12 mx-auto mb-4 animate-pulse" />
             <p className="text-gray-600">Loading your account status...</p>
           </div>
         </div>

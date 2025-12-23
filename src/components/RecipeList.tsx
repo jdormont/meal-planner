@@ -18,7 +18,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
         <div className="max-w-3xl w-full bg-cream-50 rounded-3xl shadow-xl p-12 border border-sage-200">
           <div className="text-center mb-12">
             <div className="inline-flex p-5 bg-gradient-to-br from-terracotta-100 to-cream-100 rounded-full mb-6 shadow-sm">
-              <img src="/image.png" alt="Sous" className="h-16" />
+              <img src="/image copy.png" alt="Sous" className="h-16" />
             </div>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Your recipe collection starts here
