@@ -384,7 +384,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="p-2 bg-white bg-opacity-20 rounded-xl">
-              <Bot className="w-6 h-6" />
+              <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Chef" className="w-6 h-6" />
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="font-bold text-lg">Chef Assistant</h2>
@@ -428,7 +428,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
           >
             {message.role === 'assistant' && (
               <div className="flex-shrink-0 w-8 h-8 bg-terracotta-100 rounded-full flex items-center justify-center">
-                <Bot className="w-5 h-5 text-terracotta-600" />
+                <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Chef" className="w-5 h-5" />
               </div>
             )}
             <div
@@ -502,7 +502,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
         {loading && (
           <div className="flex gap-3 justify-start">
             <div className="flex-shrink-0 w-8 h-8 bg-terracotta-100 rounded-full flex items-center justify-center">
-              <Bot className="w-5 h-5 text-terracotta-600" />
+              <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Chef" className="w-5 h-5" />
             </div>
             <div className="bg-sage-50 rounded-3xl px-4 py-3">
               <Loader2 className="w-5 h-5 text-sage-600 animate-spin" />
