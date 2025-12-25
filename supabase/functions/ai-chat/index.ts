@@ -170,11 +170,12 @@ async function detectCuisineFromMessages(
       return null;
     }
 
-    // Get the last 3 messages for context (most recent first)
-    const recentMessages = messages.slice(-3);
+    // Get the last 3 USER messages only (filter out assistant responses to avoid matching keywords from previously generated recipes)
+    const userMessages = messages.filter((m: any) => m.role === "user");
+    const recentUserMessages = userMessages.slice(-3);
 
     // Combine message content into searchable text
-    const messageText = recentMessages
+    const messageText = recentUserMessages
       .map((m: any) => m.content)
       .join(" ")
       .toLowerCase();
