@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,11 @@ Deno.serve(async (req: Request) => {
 
   try {
     const { title, description, ingredients } = await req.json();
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
 
     if (!title) {
       return new Response(
@@ -108,12 +114,98 @@ Avoid:
 
     const data = await response.json();
 
-    const imageUrl = data.data && data.data.length > 0
+    const temporaryImageUrl = data.data && data.data.length > 0
       ? data.data[0].url
       : null;
 
+    if (!temporaryImageUrl) {
+      return new Response(
+        JSON.stringify({
+          error: "No image generated",
+          imageUrl: null
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // Download the image from DALL-E
+    console.log("Downloading image from DALL-E...");
+    const imageResponse = await fetch(temporaryImageUrl);
+
+    if (!imageResponse.ok) {
+      console.error("Failed to download image from DALL-E");
+      return new Response(
+        JSON.stringify({
+          error: "Failed to download generated image",
+          imageUrl: null
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const imageBlob = await imageResponse.blob();
+    const imageBuffer = await imageBlob.arrayBuffer();
+
+    // Create a unique filename
+    const timestamp = Date.now();
+    const sanitizedTitle = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 50);
+    const filename = `${sanitizedTitle}-${timestamp}.png`;
+
+    // Upload to Supabase Storage
+    console.log("Uploading to Supabase Storage...");
+    const { data: uploadData, error: uploadError } = await supabaseClient
+      .storage
+      .from('recipe-images')
+      .upload(filename, imageBuffer, {
+        contentType: 'image/png',
+        cacheControl: '31536000', // Cache for 1 year
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      return new Response(
+        JSON.stringify({
+          error: `Failed to store image: ${uploadError.message}`,
+          imageUrl: null
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // Get the public URL
+    const { data: urlData } = supabaseClient
+      .storage
+      .from('recipe-images')
+      .getPublicUrl(filename);
+
+    const permanentImageUrl = urlData.publicUrl;
+    console.log("Image stored successfully:", permanentImageUrl);
+
     return new Response(
-      JSON.stringify({ imageUrl }),
+      JSON.stringify({ imageUrl: permanentImageUrl }),
       {
         headers: {
           ...corsHeaders,
