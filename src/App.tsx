@@ -17,7 +17,7 @@ import { RecipeImportModal } from './components/RecipeImportModal';
 import { RecipePhotoModal } from './components/RecipePhotoModal';
 import { OnboardingInterstitial } from './components/OnboardingInterstitial';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine, Camera } from 'lucide-react';
+import { Plus, LogOut, ChefHat, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine, Camera, Sparkles } from 'lucide-react';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -693,7 +693,10 @@ function App() {
                 }`}
                 title="Chef Assistant"
               >
-                <MessageSquare className="w-5 h-5" />
+                <div className="relative">
+                  <ChefHat className="w-5 h-5" />
+                  <Sparkles className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5" />
+                </div>
                 <span className="hidden md:inline">Chef</span>
               </button>
 

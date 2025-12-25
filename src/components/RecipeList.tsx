@@ -1,5 +1,5 @@
 import { Recipe } from '../lib/supabase';
-import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Clock, Users, Edit2, Trash2, Plus, Sparkles, ChefHat, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 type RecipeListProps = {
   recipes: Recipe[];
@@ -43,11 +43,11 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                 </div>
                 <div className="flex flex-col items-center gap-4 text-center">
                   <div className="p-4 bg-gradient-to-br from-warmtan-100 to-warmtan-200 rounded-2xl group-hover:scale-110 transition-transform duration-300 relative">
-                    <MessageSquare className="w-10 h-10 text-warmtan-700" />
+                    <ChefHat className="w-10 h-10 text-warmtan-700" />
                     <Sparkles className="w-5 h-5 absolute -top-1 -right-1 text-warmtan-600 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Ask the AI</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Ask the Chef</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
                       Get recipe ideas, cooking tips, or meal-planning help.
                     </p>
