@@ -691,10 +691,10 @@ function App() {
                     ? 'bg-terracotta-500 text-white shadow-sm'
                     : 'text-gray-700 hover:bg-sage-100'
                 }`}
-                title="AI Assistant"
+                title="Chef Assistant"
               >
                 <MessageSquare className="w-5 h-5" />
-                <span className="hidden md:inline">AI</span>
+                <span className="hidden md:inline">Chef</span>
               </button>
 
               <div className="hidden sm:block h-6 w-px bg-gray-300 mx-1"></div>
