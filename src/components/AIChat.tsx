@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Save, MessageSquare, Trash2, Plus, ArrowLeft } from 'lucide-react';
+import { Send, Bot, User, Loader2, Save, Trash2, Plus, ArrowLeft } from 'lucide-react';
 import { marked } from 'marked';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,7 +34,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm your AI cooking assistant. I specialize in quick weeknight recipes you can make in 30-40 minutes with common ingredients. Try one of the quick prompts below, or ask me anything about recipes, meal planning, or cooking!",
+      content: "Hi! I'm your cooking assistant. I specialize in quick weeknight recipes you can make in 30-40 minutes with common ingredients. Try one of the quick prompts below, or ask me anything about recipes, meal planning, or cooking!",
     },
   ]);
   const [input, setInput] = useState('');
@@ -107,7 +107,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
     setMessages([
       {
         role: 'assistant',
-        content: "Hi! I'm your AI cooking assistant. I specialize in quick weeknight recipes you can make in 30-40 minutes with common ingredients. Try one of the quick prompts below, or ask me anything about recipes, meal planning, or cooking!",
+        content: "Hi! I'm your cooking assistant. I specialize in quick weeknight recipes you can make in 30-40 minutes with common ingredients. Try one of the quick prompts below, or ask me anything about recipes, meal planning, or cooking!",
       },
     ]);
     setCurrentChatId(null);
@@ -285,7 +285,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
         ...prev,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please make sure your AI API is configured correctly.',
+          content: 'Sorry, I encountered an error. Please try again or contact support if the problem persists.',
         },
       ]);
     } finally {
@@ -387,7 +387,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
               <Bot className="w-6 h-6" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-bold text-lg">AI Cooking Assistant</h2>
+              <h2 className="font-bold text-lg">Chef Assistant</h2>
               <p className="text-sm text-cream-100 hidden sm:block">
                 {currentModel ? `Powered by ${currentModel}` : 'Ask me anything about recipes and cooking'}
               </p>

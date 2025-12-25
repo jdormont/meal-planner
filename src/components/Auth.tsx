@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, UserPlus, Loader2, ChefHat, Globe, Calendar, Bot } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, ChefHat, Globe, Calendar, Sparkles } from 'lucide-react';
 
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -34,7 +34,7 @@ export function Auth() {
           <div className="max-w-xl w-full">
             <div className="mb-8 lg:mb-12">
               <div className="inline-flex items-center gap-3 mb-6">
-                <img src="/image copy.png" alt="Sous" className="h-12" />
+                <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Sous" className="h-12" />
               </div>
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
                 Cook smarter.<br />Plan effortlessly.
@@ -79,11 +79,14 @@ export function Auth() {
 
               <div className="flex items-start gap-4 p-4 bg-cream-50 rounded-2xl border border-sage-200">
                 <div className="flex-shrink-0 p-2 bg-terracotta-100 rounded-xl">
-                  <Bot className="w-6 h-6 text-terracotta-600" />
+                  <div className="relative">
+                    <ChefHat className="w-6 h-6 text-terracotta-600" />
+                    <Sparkles className="w-3 h-3 absolute -top-0.5 -right-0.5 text-terracotta-600" />
+                  </div>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">AI cooking assistant</h3>
-                  <p className="text-sm text-gray-600">Get personalized recipe ideas and cooking tips from AI</p>
+                  <h3 className="font-semibold text-gray-900 mb-1">Meet Your Sous Chef</h3>
+                  <p className="text-sm text-gray-600">A culinary partner that learns your tastes, scans your pantry, and helps you decide what to cook in seconds.</p>
                 </div>
               </div>
             </div>

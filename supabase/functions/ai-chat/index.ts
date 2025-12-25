@@ -16,7 +16,6 @@ type ModelConfig = {
 
 async function getUserModel(supabaseClient: any, userId: string): Promise<ModelConfig | null> {
   try {
-    // Get user's assigned model - use two separate queries to avoid RLS join issues
     const { data: profile, error: profileError } = await supabaseClient
       .from("user_profiles")
       .select("assigned_model_id")
@@ -28,7 +27,6 @@ async function getUserModel(supabaseClient: any, userId: string): Promise<ModelC
       return null;
     }
 
-    // If user has an assigned model, fetch it
     if (profile?.assigned_model_id) {
       const { data: assignedModel, error: modelError } = await supabaseClient
         .from("llm_models")
@@ -43,7 +41,6 @@ async function getUserModel(supabaseClient: any, userId: string): Promise<ModelC
       }
     }
 
-    // If no assigned model or it's inactive, get default
     const { data: defaultModel, error: defaultError } = await supabaseClient
       .from("llm_models")
       .select("id, model_identifier, provider, model_name")
@@ -116,7 +113,6 @@ async function callAnthropic(apiKey: string, model: string, messages: any[], sys
 }
 
 async function callGemini(apiKey: string, model: string, messages: any[], systemPrompt: string) {
-  // Gemini API expects a different format
   const contents = [
     {
       role: "user",
@@ -160,7 +156,6 @@ async function detectCuisineFromMessages(
   supabaseClient: any
 ): Promise<{ cuisine: string; confidence: string; rationale: string; allMatches: string } | null> {
   try {
-    // Get all active cuisine profiles with their keywords
     const { data: profiles, error } = await supabaseClient
       .from("cuisine_profiles")
       .select("cuisine_name, keywords, style_focus")
@@ -170,16 +165,16 @@ async function detectCuisineFromMessages(
       return null;
     }
 
-    // Get the last 3 messages for context (most recent first)
-    const recentMessages = messages.slice(-3);
+    const lastUserMessage = messages.length > 0 && messages[messages.length - 1].role === "user"
+      ? messages[messages.length - 1].content
+      : "";
 
-    // Combine message content into searchable text
-    const messageText = recentMessages
-      .map((m: any) => m.content)
-      .join(" ")
-      .toLowerCase();
+    const lastAssistantMessage = messages.length > 1 && messages[messages.length - 2].role === "assistant"
+      ? messages[messages.length - 2].content
+      : "";
 
-    // Check each cuisine's keywords for matches
+    const messageText = `${lastUserMessage} ${lastAssistantMessage}`.toLowerCase();
+
     const matches: { cuisine: string; styleFocus: string; score: number; matchedKeywords: string[] }[] = [];
 
     for (const profile of profiles) {
@@ -188,13 +183,10 @@ async function detectCuisineFromMessages(
 
       for (const keyword of profile.keywords) {
         const keywordLower = keyword.toLowerCase();
-
-        // Count occurrences of this keyword
         const regex = new RegExp(`\\b${keywordLower}\\b`, "gi");
         const occurrences = (messageText.match(regex) || []).length;
 
         if (occurrences > 0) {
-          // Give higher weight to exact cuisine name matches
           const isCuisineName = keywordLower === profile.cuisine_name.toLowerCase();
           const points = occurrences * (isCuisineName ? 3 : 1);
           score += points;
@@ -212,13 +204,10 @@ async function detectCuisineFromMessages(
       }
     }
 
-    // If we have matches, return the highest scoring one
     if (matches.length > 0) {
       matches.sort((a, b) => b.score - a.score);
 
-      // Only return if we have a clear winner (score > 0)
       if (matches[0].score > 0) {
-        // Determine confidence based on score
         let confidence = "low";
         if (matches[0].score >= 5) {
           confidence = "high";
@@ -226,10 +215,7 @@ async function detectCuisineFromMessages(
           confidence = "medium";
         }
 
-        // Build rationale
         const rationale = `Matched keywords: ${matches[0].matchedKeywords.join(", ")}. Total score: ${matches[0].score}`;
-
-        // Build all matches summary
         const allMatchesSummary = matches.slice(0, 3).map(m =>
           `${m.cuisine} (${m.score}pts): ${m.matchedKeywords.slice(0, 3).join(", ")}`
         ).join(" | ");
@@ -247,7 +233,6 @@ async function detectCuisineFromMessages(
       }
     }
 
-    // Check user's favorite cuisines as a fallback
     if (userPreferences?.favorite_cuisines && userPreferences.favorite_cuisines.length > 0) {
       for (const favCuisine of userPreferences.favorite_cuisines) {
         const profile = profiles.find(
@@ -388,10 +373,8 @@ Deno.serve(async (req: Request) => {
   try {
     const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief, isAdmin } = await req.json();
     
-    // Get Authorization header for authenticated requests
     const authHeader = req.headers.get("Authorization");
     
-    // Create Supabase client with auth context if available
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -402,13 +385,11 @@ Deno.serve(async (req: Request) => {
       } : undefined
     );
 
-    // Get user's assigned model or default
     let modelConfig: ModelConfig | null = null;
     if (userId) {
       modelConfig = await getUserModel(supabaseClient, userId);
     }
 
-    // Fallback to default if no model found
     if (!modelConfig) {
       const { data: defaultModel, error: defaultError } = await supabaseClient
         .from("llm_models")
@@ -441,7 +422,6 @@ Deno.serve(async (req: Request) => {
 
     console.log(`Using model: ${modelConfig.model_name} (${modelConfig.provider})`);
 
-    // Get API key for the provider
     let apiKey = clientApiKey;
     if (!apiKey) {
       if (modelConfig.provider === "openai") {
@@ -606,7 +586,6 @@ Deno.serve(async (req: Request) => {
       weeklyBriefContext += 'Remember: Be conversational, warm, and collaborative. You\'re gathering context to help plan together, not executing a checklist.';
     }
 
-    // Detect cuisine and inject profile if relevant
     let cuisineProfileContext = '';
     let cuisineMetadata = {
       applied: false,
@@ -840,7 +819,7 @@ TECHNICAL REQUIREMENTS
 
 Your responsibilities:
 
-1. **Understand and respect the user's context:**
+1a. **Understand and respect the user's context:**
    - ALWAYS respect the user's dietary restrictions, allergies, and food preferences specified in their profile
    - Learn from their rating history and adapt suggestions accordingly
    - Default to low to medium heat unless user specifies otherwise
@@ -849,6 +828,10 @@ Your responsibilities:
    - If user has dietary restrictions or allergies, these take absolute priority over everything else
    - **USE COMMON PANTRY INGREDIENTS** - assume a typical home kitchen with standard items like olive oil, garlic, onions, basic spices, soy sauce, pasta, rice, canned tomatoes, etc.
    - Avoid specialty ingredients that require trips to specialty stores unless user specifically requests them
+
+1b. **Conduct a final safety pass:**
+  - Before outputting ANY recipe or suggestion, cross-reference the ingredients against the {dietaryRestrictions} and {allergies} context. 
+  - If a recipe contains a forbidden item (even as a garnish), DISCARD IT and select another.   - Do not suggest it with a warning. Do not suggest it with a substitution unless it is a standard, perfect swap (e.g., GF flour for flour). When in doubt, leave it out.
 
 2. **When user asks for recipe recommendations or ideas:**
    - FIRST show 3-7 well-considered options with:
@@ -993,7 +976,6 @@ Not:
     let message;
     let usedFallback = false;
     try {
-      // Try the assigned model first
       console.log(`Attempting to call ${modelConfig.provider} with model ${modelConfig.model_identifier}`);
       if (modelConfig.provider === "openai") {
         message = await callOpenAI(apiKey, modelConfig.model_identifier, messages, systemPrompt);
@@ -1007,7 +989,6 @@ Not:
     } catch (error) {
       console.error(`Error with ${modelConfig.provider}:`, error);
       
-      // Fallback to default model if not already using it
       const { data: defaultModel } = await supabaseClient
         .from("llm_models")
         .select("id, model_identifier, provider, model_name")
@@ -1020,7 +1001,6 @@ Not:
         usedFallback = true;
         modelConfig = defaultModel as ModelConfig;
         
-        // Get API key for fallback provider
         if (modelConfig.provider === "openai") {
           apiKey = Deno.env.get("OPENAI_API_KEY") || "";
           message = await callOpenAI(apiKey, modelConfig.model_identifier, messages, systemPrompt);
@@ -1036,7 +1016,6 @@ Not:
       }
     }
 
-    // Clean up any JSON code blocks that might have been included
     if (message.includes('```json') || message.includes('```')) {
       message = message.replace(/```json\s*/g, '').replace(/```\s*/g, '');
     }

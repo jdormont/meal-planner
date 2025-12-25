@@ -17,7 +17,7 @@ import { RecipeImportModal } from './components/RecipeImportModal';
 import { RecipePhotoModal } from './components/RecipePhotoModal';
 import { OnboardingInterstitial } from './components/OnboardingInterstitial';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, MessageSquare, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine, Camera } from 'lucide-react';
+import { Plus, LogOut, ChefHat, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine, Camera, Sparkles } from 'lucide-react';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -581,7 +581,7 @@ function App() {
     return (
       <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center">
         <div className="text-center">
-          <img src="/image copy.png" alt="Sous" className="h-16 mx-auto mb-4 animate-pulse" />
+          <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Sous" className="h-16 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -596,7 +596,7 @@ function App() {
     return (
       <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center">
         <div className="text-center">
-          <img src="/image copy.png" alt="Sous" className="h-16 mx-auto mb-4 animate-pulse" />
+          <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Sous" className="h-16 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading your profile...</p>
         </div>
       </div>
@@ -613,7 +613,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 lg:px-8 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <img src="/image copy.png" alt="Sous" className="h-8 sm:h-10 flex-shrink-0" />
+              <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Sous" className="h-8 sm:h-10 flex-shrink-0" />
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Sous</h1>
                 <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Plan less. Cook smarter</p>
@@ -691,10 +691,13 @@ function App() {
                     ? 'bg-terracotta-500 text-white shadow-sm'
                     : 'text-gray-700 hover:bg-sage-100'
                 }`}
-                title="AI Assistant"
+                title="Chef Assistant"
               >
-                <MessageSquare className="w-5 h-5" />
-                <span className="hidden md:inline">AI</span>
+                <div className="relative">
+                  <ChefHat className="w-5 h-5" />
+                  <Sparkles className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5" />
+                </div>
+                <span className="hidden md:inline">Chef</span>
               </button>
 
               <div className="hidden sm:block h-6 w-px bg-gray-300 mx-1"></div>

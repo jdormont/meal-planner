@@ -26,6 +26,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
   const [notes, setNotes] = useState('');
   const [isShared, setIsShared] = useState(false);
   const [isFetchingImage, setIsFetchingImage] = useState(false);
+  const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
   const [isAutoTagging, setIsAutoTagging] = useState(false);
   const [recipeType, setRecipeType] = useState<'food' | 'cocktail'>('food');
   const [cocktailMetadata, setCocktailMetadata] = useState<CocktailMetadata>({
@@ -105,9 +106,6 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
   const fetchRecipeImage = async (recipeName: string) => {
     if (!recipeName.trim()) return null;
 
-    const primaryIngredient = ingredients.find(i => i.name.trim())?.name || '';
-    const searchQuery = primaryIngredient || recipeName;
-
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-recipe-image`,
@@ -118,7 +116,9 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            query: searchQuery,
+            title: recipeName,
+            description,
+            ingredients: ingredients.filter(i => i.name.trim()),
           }),
         }
       );
@@ -129,6 +129,17 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       console.error('Error fetching recipe image:', error);
       return null;
     }
+  };
+
+  const regenerateImage = async () => {
+    if (!title.trim()) return;
+
+    setIsRegeneratingImage(true);
+    const fetchedImageUrl = await fetchRecipeImage(title);
+    if (fetchedImageUrl) {
+      setImageUrl(fetchedImageUrl);
+    }
+    setIsRegeneratingImage(false);
   };
 
   const autoTagRecipe = async () => {
@@ -978,8 +989,19 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               placeholder="https://example.com/image.jpg"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Leave blank to automatically fetch an image from Pexels when saving
+              Leave blank to automatically generate an image with DALL-E when saving
             </p>
+            {recipe && !recipe.id.startsWith('temp-') && (
+              <button
+                type="button"
+                onClick={regenerateImage}
+                disabled={isRegeneratingImage || !title.trim()}
+                className="mt-3 px-4 py-2 bg-sage-100 hover:bg-sage-200 text-sage-800 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium"
+              >
+                {isRegeneratingImage && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isRegeneratingImage ? 'Generating...' : 'Regenerate Image with DALL-E'}
+              </button>
+            )}
           </div>
 
           <div>
@@ -1050,7 +1072,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               className="px-6 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isFetchingImage && <Loader2 className="w-5 h-5 animate-spin" />}
-              {isFetchingImage ? 'Finding image...' : 'Save Recipe'}
+              {isFetchingImage ? 'Generating image...' : 'Save Recipe'}
             </button>
           </div>
         </form>

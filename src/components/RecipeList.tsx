@@ -1,5 +1,5 @@
 import { Recipe } from '../lib/supabase';
-import { Clock, Users, Edit2, Trash2, Plus, MessageSquare, Sparkles, ChefHat, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Clock, Users, Edit2, Trash2, Plus, Sparkles, ChefHat, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 type RecipeListProps = {
   recipes: Recipe[];
@@ -18,7 +18,7 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
         <div className="max-w-3xl w-full bg-cream-50 rounded-3xl shadow-xl p-12 border border-sage-200">
           <div className="text-center mb-12">
             <div className="inline-flex p-5 bg-gradient-to-br from-terracotta-100 to-cream-100 rounded-full mb-6 shadow-sm">
-              <img src="/image copy.png" alt="Sous" className="h-16" />
+              <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Sous" className="h-16" />
             </div>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Your recipe collection starts here
@@ -43,11 +43,11 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
                 </div>
                 <div className="flex flex-col items-center gap-4 text-center">
                   <div className="p-4 bg-gradient-to-br from-warmtan-100 to-warmtan-200 rounded-2xl group-hover:scale-110 transition-transform duration-300 relative">
-                    <MessageSquare className="w-10 h-10 text-warmtan-700" />
+                    <ChefHat className="w-10 h-10 text-warmtan-700" />
                     <Sparkles className="w-5 h-5 absolute -top-1 -right-1 text-warmtan-600 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Ask the AI</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Ask the Chef</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
                       Get recipe ideas, cooking tips, or meal-planning help.
                     </p>
