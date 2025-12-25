@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, UserPlus, Loader2, ChefHat, Globe, Calendar, Bot } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, ChefHat, Globe, Calendar, Sparkles } from 'lucide-react';
 
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -79,11 +79,14 @@ export function Auth() {
 
               <div className="flex items-start gap-4 p-4 bg-cream-50 rounded-2xl border border-sage-200">
                 <div className="flex-shrink-0 p-2 bg-terracotta-100 rounded-xl">
-                  <Bot className="w-6 h-6 text-terracotta-600" />
+                  <div className="relative">
+                    <ChefHat className="w-6 h-6 text-terracotta-600" />
+                    <Sparkles className="w-3 h-3 absolute -top-0.5 -right-0.5 text-terracotta-600" />
+                  </div>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">AI cooking assistant</h3>
-                  <p className="text-sm text-gray-600">Get personalized recipe ideas and cooking tips from AI</p>
+                  <h3 className="font-semibold text-gray-900 mb-1">Meet Your Sous Chef</h3>
+                  <p className="text-sm text-gray-600">A culinary partner that learns your tastes, scans your pantry, and helps you decide what to cook in seconds.</p>
                 </div>
               </div>
             </div>
