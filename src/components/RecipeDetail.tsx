@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
-import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Plus, Copy, Share2 } from 'lucide-react';
+import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2 } from 'lucide-react';
 import { marked } from 'marked';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -357,22 +357,20 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => handleRatingClick('thumbs_up')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
-                    currentRating?.rating === 'thumbs_up'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${currentRating?.rating === 'thumbs_up'
                       ? 'bg-green-100 text-green-700 border-2 border-green-500'
                       : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <ThumbsUp className="w-5 h-5" />
                   <span className="font-medium">Good</span>
                 </button>
                 <button
                   onClick={() => handleRatingClick('thumbs_down')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
-                    currentRating?.rating === 'thumbs_down'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${currentRating?.rating === 'thumbs_down'
                       ? 'bg-red-100 text-red-700 border-2 border-red-500'
                       : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <ThumbsDown className="w-5 h-5" />
                   <span className="font-medium">Not Good</span>
@@ -482,11 +480,10 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
                   <button
                     key={meal.id}
                     onClick={() => setSelectedMealId(meal.id)}
-                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition border-b border-gray-100 ${
-                      selectedMealId === meal.id
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition border-b border-gray-100 ${selectedMealId === meal.id
                         ? 'bg-terracotta-50 font-medium text-terracotta-900'
                         : 'text-gray-700'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>

@@ -18,7 +18,7 @@ export function AccountStatus() {
   }
 
   const isPending = userProfile.status === 'PENDING';
-  const isRejected = userProfile.status === 'REJECTED';
+
 
   return (
     <div className="min-h-screen bg-cream-200 texture-linen flex items-center justify-center p-4">

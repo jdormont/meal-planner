@@ -6,6 +6,7 @@ type CuisineProfile = {
   id: string;
   cuisine_name: string;
   style_focus: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   profile_data: any;
   is_active: boolean;
   keywords: string[];
@@ -218,6 +219,7 @@ export default function CuisineProfileManager() {
         setEditingProfile(prev => prev ? { ...prev, profile_data: json } : null);
         setJsonError('');
       } catch (error) {
+        console.error('Error parsing JSON file:', error);
         setJsonError('Invalid JSON file');
       }
     };
@@ -230,6 +232,7 @@ export default function CuisineProfileManager() {
       setEditingProfile(prev => prev ? { ...prev, profile_data: json } : null);
       setJsonError('');
     } catch (error) {
+      console.error('Error parsing JSON:', error);
       setJsonError('Invalid JSON');
     }
   }
@@ -327,21 +330,19 @@ export default function CuisineProfileManager() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setEditMode('form')}
-                className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                  editMode === 'form'
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
+                className={`px-3 py-1 text-sm rounded-lg transition-colors ${editMode === 'form'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'text-slate-600 hover:bg-slate-100'
+                  }`}
               >
                 Form
               </button>
               <button
                 onClick={() => setEditMode('json')}
-                className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                  editMode === 'json'
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
+                className={`px-3 py-1 text-sm rounded-lg transition-colors ${editMode === 'json'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'text-slate-600 hover:bg-slate-100'
+                  }`}
               >
                 JSON
               </button>
@@ -526,11 +527,10 @@ export default function CuisineProfileManager() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
                       onClick={() => toggleActive(profile)}
-                      className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                        profile.is_active
-                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
+                      className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${profile.is_active
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
                     >
                       {profile.is_active ? 'Active' : 'Inactive'}
                     </button>
