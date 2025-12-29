@@ -4,7 +4,7 @@
 
 A unified platform where home cooks can discover, organize, and plan meals with AI-powered assistance. Users get personalized recipe recommendations based on their preferences, dietary restrictions, and cooking history—then seamlessly plan those recipes into meals and shopping lists.
 
-**Core Promise:** From "What should I cook?" to "I have my shopping list" in minutes.
+**Core Promise:** From "What should I cook?" to "I have a plan for the night/week" that is tailored to my goals, needs, and constraints.
 
 ---
 
