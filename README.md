@@ -1,271 +1,104 @@
 # AI Recipe & Meal Planner
 
-A comprehensive recipe management and meal planning application with AI-powered assistance for discovering recipes, planning weekly meals, and organizing your culinary life.
+## Welcome!
 
-## Features
+Welcome to the AI Recipe & Meal Planner! This is a smart assistant designed to help you organize your culinary life. Whether you're a seasoned chef or just starting out, this app helps you find recipes, plan your weekly meals, and get cooking advice from an AI kitchen companion.
 
-### Recipe Management
-- **Create & Organize Recipes** - Store recipes with ingredients, instructions, prep/cook times, and servings
-- **Smart Search & Filter** - Find recipes by name, ingredients, tags, or dietary restrictions
-- **Recipe Ratings** - Rate recipes with thumbs up/down and optional feedback
-- **Auto-Generated Images** - Beautiful stock photos automatically sourced for recipes
-- **AI Auto-Tagging** - Automatic recipe categorization and tag suggestions
-- **Public/Private Sharing** - Share recipes with the community or keep them private
-- **Recipe Import** - Import recipes from popular cooking websites with one click
-- **Cocktail Support** - Dedicated support for beverage and cocktail recipes
+Think of it as your digital Sous-Chef that never gets tired and knows exactly what you like to eat.
 
-### AI Assistant
-- **Natural Language Chat** - Ask for recipe ideas, substitutions, and cooking advice
-- **Personalized Suggestions** - Context-aware recommendations based on your preferences
-- **Allergy Safety** - Comprehensive handling of dietary restrictions with safe substitutions
-- **Recipe Generation** - AI creates complete recipes that are automatically saved
-- **Learning System** - Improves suggestions based on your ratings and cooking history
-- **Multi-Chat Support** - Maintain multiple conversation threads
+---
 
-### Meal Planning
-- **Weekly Meal Planning** - Plan meals with dates, notes, and multiple recipes
-- **Recipe Association** - Link multiple recipes to each meal
-- **Completion Tracking** - Track which recipes you've completed for each meal
-- **Meal History** - Archive and review past meals
-- **Flexible Organization** - Edit, delete, and reorganize meals as needed
+## What This App Does
 
-### User Experience
-- **User Preferences** - Set dietary style, cuisines, allergies, skill level, and more
-- **Account Management** - Secure authentication with admin approval workflow
-- **Community Recipes** - Browse and adopt recipes shared by other users
-- **Settings** - Comprehensive customization options for personalization
-- **Responsive Design** - Works seamlessly on desktop and mobile devices
+Here is a simple breakdown of the main features:
 
-### Admin Features
-- **User Management** - Approve or reject new user registrations
-- **Admin Dashboard** - View all users, statuses, and manage accounts
-- **Login Tracking** - Monitor user activity and login counts
-- **Access Control** - Row-level security ensures data privacy
+### 1. Smart Recipe Manager
+*   **Your Personal Cookbook:** Save all your favorite recipes in one place.
+*   **Easy Organization:** The app automatically tags your recipes (e.g., "Italian", "Vegetarian", "Quick Dinner") so you can find them instantly.
+*   **Shared & Private:** Keep your secret family recipes private, or share your best creations with the community.
+*   **Auto-Images:** Don't have a photo? The app automatically finds beautiful pictures for your dishes.
 
-## Tech Stack
+### 2. AI Chef Assistant
+*   **Chat with a Pro:** Stuck on what to make? Just ask! "I have chicken and broccoli, what can I cook?"
+*   **Dietary Safety:** The AI knows your allergies (like nuts or gluten) and will warn you if a recipe isn't safe, or suggest substitutes.
+*   **Cooking Advice:** Ask for tips like "How long do I boil an egg?" or "Can I use honey instead of sugar?"
 
-### Frontend
-- **React 18** with TypeScript
-- **Tailwind CSS** for styling
-- **Lucide React** for icons
-- **Vite** for build tooling
+### 3. Weekly Meal Planner
+*   **Plan Ahead:** Drag and drop recipes into a weekly calendar.
+*   **Stay Organized:** Know exactly what you are cooking for Monday dinner or Sunday brunch.
+*   **Track History:** Look back at what you ate last month to bring back old favorites.
 
-### Backend & Database
-- **Supabase** for:
-  - PostgreSQL database
-  - Authentication (email/password)
-  - Row Level Security (RLS)
-  - Real-time sync
-  - Edge Functions
+---
 
-### AI Integration
-- **OpenAI** (GPT-4o-mini) or **Anthropic** (Claude 3.5 Sonnet)
-- Context-aware prompts with user preferences
-- Recipe rating history integration
-- Comprehensive allergy safety guidelines
-- Structured recipe parsing and saving
+## How the Database is Structured
 
-## Getting Started
+You don't need to value code to understand how your data is stored. Here is a conceptual overview:
 
-### Prerequisites
+### 👤 Your Profile
+This is the heart of the app. It stores:
+*   **Preferences:** Do you love spicy food? Hate cilantro?
+*   **Dietary Style:** Vegetarian, Keto, Paleo, etc.
+*   **Allergies:** Critical information to keep you safe.
+*   **Skill Level:** Helps the AI suggest recipes that match your cooking ability.
 
-- Node.js 18+ and npm
-- A Supabase account (free tier works great)
-- An OpenAI or Anthropic API key (optional, for AI features)
+### 📖 Recipes
+Think of this as a big library of index cards.
+*   **Private Recipes:** Cards only you can see.
+*   **Shared Recipes:** Cards everyone can see.
+*   Each card holds the ingredients, instructions, prep time, and photos.
+
+### 📅 Meals
+This connects **Recipes** to **Dates**.
+*   It's simply a link saying "On [Date], we are cooking [Recipe Name]".
+*   This allows you to plan the same recipe multiple times without copying it.
+
+### 💬 Chat History
+*   The app remembers your conversations with the AI so you can scroll back and find that tip it gave you last week.
+
+---
+
+## How to Run It
+
+Follow these simple steps to get the app running on your computer.
+
+### Prerequisites (What you need first)
+*   **Node.js**: This is the engine that runs the app. Download and install it from [nodejs.org](https://nodejs.org/).
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd <your-project-folder>
-   ```
+1.  **Download the Code**
+    Open your terminal (command prompt) and run:
+    ```bash
+    git clone <repository-url>
+    cd meal-planner
+    ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2.  **Install the "Parts"**
+    This command downloads all the necessary tools for the app to work:
+    ```bash
+    npm install
+    ```
 
-3. **Set up environment variables**
+3.  **Setup the Database**
+    You will need a file called `.env` with your secure keys (ask your administrator for these if you don't have them).
+    It looks like this:
+    ```env
+    VITE_SUPABASE_URL=...
+    VITE_SUPABASE_ANON_KEY=...
+    ```
 
-   Create a `.env` file in the root directory:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
+4.  **Start the App!**
+    Run this command to turn it on:
+    ```bash
+    npm run dev
+    ```
 
-   You can find these values in your Supabase project settings.
+    You should see a message saying the app is running at `http://localhost:5173`. Open that link in your web browser!
 
-4. **Run database migrations**
+---
 
-   All migrations are located in `supabase/migrations/`. Apply them in order through the Supabase dashboard or using the Supabase CLI.
+## Need Help?
 
-5. **Deploy Edge Functions** (Optional, for AI features)
+If you run into trouble, check the `TECHNICAL_DOCS.md` file for more advanced details, or reach out to the development team.
 
-   The following edge functions need to be deployed:
-   - `ai-chat` - Main AI assistant
-   - `auto-tag-recipe` - Automatic recipe categorization
-   - `get-recipe-image` - Stock photo integration
-   - `import-recipe` - Recipe URL import
-   - `admin-get-users` - User management
-   - `admin-update-user-status` - User approval
-   - `admin-delete-user` - User deletion
-
-   You'll need to set up your AI API key as an environment variable in Supabase Edge Functions:
-   ```
-   OPENAI_API_KEY=your_openai_key
-   # OR
-   ANTHROPIC_API_KEY=your_anthropic_key
-   ```
-
-6. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-   The app will be available at `http://localhost:5173`
-
-### First-Time Setup
-
-1. **Create your account** - The first user to sign up automatically becomes an admin
-2. **Set up preferences** - Fill out your dietary preferences, cuisines, and restrictions
-3. **Start adding recipes** - Create your first recipe or import one from a URL
-4. **Try the AI assistant** - Ask for recipe ideas based on your preferences
-
-## Project Structure
-
-```
-├── src/
-│   ├── components/          # React components
-│   │   ├── AccountStatus.tsx
-│   │   ├── AdminDashboard.tsx
-│   │   ├── AIChat.tsx
-│   │   ├── Auth.tsx
-│   │   ├── CommunityRecipes.tsx
-│   │   ├── MealDetail.tsx
-│   │   ├── MealForm.tsx
-│   │   ├── MealList.tsx
-│   │   ├── RecipeDetail.tsx
-│   │   ├── RecipeForm.tsx
-│   │   ├── RecipeImportModal.tsx
-│   │   ├── RecipeList.tsx
-│   │   ├── RecipePhotoModal.tsx
-│   │   ├── RecipeSearch.tsx
-│   │   └── Settings.tsx
-│   ├── contexts/            # React contexts
-│   │   └── AuthContext.tsx
-│   ├── lib/                 # Utilities and configuration
-│   │   └── supabase.ts
-│   ├── App.tsx              # Main application component
-│   ├── main.tsx             # Application entry point
-│   └── index.css            # Global styles
-├── supabase/
-│   ├── functions/           # Edge Functions
-│   │   ├── ai-chat/
-│   │   ├── auto-tag-recipe/
-│   │   ├── get-recipe-image/
-│   │   ├── import-recipe/
-│   │   ├── admin-get-users/
-│   │   ├── admin-update-user-status/
-│   │   └── admin-delete-user/
-│   └── migrations/          # Database migrations
-└── package.json
-```
-
-## Database Schema
-
-### Tables
-
-- **user_profiles** - User information and approval status
-- **user_preferences** - User dietary preferences and settings
-- **recipes** - Recipe storage with ingredients and instructions
-- **recipe_ratings** - User ratings for recipes
-- **meals** - Meal planning entries
-- **meal_recipes** - Junction table linking recipes to meals
-- **chats** - AI chat conversations
-- **chat_messages** - Individual messages in chats
-
-All tables have Row Level Security (RLS) enabled to ensure users can only access their own data.
-
-## Security
-
-- **Row Level Security (RLS)** - All database queries are secured at the database level
-- **Admin Approval** - New users must be approved by an admin before accessing the app
-- **Secure API Keys** - Edge Functions handle sensitive API keys server-side
-- **HTTPS Only** - All communications encrypted
-- **User Data Isolation** - Users can only access their own recipes, meals, and chats
-
-## Build & Deploy
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist/` directory.
-
-### Type Checking
-
-```bash
-npm run typecheck
-```
-
-### Linting
-
-```bash
-npm run lint
-```
-
-## Admin Approval System
-
-The app uses an admin approval workflow:
-
-1. **First User** - Automatically becomes an admin
-2. **New Users** - See a "Pending Approval" screen after registration
-3. **Admin Approval** - Admins can approve or reject users from the Admin Dashboard
-4. **Access Granted** - Approved users gain full access to the app
-
-See `ADMIN_APPROVAL_SYSTEM.md` for detailed implementation documentation.
-
-## AI Features
-
-The AI assistant can help you:
-
-- **Find Recipes** - "I want something with chicken and mushrooms"
-- **Handle Allergies** - "I'm allergic to nuts, what can I make?"
-- **Get Substitutions** - "Can I substitute butter with olive oil?"
-- **Plan Meals** - "Give me a meal plan for the week"
-- **Learn Your Taste** - Recommendations improve based on your ratings
-
-AI features require an OpenAI or Anthropic API key configured in your Supabase Edge Functions.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
-
-## Development Roadmap
-
-See `PRD.md` for the complete product roadmap and feature status.
-
-### Coming Soon
-- Shopping list generation from meal plans
-- Calendar view for meal planning
-- Recipe collections and folders
-- Nutrition tracking
-- Kitchen inventory management
-- Batch cooking and meal prep features
-
-## License
-
-This project is private and proprietary.
-
-## Support
-
-For questions or issues, please open an issue in the repository or contact the development team.
-
-## Acknowledgments
-
-- Stock photos provided by [Pexels](https://www.pexels.com/)
-- Icons by [Lucide](https://lucide.dev/)
-- Built with [Bolt](https://bolt.new/)
+Happy Cooking! 🍳
