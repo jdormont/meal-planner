@@ -17,7 +17,7 @@ import { RecipeImportModal } from './components/RecipeImportModal';
 import { RecipePhotoModal } from './components/RecipePhotoModal';
 import { OnboardingInterstitial } from './components/OnboardingInterstitial';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, LogOut, ChefHat, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, Menu, User, Globe, Wine, Camera, Sparkles } from 'lucide-react';
+import { Plus, LogOut, ChefHat, BookOpen, Settings as SettingsIcon, Calendar, Shield, Users, User, Globe, Wine, Camera, Sparkles } from 'lucide-react';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -519,11 +519,11 @@ function App() {
     // Check if the user explicitly asked for a drink or cocktail
     const userQueryLower = userQuery?.toLowerCase() || '';
     const userAskedForDrink = userQueryLower.includes('drink') ||
-                               userQueryLower.includes('cocktail') ||
-                               userQueryLower.includes('beverage') ||
-                               userQueryLower.includes('martini') ||
-                               userQueryLower.includes('mojito') ||
-                               userQueryLower.includes('margarita');
+      userQueryLower.includes('cocktail') ||
+      userQueryLower.includes('beverage') ||
+      userQueryLower.includes('martini') ||
+      userQueryLower.includes('mojito') ||
+      userQueryLower.includes('margarita');
 
     // If user didn't ask for a drink/cocktail, default to food
     let isCocktail = false;
@@ -533,17 +533,17 @@ function App() {
 
       // Only classify as cocktail if there's explicit cocktail terminology in the title
       const hasCocktailTitle = titleLower.includes('cocktail') ||
-                                titleLower.includes('martini') ||
-                                titleLower.includes('margarita') ||
-                                titleLower.includes('mojito') ||
-                                titleLower.includes('daiquiri') ||
-                                titleLower.includes('old fashioned') ||
-                                titleLower.includes('negroni') ||
-                                titleLower.includes('manhattan') ||
-                                titleLower.includes('gimlet') ||
-                                titleLower.includes('cosmopolitan') ||
-                                titleLower.includes('sidecar') ||
-                                titleLower.includes('mai tai');
+        titleLower.includes('martini') ||
+        titleLower.includes('margarita') ||
+        titleLower.includes('mojito') ||
+        titleLower.includes('daiquiri') ||
+        titleLower.includes('old fashioned') ||
+        titleLower.includes('negroni') ||
+        titleLower.includes('manhattan') ||
+        titleLower.includes('gimlet') ||
+        titleLower.includes('cosmopolitan') ||
+        titleLower.includes('sidecar') ||
+        titleLower.includes('mai tai');
 
       // Count spirit-based ingredients (be very specific to avoid false positives)
       const spiritKeywords = [
@@ -565,7 +565,7 @@ function App() {
       const hasCocktailIngredients = ingredients.some(ing => {
         const ingLower = ing.name.toLowerCase();
         return ingLower.includes('simple syrup') ||
-               ingLower.match(/\b(bitters?|maraschino|orgeat|falernum)\b/) !== null;
+          ingLower.match(/\b(bitters?|maraschino|orgeat|falernum)\b/) !== null;
       });
 
       // Only classify as cocktail if it's very obvious
@@ -648,11 +648,10 @@ function App() {
                   setShowCommunity(false);
                   setSelectedRecipe(null);
                 }}
-                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
-                  !showMeals && !showChat && !showSettings && !showAdmin && !showCommunity
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${!showMeals && !showChat && !showSettings && !showAdmin && !showCommunity
                     ? 'bg-terracotta-500 text-white shadow-sm'
                     : 'text-gray-700 hover:bg-sage-100'
-                }`}
+                  }`}
                 title="My Recipes"
               >
                 <BookOpen className="w-5 h-5" />
@@ -668,11 +667,10 @@ function App() {
                   setSearchTerm('');
                   setSelectedTags([]);
                 }}
-                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
-                  showCommunity
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${showCommunity
                     ? 'bg-terracotta-500 text-white shadow-sm'
                     : 'text-gray-700 hover:bg-sage-100'
-                }`}
+                  }`}
                 title="Community Recipes"
               >
                 <Users className="w-5 h-5" />
@@ -686,11 +684,10 @@ function App() {
                   setShowAdmin(false);
                   setShowCommunity(false);
                 }}
-                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
-                  showMeals
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${showMeals
                     ? 'bg-terracotta-500 text-white shadow-sm'
                     : 'text-gray-700 hover:bg-sage-100'
-                }`}
+                  }`}
                 title="Meal Planning"
               >
                 <Calendar className="w-5 h-5" />
@@ -704,11 +701,10 @@ function App() {
                   setShowAdmin(false);
                   setShowCommunity(false);
                 }}
-                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${
-                  showChat
+                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${showChat
                     ? 'bg-terracotta-500 text-white shadow-sm'
                     : 'text-gray-700 hover:bg-sage-100'
-                }`}
+                  }`}
                 title="Chef Assistant"
               >
                 <div className="relative">
@@ -931,11 +927,10 @@ function App() {
                           setSelectedTags([]);
                           setSelectedTimeFilter('');
                         }}
-                        className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${
-                          recipeType === 'food'
+                        className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${recipeType === 'food'
                             ? 'bg-cream-50 text-terracotta-600 shadow-sm'
                             : 'text-gray-600 hover:text-gray-900'
-                        }`}
+                          }`}
                         title="Food Recipes"
                       >
                         <ChefHat className="w-4 h-4" />
@@ -949,11 +944,10 @@ function App() {
                           setSelectedTags([]);
                           setSelectedTimeFilter('');
                         }}
-                        className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${
-                          recipeType === 'cocktail'
+                        className={`px-3 sm:px-4 py-2 min-h-[44px] rounded-lg transition flex items-center gap-2 font-medium touch-manipulation ${recipeType === 'cocktail'
                             ? 'bg-cream-50 text-terracotta-600 shadow-sm'
                             : 'text-gray-600 hover:text-gray-900'
-                        }`}
+                          }`}
                         title="Cocktails"
                       >
                         <Wine className="w-4 h-4" />

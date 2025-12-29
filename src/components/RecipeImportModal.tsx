@@ -34,10 +34,8 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
     }
 
     // Check for notes at the end (after comma)
-    let notes = '';
     const commaIndex = remaining.lastIndexOf(',');
     if (commaIndex !== -1) {
-      notes = remaining.slice(commaIndex + 1).trim();
       remaining = remaining.slice(0, commaIndex).trim();
     }
 
@@ -199,20 +197,18 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
           </div>
 
           {status !== 'idle' && (
-            <div className={`p-4 rounded-lg flex items-start gap-3 ${
-              status === 'error' ? 'bg-red-50' :
-              status === 'done' ? 'bg-green-50' :
-              'bg-blue-50'
-            }`}>
+            <div className={`p-4 rounded-lg flex items-start gap-3 ${status === 'error' ? 'bg-red-50' :
+                status === 'done' ? 'bg-green-50' :
+                  'bg-blue-50'
+              }`}>
               <div className="flex-shrink-0 mt-0.5">
                 {getStatusIcon()}
               </div>
               <div className="flex-1">
-                <p className={`text-sm font-medium ${
-                  status === 'error' ? 'text-red-800' :
-                  status === 'done' ? 'text-green-800' :
-                  'text-blue-800'
-                }`}>
+                <p className={`text-sm font-medium ${status === 'error' ? 'text-red-800' :
+                    status === 'done' ? 'text-green-800' :
+                      'text-blue-800'
+                  }`}>
                   {getStatusMessage()}
                 </p>
               </div>

@@ -1,5 +1,5 @@
 import { MealWithRecipes } from '../lib/supabase';
-import { Calendar, ChefHat, CheckCircle2, Circle, Plus, Sparkles } from 'lucide-react';
+import { Calendar, ChefHat, CheckCircle2, Plus, Sparkles } from 'lucide-react';
 
 type MealListProps = {
   meals: MealWithRecipes[];
@@ -117,9 +117,8 @@ export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
                 <div className="flex items-center gap-2">
                   <div className="w-24 bg-gray-200 rounded-full h-2 overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${
-                        isComplete ? 'bg-green-500' : 'bg-orange-500'
-                      }`}
+                      className={`h-full rounded-full transition-all ${isComplete ? 'bg-green-500' : 'bg-orange-500'
+                        }`}
                       style={{ width: `${stats.percentage}%` }}
                     />
                   </div>

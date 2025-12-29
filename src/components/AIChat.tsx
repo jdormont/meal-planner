@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Save, Trash2, Plus, ArrowLeft } from 'lucide-react';
+import { Send, User, Loader2, Save, Trash2, Plus, ArrowLeft } from 'lucide-react';
 import { marked } from 'marked';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -194,7 +194,8 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
     }
 
     try {
-      let ratingHistory = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let ratingHistory: any[] = [];
       let userPreferences = null;
       let isAdmin = false;
 
@@ -281,6 +282,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
         onFirstAction();
       }
     } catch (error) {
+      console.error('Error in chat:', error);
       setMessages((prev) => [
         ...prev,
         {
@@ -344,9 +346,8 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
           {chats.map((chat) => (
             <div
               key={chat.id}
-              className={`p-4 rounded-xl mb-2 cursor-pointer transition group hover:bg-sage-50 ${
-                currentChatId === chat.id ? 'bg-cream-50 border border-terracotta-200' : ''
-              }`}
+              className={`p-4 rounded-xl mb-2 cursor-pointer transition group hover:bg-sage-50 ${currentChatId === chat.id ? 'bg-cream-50 border border-terracotta-200' : ''
+                }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0" onClick={() => loadChat(chat.id)}>
@@ -396,139 +397,137 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {showQuickPrompts && messages.length === 1 && (
-          <div className="max-w-3xl mx-auto mt-8">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Start:</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {quickPrompts.map((prompt, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => sendMessage(prompt.prompt, prompt.weeklyBrief)}
-                  disabled={loading}
-                  className="p-4 bg-white border-2 border-sage-200 rounded-xl hover:border-terracotta-500 hover:shadow-md transition text-left disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl flex-shrink-0">{prompt.icon}</span>
-                    <div>
-                      <div className="font-medium text-gray-900 mb-1">{prompt.text}</div>
-                      <div className="text-xs text-gray-500 line-clamp-2">{prompt.prompt}</div>
+          {showQuickPrompts && messages.length === 1 && (
+            <div className="max-w-3xl mx-auto mt-8">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Start:</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {quickPrompts.map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => sendMessage(prompt.prompt, prompt.weeklyBrief)}
+                    disabled={loading}
+                    className="p-4 bg-white border-2 border-sage-200 rounded-xl hover:border-terracotta-500 hover:shadow-md transition text-left disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl flex-shrink-0">{prompt.icon}</span>
+                      <div>
+                        <div className="font-medium text-gray-900 mb-1">{prompt.text}</div>
+                        <div className="text-xs text-gray-500 line-clamp-2">{prompt.prompt}</div>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {messages.map((message, idx) => (
-          <div
-            key={idx}
-            className={`flex gap-3 ${
-              message.role === 'user' ? 'justify-end' : 'justify-start'
-            }`}
-          >
-            {message.role === 'assistant' && (
-              <div className="flex-shrink-0 w-8 h-8 bg-terracotta-100 rounded-full flex items-center justify-center">
-                <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Chef" className="w-5 h-5" />
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+          )}
+          {messages.map((message, idx) => (
             <div
-              className={`max-w-[85%] sm:max-w-[80%] rounded-3xl px-4 py-3 ${
-                message.role === 'user'
+              key={idx}
+              className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'
+                }`}
+            >
+              {message.role === 'assistant' && (
+                <div className="flex-shrink-0 w-8 h-8 bg-terracotta-100 rounded-full flex items-center justify-center">
+                  <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Chef" className="w-5 h-5" />
+                </div>
+              )}
+              <div
+                className={`max-w-[85%] sm:max-w-[80%] rounded-3xl px-4 py-3 ${message.role === 'user'
                   ? 'bg-terracotta-600 text-white'
                   : 'bg-sage-50 text-gray-900'
-              }`}
-            >
-              <div
-                className="prose prose-sm max-w-none leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: message.role === 'assistant'
-                    ? marked(message.content.replace('FULL_RECIPE', '').trim()) as string
-                    : message.content
-                }}
-              />
-              {message.role === 'assistant' && onSaveRecipe && idx > 0 && message.content.includes('FULL_RECIPE') && (
-                <button
-                  onClick={() => {
-                    const userQuery = idx > 0 && messages[idx - 1]?.role === 'user'
-                      ? messages[idx - 1].content
-                      : '';
-                    onSaveRecipe(message.content.replace('FULL_RECIPE', '').trim(), userQuery);
+                  }`}
+              >
+                <div
+                  className="prose prose-sm max-w-none leading-relaxed"
+                  dangerouslySetInnerHTML={{
+                    __html: message.role === 'assistant'
+                      ? marked(message.content.replace('FULL_RECIPE', '').trim()) as string
+                      : message.content
                   }}
-                  className="mt-3 px-4 py-2 min-h-[44px] bg-white hover:bg-sage-50 text-terracotta-600 rounded-xl text-sm font-medium flex items-center gap-2 transition touch-manipulation"
-                >
-                  <Save className="w-4 h-4" />
-                  Save as Recipe
-                </button>
-              )}
-              {message.role === 'assistant' && isAdmin && message.cuisineMetadata && message.content.includes('FULL_RECIPE') && (
-                <div className="mt-4 pt-4 border-t border-sage-200">
-                  <div className="text-xs font-semibold text-gray-700 mb-2">Generation Metadata (Admin Only)</div>
-                  <div className="text-xs space-y-1 text-gray-600">
-                    <div>
-                      <span className="font-medium">Cuisine Profile Applied:</span>{' '}
-                      {message.cuisineMetadata.applied ? '✅ Yes' : '❌ No'}
+                />
+                {message.role === 'assistant' && onSaveRecipe && idx > 0 && message.content.includes('FULL_RECIPE') && (
+                  <button
+                    onClick={() => {
+                      const userQuery = idx > 0 && messages[idx - 1]?.role === 'user'
+                        ? messages[idx - 1].content
+                        : '';
+                      onSaveRecipe(message.content.replace('FULL_RECIPE', '').trim(), userQuery);
+                    }}
+                    className="mt-3 px-4 py-2 min-h-[44px] bg-white hover:bg-sage-50 text-terracotta-600 rounded-xl text-sm font-medium flex items-center gap-2 transition touch-manipulation"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save as Recipe
+                  </button>
+                )}
+                {message.role === 'assistant' && isAdmin && message.cuisineMetadata && message.content.includes('FULL_RECIPE') && (
+                  <div className="mt-4 pt-4 border-t border-sage-200">
+                    <div className="text-xs font-semibold text-gray-700 mb-2">Generation Metadata (Admin Only)</div>
+                    <div className="text-xs space-y-1 text-gray-600">
+                      <div>
+                        <span className="font-medium">Cuisine Profile Applied:</span>{' '}
+                        {message.cuisineMetadata.applied ? '✅ Yes' : '❌ No'}
+                      </div>
+                      {message.cuisineMetadata.applied && (
+                        <>
+                          <div>
+                            <span className="font-medium">Cuisine:</span>{' '}
+                            {message.cuisineMetadata.cuisine} ({message.cuisineMetadata.styleFocus})
+                          </div>
+                          <div>
+                            <span className="font-medium">Confidence:</span>{' '}
+                            {message.cuisineMetadata.confidence.charAt(0).toUpperCase() + message.cuisineMetadata.confidence.slice(1)}
+                          </div>
+                          <div>
+                            <span className="font-medium">Rationale:</span>{' '}
+                            {message.cuisineMetadata.rationale}
+                          </div>
+                          <div>
+                            <span className="font-medium">All Competing Matches:</span>{' '}
+                            {message.cuisineMetadata.allMatches}
+                          </div>
+                        </>
+                      )}
                     </div>
-                    {message.cuisineMetadata.applied && (
-                      <>
-                        <div>
-                          <span className="font-medium">Cuisine:</span>{' '}
-                          {message.cuisineMetadata.cuisine} ({message.cuisineMetadata.styleFocus})
-                        </div>
-                        <div>
-                          <span className="font-medium">Confidence:</span>{' '}
-                          {message.cuisineMetadata.confidence.charAt(0).toUpperCase() + message.cuisineMetadata.confidence.slice(1)}
-                        </div>
-                        <div>
-                          <span className="font-medium">Rationale:</span>{' '}
-                          {message.cuisineMetadata.rationale}
-                        </div>
-                        <div>
-                          <span className="font-medium">All Competing Matches:</span>{' '}
-                          {message.cuisineMetadata.allMatches}
-                        </div>
-                      </>
-                    )}
                   </div>
+                )}
+              </div>
+              {message.role === 'user' && (
+                <div className="flex-shrink-0 w-8 h-8 bg-terracotta-600 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-white" />
                 </div>
               )}
             </div>
-            {message.role === 'user' && (
-              <div className="flex-shrink-0 w-8 h-8 bg-terracotta-600 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+          ))}
+          {loading && (
+            <div className="flex gap-3 justify-start">
+              <div className="flex-shrink-0 w-8 h-8 bg-terracotta-100 rounded-full flex items-center justify-center">
+                <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Chef" className="w-5 h-5" />
               </div>
-            )}
-          </div>
-        ))}
-        {loading && (
-          <div className="flex gap-3 justify-start">
-            <div className="flex-shrink-0 w-8 h-8 bg-terracotta-100 rounded-full flex items-center justify-center">
-              <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Chef" className="w-5 h-5" />
+              <div className="bg-sage-50 rounded-3xl px-4 py-3">
+                <Loader2 className="w-5 h-5 text-sage-600 animate-spin" />
+              </div>
             </div>
-            <div className="bg-sage-50 rounded-3xl px-4 py-3">
-              <Loader2 className="w-5 h-5 text-sage-600 animate-spin" />
-            </div>
-          </div>
-        )}
+          )}
           <div ref={messagesEndRef} />
         </div>
 
         <div className="border-t p-4 bg-white">
-        <div className="flex gap-2 items-end">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me for recipe ideas, cooking tips, or substitutions..."
-            rows={2}
-            className="flex-1 px-4 py-3 border border-sage-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none text-base"
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!input.trim() || loading}
-            className="px-4 py-3 min-h-[44px] bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-          >
-            <Send className="w-5 h-5" />
-          </button>
+          <div className="flex gap-2 items-end">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask me for recipe ideas, cooking tips, or substitutions..."
+              rows={2}
+              className="flex-1 px-4 py-3 border border-sage-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none resize-none text-base"
+            />
+            <button
+              onClick={() => sendMessage()}
+              disabled={!input.trim() || loading}
+              className="px-4 py-3 min-h-[44px] bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+            >
+              <Send className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
