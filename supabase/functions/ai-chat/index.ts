@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
+import { Message, UserPreferences, ModelConfig, CuisineProfile } from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,14 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-type ModelConfig = {
-  id: string;
-  model_identifier: string;
-  provider: string;
-  model_name: string;
-};
 
-async function getUserModel(supabaseClient: any, userId: string): Promise<ModelConfig | null> {
+
+async function getUserModel(supabaseClient: SupabaseClient, userId: string): Promise<ModelConfig | null> {
   try {
     const { data: profile, error: profileError } = await supabaseClient
       .from("user_profiles")
@@ -60,7 +56,7 @@ async function getUserModel(supabaseClient: any, userId: string): Promise<ModelC
   }
 }
 
-async function callOpenAI(apiKey: string, model: string, messages: any[], systemPrompt: string) {
+async function callOpenAI(apiKey: string, model: string, messages: Message[], systemPrompt: string) {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -87,7 +83,7 @@ async function callOpenAI(apiKey: string, model: string, messages: any[], system
   return data.choices[0].message.content;
 }
 
-async function callAnthropic(apiKey: string, model: string, messages: any[], systemPrompt: string) {
+async function callAnthropic(apiKey: string, model: string, messages: Message[], systemPrompt: string) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -112,13 +108,13 @@ async function callAnthropic(apiKey: string, model: string, messages: any[], sys
   return data.content[0].text;
 }
 
-async function callGemini(apiKey: string, model: string, messages: any[], systemPrompt: string) {
+async function callGemini(apiKey: string, model: string, messages: Message[], systemPrompt: string) {
   const contents = [
     {
       role: "user",
       parts: [{ text: systemPrompt }]
     },
-    ...messages.map((msg: any) => ({
+    ...messages.map((msg: Message) => ({
       role: msg.role === "assistant" ? "model" : "user",
       parts: [{ text: msg.content }]
     }))
@@ -151,9 +147,9 @@ async function callGemini(apiKey: string, model: string, messages: any[], system
 }
 
 async function detectCuisineFromMessages(
-  messages: any[],
-  userPreferences: any,
-  supabaseClient: any
+  messages: Message[],
+  userPreferences: UserPreferences,
+  supabaseClient: SupabaseClient
 ): Promise<{ cuisine: string; confidence: string; rationale: string; allMatches: string } | null> {
   try {
     const { data: profiles, error } = await supabaseClient
@@ -236,7 +232,7 @@ async function detectCuisineFromMessages(
     if (userPreferences?.favorite_cuisines && userPreferences.favorite_cuisines.length > 0) {
       for (const favCuisine of userPreferences.favorite_cuisines) {
         const profile = profiles.find(
-          (p: any) => p.cuisine_name.toLowerCase() === favCuisine.toLowerCase()
+          (p: CuisineProfile) => p.cuisine_name.toLowerCase() === favCuisine.toLowerCase()
         );
         if (profile) {
           console.log(`Using favorite cuisine: ${profile.cuisine_name}`);
@@ -259,8 +255,8 @@ async function detectCuisineFromMessages(
 
 async function getCuisineProfile(
   cuisineName: string,
-  supabaseClient: any
-): Promise<any | null> {
+  supabaseClient: SupabaseClient
+): Promise<CuisineProfile | null> {
   try {
     const { data: profile, error } = await supabaseClient
       .from("cuisine_profiles")
@@ -281,7 +277,7 @@ async function getCuisineProfile(
   }
 }
 
-function formatCuisineProfile(profile: any): string {
+function formatCuisineProfile(profile: CuisineProfile): string {
   if (!profile || !profile.profile_data) {
     return "";
   }
@@ -372,9 +368,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief, isAdmin } = await req.json();
-    
+
     const authHeader = req.headers.get("Authorization");
-    
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -397,18 +393,18 @@ Deno.serve(async (req: Request) => {
         .eq("is_default", true)
         .eq("is_active", true)
         .maybeSingle();
-      
+
       if (defaultError) {
         console.error("Error fetching default model:", defaultError);
       }
-      
+
       modelConfig = defaultModel as ModelConfig | null;
     }
 
     if (!modelConfig) {
       return new Response(
-        JSON.stringify({ 
-          error: "No LLM model configured. Please contact administrator." 
+        JSON.stringify({
+          error: "No LLM model configured. Please contact administrator."
         }),
         {
           status: 500,
@@ -432,11 +428,11 @@ Deno.serve(async (req: Request) => {
         apiKey = Deno.env.get("GOOGLE_API_KEY");
       }
     }
-    
+
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ 
-          error: `API key not configured for ${modelConfig.provider}. Please set the appropriate API key in your Supabase project settings.` 
+        JSON.stringify({
+          error: `API key not configured for ${modelConfig.provider}. Please set the appropriate API key in your Supabase project settings.`
         }),
         {
           status: 500,
@@ -470,7 +466,7 @@ Deno.serve(async (req: Request) => {
       }
 
       if (userPreferences.time_preference) {
-        const timeMap: any = {
+        const timeMap: Record<string, string> = {
           quick: 'under 30 minutes',
           moderate: '30-60 minutes',
           relaxed: '60+ minutes'
@@ -561,10 +557,10 @@ Deno.serve(async (req: Request) => {
       if (likedRecipes.length > 0 || dislikedRecipes.length > 0) {
         ratingContext = '\n\n**User Recipe Ratings History:**\n';
         if (likedRecipes.length > 0) {
-          ratingContext += `\nRecipes they LIKED:\n${likedRecipes.map(r => `- ${r}`).join('\n')}`;
+          ratingContext += `\nRecipes they LIKED:\n${likedRecipes.map((r: string) => `- ${r}`).join('\n')}`;
         }
         if (dislikedRecipes.length > 0) {
-          ratingContext += `\n\nRecipes they DISLIKED:\n${dislikedRecipes.map(r => `- ${r}`).join('\n')}`;
+          ratingContext += `\n\nRecipes they DISLIKED:\n${dislikedRecipes.map((r: string) => `- ${r}`).join('\n')}`;
         }
         ratingContext += '\n\nUse this information to personalize recommendations and avoid suggesting similar recipes to ones they disliked.';
       }
@@ -988,7 +984,7 @@ Not:
       }
     } catch (error) {
       console.error(`Error with ${modelConfig.provider}:`, error);
-      
+
       const { data: defaultModel } = await supabaseClient
         .from("llm_models")
         .select("id, model_identifier, provider, model_name")
@@ -1000,7 +996,7 @@ Not:
         console.log(`Falling back to default model: ${defaultModel.model_name}`);
         usedFallback = true;
         modelConfig = defaultModel as ModelConfig;
-        
+
         if (modelConfig.provider === "openai") {
           apiKey = Deno.env.get("OPENAI_API_KEY") || "";
           message = await callOpenAI(apiKey, modelConfig.model_identifier, messages, systemPrompt);
@@ -1039,8 +1035,8 @@ Not:
   } catch (error) {
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error occurred" 
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Unknown error occurred"
       }),
       {
         status: 500,

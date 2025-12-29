@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "allowJs": true,
+        "strict": true,
+        "noEmit": true,
+        "lib": [
+            "esnext",
+            "dom",
+            "dom.iterable"
+        ],
+        "types": []
+    },
+    "include": [
+        "**/*.ts",
+        "global.d.ts"
+    ]
+}

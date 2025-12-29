@@ -21,6 +21,7 @@ import { OnboardingInterstitial } from './components/OnboardingInterstitial';
 import { Layout, View } from './components/Layout';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
 import { Plus, ChefHat, BookOpen, Globe, Wine, Camera, Users, Calendar } from 'lucide-react';
+import { parseAIRecipe } from './utils/recipeParser';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -168,166 +169,33 @@ function App() {
     }
   };
 
-  const parseAIRecipe = (text: string, userQuery?: string) => {
-    console.log('=== PARSING RECIPE ===');
-    console.log('Raw text length:', text.length);
-    console.log('First 500 chars:', text.substring(0, 500));
+  const handleAIRecipe = (text: string) => {
+    const parsed = parseAIRecipe(text);
 
-    const lines = text.split('\n').filter((line) => line.trim());
-    console.log('Total lines:', lines.length);
-
-    let title = 'AI Suggested Recipe';
-    let description = '';
-    const ingredients: Array<{ name: string; quantity: string; unit: string }> = [];
-    const instructions: string[] = [];
-    let section: 'none' | 'ingredients' | 'instructions' = 'none';
-    let prepTime = 0;
-    let cookTime = 0;
-    let titleFound = false;
-    const descriptionLines: string[] = [];
-
-    lines.forEach((line, index) => {
-      const lowerLine = line.toLowerCase();
-
-      // Parse prep time - handle formats like "**Prep Time:** 10 minutes" or "Prep Time: 10 minutes"
-      const prepMatch = line.match(/\*?\*?prep\s+time:?\*?\*?\s*(\d+)/i);
-      if (prepMatch) {
-        prepTime = parseInt(prepMatch[1]);
-        return;
-      }
-
-      // Parse cook time - handle formats like "**Cook Time:** 30 minutes" or "Cook Time: 30 minutes"
-      const cookMatch = line.match(/\*?\*?cook\s+time:?\*?\*?\s*(\d+)/i);
-      if (cookMatch) {
-        cookTime = parseInt(cookMatch[1]);
-        return;
-      }
-
-      // Look for the first markdown heading as the recipe title
-      if (!titleFound && line.match(/^#{1,3}\s+/)) {
-        title = line.replace(/^#+\s+/, '').replace(/^\*\*/, '').replace(/\*\*$/, '').trim();
-        titleFound = true;
-        return;
-      }
-
-      if (lowerLine.includes('ingredient')) {
-        section = 'ingredients';
-        console.log('Switched to ingredients section at line', index);
-        // Convert accumulated description lines to description
-        if (descriptionLines.length > 0) {
-          description = descriptionLines.join(' ').trim();
-        }
-      } else if (lowerLine.includes('instruction') || lowerLine.includes('direction') || lowerLine.includes('step')) {
-        section = 'instructions';
-        console.log('Switched to instructions section at line', index);
-      } else if (section === 'ingredients' && line.match(/^[-*•]\s/)) {
-        const cleaned = line.replace(/^[-*•]\s/, '').trim();
-        const parts = cleaned.match(/^([\d./]+)?\s*([a-z]+)?\s*(.+)$/i);
-        if (parts) {
-          ingredients.push({
-            quantity: parts[1]?.trim() || '1',
-            unit: parts[2]?.trim() || '',
-            name: parts[3]?.trim() || cleaned,
-          });
-        } else {
-          ingredients.push({ quantity: '', unit: '', name: cleaned });
-        }
-      } else if (section === 'instructions' && line.match(/^(\d+\.|-|\*|•)/)) {
-        const instruction = line.replace(/^(\d+\.|-|\*|•)\s*/, '').trim();
-        console.log('Found instruction:', instruction.substring(0, 50));
-        instructions.push(instruction);
-      } else if (section === 'instructions' && line.trim().length > 0 && !line.match(/^#{1,3}\s+/)) {
-        // Capture any non-empty line in instructions section that isn't a heading
-        // This handles cases where numbered steps might be formatted differently
-        console.log('Adding line as instruction (fallback):', line.substring(0, 50));
-        instructions.push(line.trim());
-      } else if (section === 'none' && titleFound && !lowerLine.includes('prep time') && !lowerLine.includes('cook time') && !lowerLine.includes('servings')) {
-        // Collect lines after the title but before ingredients as description
-        descriptionLines.push(line.trim());
-      }
-    });
-
-    console.log('Parsed instructions count:', instructions.length);
-    console.log('Instructions:', instructions);
-
-    // Check if the user explicitly asked for a drink or cocktail
-    const userQueryLower = userQuery?.toLowerCase() || '';
-    const userAskedForDrink = userQueryLower.includes('drink') ||
-      userQueryLower.includes('cocktail') ||
-      userQueryLower.includes('beverage') ||
-      userQueryLower.includes('martini') ||
-      userQueryLower.includes('mojito') ||
-      userQueryLower.includes('margarita');
-
-    // If user didn't ask for a drink/cocktail, default to food
-    let isCocktail = false;
-
-    if (userAskedForDrink) {
-      const titleLower = title.toLowerCase();
-
-      // Only classify as cocktail if there's explicit cocktail terminology in the title
-      const hasCocktailTitle = titleLower.includes('cocktail') ||
-        titleLower.includes('martini') ||
-        titleLower.includes('margarita') ||
-        titleLower.includes('mojito') ||
-        titleLower.includes('daiquiri') ||
-        titleLower.includes('old fashioned') ||
-        titleLower.includes('negroni') ||
-        titleLower.includes('manhattan') ||
-        titleLower.includes('gimlet') ||
-        titleLower.includes('cosmopolitan') ||
-        titleLower.includes('sidecar') ||
-        titleLower.includes('mai tai');
-
-      // Count spirit-based ingredients (be very specific to avoid false positives)
-      const spiritKeywords = [
-        'vodka', 'gin', 'rum', 'tequila', 'whiskey', 'whisky',
-        'bourbon', 'scotch', 'cognac', 'brandy', 'vermouth',
-        'aperol', 'campari', 'amaretto',
-        'benedictine', 'chartreuse', 'mezcal', 'pisco'
-      ];
-
-      const hasSpirit = ingredients.some(ing => {
-        const ingLower = ing.name.toLowerCase();
-        return spiritKeywords.some(spirit => {
-          const regex = new RegExp(`\\b${spirit}\\b`, 'i');
-          return regex.test(ingLower);
-        });
-      });
-
-      // Check for classic cocktail-only ingredients
-      const hasCocktailIngredients = ingredients.some(ing => {
-        const ingLower = ing.name.toLowerCase();
-        return ingLower.includes('simple syrup') ||
-          ingLower.match(/\b(bitters?|maraschino|orgeat|falernum)\b/) !== null;
-      });
-
-      // Only classify as cocktail if it's very obvious
-      isCocktail = hasCocktailTitle || (hasSpirit && hasCocktailIngredients);
-    }
-
-    const parsedRecipe: Recipe = {
-      id: 'temp-ai-recipe',
-      user_id: user!.id,
-      title,
-      description: description.substring(0, 500),
-      ingredients: ingredients.length > 0 ? ingredients : [{ name: '', quantity: '', unit: '' }],
-      instructions: instructions.length > 0 ? instructions : [''],
-      prep_time_minutes: prepTime,
-      cook_time_minutes: cookTime,
+    setEditingRecipe({
+      id: `temp-${Date.now()}`,
+      user_id: user?.id || '',
+      title: parsed.title,
+      description: parsed.description,
+      ingredients: parsed.ingredients,
+      instructions: parsed.instructions,
+      prep_time_minutes: parsed.prepTime,
+      cook_time_minutes: parsed.cookTime,
       servings: 4,
       tags: ['AI Generated'],
-      notes: 'Recipe generated by AI assistant',
+      image_url: '',
+      source_url: '',
+      notes: '',
       is_shared: false,
-      recipe_type: isCocktail ? 'cocktail' : 'food',
-      cocktail_metadata: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    };
+      recipe_type: recipeType
+    });
 
-    setEditingRecipe(parsedRecipe);
     setShowForm(true);
   };
+
+
 
   if (authLoading) {
     return (
@@ -394,7 +262,7 @@ function App() {
         <Settings />
       ) : view === 'chat' ? (
         <div className="h-[calc(100vh-10rem)]">
-          <AIChat onSaveRecipe={parseAIRecipe} onFirstAction={checkAndShowOnboarding} />
+          <AIChat onSaveRecipe={handleAIRecipe} onFirstAction={checkAndShowOnboarding} />
         </div>
       ) : view === 'community' ? (
         <div>

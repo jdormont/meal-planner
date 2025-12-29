@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { RecipeRequest, Ingredient, RecipeTags } from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { title, description, ingredients, instructions, prepTime, cookTime, recipeType } = await req.json();
+    const { title, description, ingredients, instructions, prepTime, cookTime, recipeType } = await req.json() as RecipeRequest;
 
     console.log("Received recipeType:", recipeType);
 
@@ -38,7 +39,7 @@ Deno.serve(async (req: Request) => {
       ? "https://api.openai.com/v1/chat/completions"
       : "https://api.anthropic.com/v1/messages";
 
-    const ingredientsList = ingredients?.map((i: any) => i.name).filter(Boolean).join(', ') || '';
+    const ingredientsList = ingredients?.map((i: Ingredient) => i.name).filter(Boolean).join(', ') || '';
     const instructionsList = instructions?.join(' ') || '';
 
     const isCocktail = recipeType === 'cocktail';
@@ -159,7 +160,7 @@ Select ONE option from each category. Choose the most appropriate option based o
 
     console.log("Extracted message:", message);
 
-    let tags = {};
+    let tags: RecipeTags = {};
     try {
       tags = JSON.parse(message);
     } catch {
