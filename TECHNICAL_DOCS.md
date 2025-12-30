@@ -34,7 +34,9 @@ A comprehensive recipe management and meal planning application with AI-powered 
 - **Account Management** - Secure authentication with admin approval workflow
 - **Community Recipes** - Browse and adopt recipes shared by other users
 - **Settings** - Comprehensive customization options for personalization
-- **Responsive Design** - Works seamlessly on desktop and mobile devices
+- **Settings** - Comprehensive customization options for personalization
+- **Responsive Design** - Works seamlessly on desktop and mobile
+- **Cooking Mode** - Optimized tablet layout with sticky ingredients list for easier cooking
 
 ### Admin Features
 - **User Management** - Approve or reject new user registrations
@@ -255,6 +257,7 @@ See `PRD.md` for the complete product roadmap and feature status.
 - Nutrition tracking
 - Kitchen inventory management
 - Batch cooking and meal prep features
+- Progressive Web App (PWA) support
 
 ## License
 

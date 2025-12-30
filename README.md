@@ -23,7 +23,11 @@ Here is a simple breakdown of the main features:
 *   **Dietary Safety:** The AI knows your allergies (like nuts or gluten) and will warn you if a recipe isn't safe, or suggest substitutes.
 *   **Cooking Advice:** Ask for tips like "How long do I boil an egg?" or "Can I use honey instead of sugar?"
 
-### 3. Weekly Meal Planner
+### 3. Tablet Cooking Mode
+*   **Sticky Ingredients:** On tablets, your ingredients list stays visible while you scroll through instructions. 
+*   **Readability:** Large, clear text makes it easy to read from a distance while you cook.
+
+### 4. Weekly Meal Planner
 *   **Plan Ahead:** Drag and drop recipes into a weekly calendar.
 *   **Stay Organized:** Know exactly what you are cooking for Monday dinner or Sunday brunch.
 *   **Track History:** Look back at what you ate last month to bring back old favorites.
