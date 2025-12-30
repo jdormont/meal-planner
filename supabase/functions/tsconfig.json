@@ -4,6 +4,7 @@
         "module": "esnext",
         "moduleResolution": "bundler",
         "allowJs": true,
+        "allowImportingTsExtensions": true,
         "strict": true,
         "noEmit": true,
         "lib": [

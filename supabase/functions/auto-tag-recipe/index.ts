@@ -62,19 +62,19 @@ Deno.serve(async (req: Request) => {
 
 Return ONLY a JSON object with your suggestions in this exact format:
 {
-  \"base\": \"value\",
-  \"flavor\": \"value\",
-  \"strength\": \"value\",
-  \"method\": \"value\",
-  \"occasion\": \"value\",
-  \"baseSpirit\": \"value\",
-  \"glassType\": \"value\",
-  \"cocktailMethod\": \"value\",
-  \"ice\": \"value\",
-  \"garnish\": \"value\"
+  "base": "value",
+  "flavor": "value",
+  "strength": "value",
+  "method": "value",
+  "occasion": "value",
+  "baseSpirit": "value",
+  "glassType": "value",
+  "cocktailMethod": "value",
+  "ice": "value",
+  "garnish": "value"
 }
 
-Select ONE option from each category. Choose the most appropriate option based on the cocktail. For garnish, provide a simple description like \"lemon twist\" or \"cherry\" if not from the list.`
+Select ONE option from each category. Choose the most appropriate option based on the cocktail. For garnish, provide a simple description like "lemon twist" or "cherry" if not from the list.`
       : `You are a recipe categorization assistant. Based on the recipe details provided, suggest appropriate tags from these categories:
 
 **technique**: saute, bake, broil, grill, roast, steam, boil, fry, slow-cook, pressure-cook, raw
@@ -85,11 +85,11 @@ Select ONE option from each category. Choose the most appropriate option based o
 
 Return ONLY a JSON object with your suggestions in this exact format:
 {
-  \"technique\": \"value\",
-  \"grain\": \"value\",
-  \"protein\": \"value\",
-  \"cuisine\": \"value\",
-  \"meal\": \"value\"
+  "technique": "value",
+  "grain": "value",
+  "protein": "value",
+  "cuisine": "value",
+  "meal": "value"
 }
 
 Select ONE option from each category. Choose the most appropriate option based on the recipe. If unsure, make your best educated guess.`;

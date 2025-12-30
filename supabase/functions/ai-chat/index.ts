@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
-import { Message, UserPreferences, ModelConfig, CuisineProfile } from "../_shared/types.ts";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { Message, UserPreferences, ModelConfig, CuisineProfile, RatingHistoryItem } from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -537,8 +537,8 @@ Deno.serve(async (req: Request) => {
     let ratingContext = '';
     if (ratingHistory && ratingHistory.length > 0) {
       const likedRecipes = ratingHistory
-        .filter((r: any) => r.rating === 'thumbs_up')
-        .map((r: any) => {
+        .filter((r: RatingHistoryItem) => r.rating === 'thumbs_up')
+        .map((r: RatingHistoryItem) => {
           const title = r.recipes?.title || 'Unknown';
           const tags = r.recipes?.tags?.join(', ') || '';
           const feedback = r.feedback ? ` (${r.feedback})` : '';
@@ -546,8 +546,8 @@ Deno.serve(async (req: Request) => {
         });
 
       const dislikedRecipes = ratingHistory
-        .filter((r: any) => r.rating === 'thumbs_down')
-        .map((r: any) => {
+        .filter((r: RatingHistoryItem) => r.rating === 'thumbs_down')
+        .map((r: RatingHistoryItem) => {
           const title = r.recipes?.title || 'Unknown';
           const tags = r.recipes?.tags?.join(', ') || '';
           const feedback = r.feedback ? ` (${r.feedback})` : '';
