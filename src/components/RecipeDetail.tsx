@@ -288,44 +288,55 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
             </div>
           )}
 
-          {recipe.ingredients.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Ingredients
-              </h2>
-              <ul className="space-y-2">
-                {recipe.ingredients.map((ingredient, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <span className="text-terracotta-600 mt-1">•</span>
-                    <span className="text-gray-700">
-                      {ingredient.quantity} {ingredient.unit} {ingredient.name}
+          <div className="md:grid md:grid-cols-[minmax(250px,35%)_1fr] md:gap-12">
+            {/* Ingredients Column */}
+            <div className="md:sticky md:top-8 md:self-start md:h-[calc(100vh-4rem)] md:overflow-y-auto custom-scrollbar">
+              {recipe.ingredients.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    Ingredients
+                    <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      {recipe.ingredients.length} items
                     </span>
-                  </li>
-                ))}
-              </ul>
+                  </h2>
+                  <ul className="space-y-3">
+                    {recipe.ingredients.map((ingredient, idx) => (
+                      <li key={idx} className="flex items-start gap-3 p-3 rounded-lg hover:bg-terracotta-50 transition-colors group">
+                        <div className="mt-1.5 w-2 h-2 rounded-full bg-terracotta-400 group-hover:bg-terracotta-600 transition-colors" />
+                        <span className="text-gray-700 font-medium text-lg leading-relaxed">
+                          {ingredient.quantity} {ingredient.unit} {ingredient.name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-          )}
 
-          {recipe.instructions.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Instructions
-              </h2>
-              <ol className="space-y-4">
-                {recipe.instructions.map((instruction, idx) => (
-                  <li key={idx} className="flex gap-4">
-                    <span className="flex-shrink-0 w-8 h-8 bg-terracotta-600 text-white rounded-full flex items-center justify-center font-bold">
-                      {idx + 1}
-                    </span>
-                    <div
-                      className="text-gray-700 pt-1 leading-relaxed prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={renderMarkdown(instruction)}
-                    />
-                  </li>
-                ))}
-              </ol>
+            {/* Instructions Column */}
+            <div>
+              {recipe.instructions.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    Instructions
+                  </h2>
+                  <ol className="space-y-8">
+                    {recipe.instructions.map((instruction, idx) => (
+                      <li key={idx} className="flex gap-6 group">
+                        <span className="flex-shrink-0 w-10 h-10 bg-terracotta-100 text-terracotta-700 rounded-full flex items-center justify-center font-bold text-xl group-hover:bg-terracotta-600 group-hover:text-white transition-colors">
+                          {idx + 1}
+                        </span>
+                        <div
+                          className="text-gray-700 pt-1 leading-relaxed prose prose-lg max-w-none"
+                          dangerouslySetInnerHTML={renderMarkdown(instruction)}
+                        />
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {recipe.notes && (
             <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
