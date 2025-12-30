@@ -81,3 +81,12 @@ export interface RecipeTags {
     garnish?: string;
     [key: string]: string | undefined;
 }
+
+export interface RatingHistoryItem {
+    rating: 'thumbs_up' | 'thumbs_down';
+    feedback?: string;
+    recipes?: {
+        title?: string;
+        tags?: string[];
+    };
+}
