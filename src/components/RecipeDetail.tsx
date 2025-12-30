@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
 import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2 } from 'lucide-react';
 import { marked } from 'marked';
@@ -30,14 +30,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
     return { __html: marked(text, { breaks: true, gfm: true }) as string };
   };
 
-  useEffect(() => {
-    if (user) {
-      loadCurrentRating();
-      loadAvailableMeals();
-    }
-  }, [user, recipe.id]);
-
-  const loadCurrentRating = async () => {
+  const loadCurrentRating = useCallback(async () => {
     if (!user) return;
 
     const { data } = await supabase
@@ -48,9 +41,9 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
       .maybeSingle();
 
     setCurrentRating(data);
-  };
+  }, [user, recipe.id]);
 
-  const loadAvailableMeals = async () => {
+  const loadAvailableMeals = useCallback(async () => {
     if (!user) return;
 
     const { data } = await supabase
@@ -60,7 +53,14 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
       .order('date', { ascending: true });
 
     setAvailableMeals(data || []);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadCurrentRating();
+      loadAvailableMeals();
+    }
+  }, [user, loadCurrentRating, loadAvailableMeals]);
 
   const addRecipeToMeal = async () => {
     if (!user || !selectedMealId) return;
@@ -358,8 +358,8 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
                 <button
                   onClick={() => handleRatingClick('thumbs_up')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${currentRating?.rating === 'thumbs_up'
-                      ? 'bg-green-100 text-green-700 border-2 border-green-500'
-                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-green-100 text-green-700 border-2 border-green-500'
+                    : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
                     }`}
                 >
                   <ThumbsUp className="w-5 h-5" />
@@ -368,8 +368,8 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
                 <button
                   onClick={() => handleRatingClick('thumbs_down')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${currentRating?.rating === 'thumbs_down'
-                      ? 'bg-red-100 text-red-700 border-2 border-red-500'
-                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-red-100 text-red-700 border-2 border-red-500'
+                    : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
                     }`}
                 >
                   <ThumbsDown className="w-5 h-5" />
@@ -481,8 +481,8 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
                     key={meal.id}
                     onClick={() => setSelectedMealId(meal.id)}
                     className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition border-b border-gray-100 ${selectedMealId === meal.id
-                        ? 'bg-terracotta-50 font-medium text-terracotta-900'
-                        : 'text-gray-700'
+                      ? 'bg-terracotta-50 font-medium text-terracotta-900'
+                      : 'text-gray-700'
                       }`}
                   >
                     <div className="flex items-center justify-between">

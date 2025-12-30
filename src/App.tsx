@@ -470,19 +470,7 @@ function App() {
         />
       )}
 
-      {selectedRecipe && (
-        <RecipeDetail
-          recipe={selectedRecipe}
-          onClose={() => setSelectedRecipe(null)}
-          onEdit={() => {
-            setEditingRecipe(selectedRecipe);
-            setSelectedRecipe(null);
-            setShowForm(true);
-          }}
-          onCopy={handleCopyRecipe}
-          onFirstAction={checkAndShowOnboarding}
-        />
-      )}
+
 
       {showMealForm && (
         <MealForm
@@ -513,6 +501,20 @@ function App() {
             setShowMealForm(true);
           }}
           onDelete={() => selectedMeal && handleDeleteMeal(selectedMeal.id)}
+        />
+      )}
+
+      {selectedRecipe && (
+        <RecipeDetail
+          recipe={selectedRecipe}
+          onClose={() => setSelectedRecipe(null)}
+          onEdit={() => {
+            setEditingRecipe(selectedRecipe);
+            setSelectedRecipe(null);
+            setShowForm(true);
+          }}
+          onCopy={handleCopyRecipe}
+          onFirstAction={checkAndShowOnboarding}
         />
       )}
 
