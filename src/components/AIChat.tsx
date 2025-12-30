@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, User, Loader2, Save, Trash2, Plus, ArrowLeft } from 'lucide-react';
+import { Send, User, Loader2, Save, Trash2, Plus, ArrowLeft, MessageSquare } from 'lucide-react';
 import { marked } from 'marked';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -333,10 +333,10 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
     <div className="flex h-full bg-white rounded-xl shadow-lg overflow-hidden">
       {/* Chat List Sidebar - Hidden on mobile unless showChatList is true */}
       <div className={`${showChatList ? 'flex' : 'hidden'} lg:flex w-full lg:w-80 border-r flex-col`}>
-        <div className="p-4 border-b bg-gradient-to-r from-terracotta-600 to-warmtan-600">
+        <div className="p-4 border-b bg-white border-sage-200">
           <button
             onClick={createNewChat}
-            className="w-full px-4 py-3 bg-white hover:bg-cream-50 text-terracotta-600 rounded-xl transition flex items-center justify-center gap-2 font-medium touch-manipulation"
+            className="w-full px-4 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition flex items-center justify-center gap-2 font-medium touch-manipulation shadow-sm"
           >
             <Plus className="w-5 h-5" />
             New Chat
@@ -346,10 +346,13 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
           {chats.map((chat) => (
             <div
               key={chat.id}
-              className={`p-4 rounded-xl mb-2 cursor-pointer transition group hover:bg-sage-50 ${currentChatId === chat.id ? 'bg-cream-50 border border-terracotta-200' : ''
+              className={`p-3 rounded-xl mb-2 cursor-pointer transition group hover:bg-sage-50 border border-transparent ${currentChatId === chat.id ? 'bg-cream-50 border-terracotta-200' : ''
                 }`}
             >
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="mt-1">
+                  <MessageSquare className={`w-4 h-4 ${currentChatId === chat.id ? 'text-terracotta-600' : 'text-gray-400'}`} />
+                </div>
                 <div className="flex-1 min-w-0" onClick={() => loadChat(chat.id)}>
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {chat.title}
