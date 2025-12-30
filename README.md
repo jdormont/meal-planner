@@ -8,7 +8,7 @@ Think of it as your digital Sous-Chef that never gets tired and knows exactly wh
 
 ---
 
-## What This App Does
+## What This App Does 
 
 Here is a simple breakdown of the main features:
 
