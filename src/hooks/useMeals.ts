@@ -133,6 +133,65 @@ export function useMeals() {
         }
     };
 
+    const removeRecipeFromMeal = async (mealId: string, recipeId: string) => {
+        const meal = meals.find(m => m.id === mealId);
+        if (!meal) return false;
+
+        // If it's the last recipe, delete the whole meal
+        if (meal.recipes.length <= 1) {
+            return deleteMeal(mealId);
+        }
+
+        try {
+            const { error } = await supabase
+                .from('meal_recipes')
+                .delete()
+                .eq('meal_id', mealId)
+                .eq('recipe_id', recipeId);
+
+            if (error) throw error;
+            await loadMeals();
+            return true;
+        } catch (err) {
+            console.error('Error removing recipe from meal:', err);
+            setError(err instanceof Error ? err.message : 'Failed to remove recipe');
+            return false;
+        }
+    };
+
+    const moveMeal = async (mealId: string, newDate: string, newType: string) => {
+        // Optimistic Update
+        const previousMeals = [...meals];
+        setMeals(currentMeals => currentMeals.map(meal =>
+            meal.id === mealId
+                ? { ...meal, date: newDate, meal_type: newType as any }
+                : meal
+        ));
+
+        try {
+            const { error } = await supabase
+                .from('meals')
+                .update({
+                    date: newDate,
+                    meal_type: newType,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', mealId);
+
+            if (error) throw error;
+
+            // Background re-fetch to ensure consistency
+            loadMeals();
+            return true;
+        } catch (err) {
+            console.error('Error moving meal:', err);
+            // Rollback
+            setMeals(previousMeals);
+            setError(err instanceof Error ? err.message : 'Failed to move meal');
+            return false;
+        }
+    };
+
     useEffect(() => {
         if (user) {
             loadMeals();
@@ -146,6 +205,8 @@ export function useMeals() {
         loadMeals,
         saveMeal,
         deleteMeal,
+        moveMeal,
+        removeRecipeFromMeal,
         toggleRecipeCompletion
     };
 }

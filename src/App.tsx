@@ -54,6 +54,8 @@ function App() {
     loading: mealsLoading,
     saveMeal,
     deleteMeal,
+    moveMeal,
+    removeRecipeFromMeal,
     toggleRecipeCompletion
   } = useMeals();
 
@@ -348,12 +350,11 @@ function App() {
           ) : mealViewMode === 'calendar' ? (
             <MealCalendar
               meals={meals.filter(m => !m.is_event)}
+              onMoveMeal={moveMeal}
               onAddMeal={handleCalendarAddMeal}
               onMealClick={setSelectedMeal}
-              onMoveMeal={async (mealId, newDate, newType) => {
-                // Optimization: Directly update via Supabase or use a hook function if available
-                // For now, we rely on editing via form, but a drag-drop handler would go here
-              }}
+              onRecipeClick={setSelectedRecipe}
+              onRemoveRecipe={removeRecipeFromMeal}
             />
           ) : (
             <MealList
