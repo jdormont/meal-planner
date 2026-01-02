@@ -33,10 +33,10 @@ export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
               <Calendar className="w-16 h-16 text-warmtan-600" />
             </div>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Ready to plan your first meal?
+              Create your first Collection
             </h2>
             <p className="text-xl text-gray-600 leading-relaxed mb-8">
-              Group recipes together for dinner parties, weekly meal prep, or special occasions.
+              Group recipes together for dinner parties, holidays, or special occasions.
             </p>
 
             {onCreateNew && (
@@ -45,7 +45,7 @@ export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
                 className="group relative inline-flex items-center gap-3 bg-gradient-to-br from-terracotta-500 to-terracotta-600 hover:from-terracotta-600 hover:to-terracotta-700 text-white rounded-xl px-8 py-4 transition-all transform hover:scale-105 hover:shadow-xl font-semibold text-lg"
               >
                 <Plus className="w-6 h-6" />
-                Create Your First Meal Plan
+                Create New Collection
                 <Sparkles className="w-5 h-5 animate-pulse" />
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-xl transition-colors" />
               </button>
@@ -54,11 +54,11 @@ export function MealList({ meals, onSelect, onCreateNew }: MealListProps) {
 
           <div className="mt-10 pt-8 border-t border-sage-200">
             <div className="text-sm text-gray-600 space-y-3">
-              <p className="font-semibold text-gray-900 mb-4 text-center">With meal planning you can:</p>
+              <p className="font-semibold text-gray-900 mb-4 text-center">With Collections you can:</p>
               <ul className="space-y-3 text-left max-w-lg mx-auto">
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-sage-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Organize multiple recipes for specific dates and events</span>
+                  <span className="text-gray-700">Organize recipes for specific events (e.g., "Thanksgiving Dinner")</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-sage-600 flex-shrink-0 mt-0.5" />
