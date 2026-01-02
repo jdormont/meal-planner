@@ -11,7 +11,7 @@ import { RecipeDetail } from './components/RecipeDetail';
 import { RecipeSearch } from './components/RecipeSearch';
 import { AIChat } from './components/AIChat';
 import Settings from './components/Settings';
-import { MealList } from './components/MealList';
+import { MealCalendar } from './components/MealCalendar';
 import { MealForm } from './components/MealForm';
 import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
@@ -315,14 +315,9 @@ function App() {
               <p className="text-gray-600">Loading your meals...</p>
             </div>
           ) : (
-            <MealList
+            <MealCalendar
               meals={meals}
-              onSelect={setSelectedMeal}
-              onCreateNew={() => {
-                setEditingMeal(null);
-                setEditingMealRecipeIds([]);
-                setShowMealForm(true);
-              }}
+              onMealClick={setSelectedMeal}
             />
           )}
         </div>
