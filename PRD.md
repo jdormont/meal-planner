@@ -62,6 +62,11 @@ A comprehensive recipe management and meal planning application with AI-powered 
    - AI-driven weekly meal plan generation
    - "Weekly Brief" mode for quick planning
    - Integration with user preferences and constraints
+10. **Weekly Meal Calendar & Collections**
+    - Interactive weekly/monthly calendar view
+    - Support for Breakfast, Lunch, and Dinner slots
+    - "Collections" feature for grouping meals (e.g., event planning)
+    - Responsive "Meal Form" with auto-complete recipe search
 
 
 ## Core User Problems
@@ -99,9 +104,12 @@ A comprehensive recipe management and meal planning application with AI-powered 
 - **Mobile Optimization** - Responsive design with tablet-specific "Cooking Mode"
 - **Chat-to-Plan** - AI converts user requests into structured weekly meal plans
 
+- [x] **Calendar View** - Interactive weekly/monthly planner with multiple meal slots
+- [x] **Meal Collections** - Group meals for events or special occasions separate from the calendar
+- [x] **Responsive UI** - Optimized meal creation flow for all devices
+
 ### 🚧 In Progress
 - Shopping list generation from meal plans
-- Calendar view for meal planning
 
 ### 📋 Planned
 - Special occasion event planning with timeline optimization
@@ -168,9 +176,10 @@ A comprehensive recipe management and meal planning application with AI-powered 
 - ✅ Edit and delete meals
 - ✅ Archive system for past meals
 - ✅ View meal history
-- 📋 Calendar view for 7-day planning (planned)
+- ✅ Calendar view for 7-day planning
 - 📋 Drag-and-drop interface (planned)
-- 📋 Multiple meal types per day (breakfast, lunch, dinner) (planned)
+- ✅ Multiple meal types per day (breakfast, lunch, dinner)
+- ✅ **New Feature: Collections** - Create independent lists of meals (e.g., "Camping Trip 2026")
 - 📋 Clone/duplicate meal plans (planned)
 
 #### 2.2 Shopping List Generator 📋 PLANNED
@@ -454,12 +463,14 @@ A comprehensive recipe management and meal planning application with AI-powered 
 2. ✅ Link recipes to meals
 3. ✅ Save and retrieve meals
 4. ✅ Recipe completion tracking
-5. 📋 Weekly calendar view (in progress)
+5. ✅ Weekly calendar view
 6. 📋 Generate shopping lists from meals (planned)
 
 **Success Criteria:**
 - ✅ Users can create meals with multiple recipes
 - ✅ Meals saved and retrievable
+- ✅ Users can visually plan meals across a weekly calendar
+- ✅ Support for breakfast, lunch, and dinner slots
 - 📋 Shopping list auto-generation (planned)
 - 📋 Full calendar view (planned)
 

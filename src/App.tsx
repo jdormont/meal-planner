@@ -1,3 +1,5 @@
+import { MealCalendar, MealType } from './components/MealCalendar';
+
 import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { useRecipes } from './hooks/useRecipes';
@@ -65,9 +67,8 @@ function App() {
 
   // Initial load handled by useRecipes and useMeals hooks
 
-  // Initial load handled by useRecipes and useMeals hooks
-
   const [view, setView] = useState<View>('recipes');
+  const [mealViewMode, setMealViewMode] = useState<'calendar' | 'list'>('calendar');
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -77,12 +78,15 @@ function App() {
   const [selectedMeal, setSelectedMeal] = useState<MealWithRecipes | null>(null);
   const [editingMealRecipeIds, setEditingMealRecipeIds] = useState<string[]>([]);
 
+  // Default values for new meals from calendar
+  const [defaultMealDate, setDefaultMealDate] = useState<string>('');
+  const [defaultMealType, setDefaultMealType] = useState<MealType>('dinner');
+
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showOnboardingInterstitial, setShowOnboardingInterstitial] = useState(false);
 
-
-  // Removed filter effects as they are in the hook
+  // ... (keeping existing checkAndShowOnboarding, markOnboardingSeen, handleSaveRecipe, etc. as they are mostly unchanged logic-wise, just need to ensure imports are right) ...
 
   const checkAndShowOnboarding = async () => {
     if (!user || !userProfile) return;
@@ -105,8 +109,6 @@ function App() {
       console.error('Error marking onboarding as seen:', error);
     }
   };
-
-  // Removed filterRecipes, filterCommunityRecipes, getAllTags, toggleTag as they are in the hook
 
   const handleSaveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     const success = await saveRecipe(recipeData, editingRecipe?.id);
@@ -145,6 +147,7 @@ function App() {
       setShowMealForm(false);
       setEditingMeal(null);
       setEditingMealRecipeIds([]);
+      setDefaultMealDate(''); // Reset defaults
     } else {
       alert('Failed to save meal. Please try again.');
     }
@@ -162,10 +165,7 @@ function App() {
   const handleToggleRecipeCompletion = async (mealRecipeId: string, isCompleted: boolean) => {
     const success = await toggleRecipeCompletion(mealRecipeId, isCompleted);
     if (success && selectedMeal) {
-      // Optimistically update or re-select from meals
-      // Since loadMeals is triggered in hook, meals will update
-      // We rely on the hook's update to reflect changes, but we might need to update selectedMeal separately if it is not derived
-      // Actually, selectedMeal is just the view state. The list will update.
+      // Optimistically update handled by hook re-fetch
     }
   };
 
@@ -195,7 +195,16 @@ function App() {
     setShowForm(true);
   };
 
+  const handleCalendarAddMeal = (date: string, type: MealType) => {
+    setDefaultMealDate(date);
+    setDefaultMealType(type);
+    setEditingMeal(null);
+    setEditingMealRecipeIds([]);
+    setShowMealForm(true);
+  };
 
+  // Filter meals for "Collections" view (is_event = true)
+  const collectionMeals = meals.filter(meal => meal.is_event);
 
   if (authLoading) {
     return (
@@ -228,7 +237,6 @@ function App() {
   }
 
   return (
-
     <Layout
       currentView={view}
       onViewChange={(newView) => {
@@ -253,6 +261,7 @@ function App() {
       onNewMeal={() => {
         setEditingMeal(null);
         setEditingMealRecipeIds([]);
+        setDefaultMealDate(new Date().toISOString().split('T')[0]);
         setShowMealForm(true);
       }}
     >
@@ -266,6 +275,7 @@ function App() {
         </div>
       ) : view === 'community' ? (
         <div>
+          {/* ... existing community view ... */}
           {loading ? (
             <div className="text-center py-12">
               <Users className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
@@ -309,25 +319,59 @@ function App() {
         </div>
       ) : view === 'meals' ? (
         <div>
+          <div className="flex gap-4 mb-6">
+            <button
+              onClick={() => setMealViewMode('calendar')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${mealViewMode === 'calendar'
+                ? 'bg-terracotta-500 text-white shadow-sm'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              Weekly Plan
+            </button>
+            <button
+              onClick={() => setMealViewMode('list')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${mealViewMode === 'list'
+                ? 'bg-terracotta-500 text-white shadow-sm'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              Collections
+            </button>
+          </div>
+
           {loading ? (
             <div className="text-center py-12">
               <Calendar className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
               <p className="text-gray-600">Loading your meals...</p>
             </div>
+          ) : mealViewMode === 'calendar' ? (
+            <MealCalendar
+              meals={meals.filter(m => !m.is_event)}
+              onAddMeal={handleCalendarAddMeal}
+              onMealClick={setSelectedMeal}
+              onMoveMeal={async (mealId, newDate, newType) => {
+                // Optimization: Directly update via Supabase or use a hook function if available
+                // For now, we rely on editing via form, but a drag-drop handler would go here
+              }}
+            />
           ) : (
             <MealList
-              meals={meals}
+              meals={collectionMeals}
               onSelect={setSelectedMeal}
               onCreateNew={() => {
                 setEditingMeal(null);
                 setEditingMealRecipeIds([]);
                 setShowMealForm(true);
+                // Note: The form handles defaulting is_event based on user input, 
+                // but we could set a default here if we wanted "New Collection" specifically
               }}
             />
           )}
         </div>
       ) : (
         <div>
+          {/* ... existing recipes view ... */}
           {loading ? (
             <div className="text-center py-12">
               <BookOpen className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
@@ -337,6 +381,7 @@ function App() {
             <>
               {recipes.length > 0 && (
                 <div className="mb-6">
+                  {/* ... existing recipes header ... */}
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900">My Recipes</h2>
@@ -344,6 +389,7 @@ function App() {
                         {filteredRecipes.length} {filteredRecipes.length === 1 ? (recipeType === 'cocktail' ? 'cocktail' : 'recipe') : (recipeType === 'cocktail' ? 'cocktails' : 'recipes')}
                       </p>
                     </div>
+                    {/* ... (rest of recipe list header) ... */}
                     <div className="flex gap-2 sm:gap-3">
                       <button
                         onClick={() => setShowPhotoModal(true)}
@@ -455,6 +501,7 @@ function App() {
           onCancel={() => {
             setShowForm(false);
             setEditingRecipe(null);
+            // Default reset
           }}
           onDelete={editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-') ? async () => {
             if (confirm('Are you sure you want to delete this recipe?')) {
@@ -482,7 +529,11 @@ function App() {
             setShowMealForm(false);
             setEditingMeal(null);
             setEditingMealRecipeIds([]);
+            setDefaultMealDate('');
+            setDefaultMealType('dinner');
           }}
+          initialDate={defaultMealDate}
+          initialMealType={defaultMealType}
         />
       )}
 
@@ -499,6 +550,7 @@ function App() {
             setEditingMealRecipeIds(selectedMeal.recipes.map(mr => mr.recipe_id));
             setSelectedMeal(null);
             setShowMealForm(true);
+            setDefaultMealDate(selectedMeal.date);
           }}
           onDelete={() => selectedMeal && handleDeleteMeal(selectedMeal.id)}
         />
@@ -556,5 +608,7 @@ function App() {
     </Layout>
   );
 }
+
+
 
 export default App;

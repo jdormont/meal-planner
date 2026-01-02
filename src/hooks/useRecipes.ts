@@ -21,7 +21,6 @@ export function useRecipes() {
         if (!user) return;
 
         try {
-            setLoading(true);
             const { data: recipesData, error: recipesError } = await supabase
                 .from('recipes')
                 .select('*')

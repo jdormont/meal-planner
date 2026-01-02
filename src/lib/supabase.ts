@@ -58,6 +58,8 @@ export type Meal = {
   user_id: string;
   name: string;
   date: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner';
+  is_event: boolean;
   description: string;
   notes: string;
   is_archived: boolean;
