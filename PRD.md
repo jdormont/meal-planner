@@ -3,7 +3,7 @@
 ## Executive Summary
 A comprehensive recipe management and meal planning application with AI-powered assistance for discovering recipes, planning weekly meals, and organizing multi-dish special occasion meals.
 
-**Last Updated:** December 21, 2025
+**Last Updated:** January 1, 2026
 **Current Status:** Phase 2 Complete + Phase 4 Enhancements - Full recipe management, AI chat, meal planning, admin system, recipe sharing, and import capabilities operational
 
 ## Recent Updates (December 2025) 
@@ -58,6 +58,12 @@ A comprehensive recipe management and meal planning application with AI-powered 
    - Improved touch targets and mobile navigation
    - Custom scrollbars for better utility
 
+9. **Chat-to-Plan (AI Meal Planning)**
+   - AI-driven weekly meal plan generation
+   - "Weekly Brief" mode for quick planning
+   - Integration with user preferences and constraints
+
+
 ## Core User Problems
 1. Difficulty organizing and storing personal recipes
 2. Time-consuming meal planning for weekly shopping
@@ -91,6 +97,7 @@ A comprehensive recipe management and meal planning application with AI-powered 
 - **Cocktail Support** - Beverage recipe management with dedicated type field
 - **Auto-Tagging** - AI-powered automatic recipe categorization
 - **Mobile Optimization** - Responsive design with tablet-specific "Cooking Mode"
+- **Chat-to-Plan** - AI converts user requests into structured weekly meal plans
 
 ### 🚧 In Progress
 - Shopping list generation from meal plans
