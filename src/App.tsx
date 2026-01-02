@@ -1,6 +1,29 @@
 import { MealCalendar, MealType } from './components/MealCalendar';
 
-// ... existing imports ...
+import { useState, useEffect } from 'react';
+import { useAuth } from './contexts/AuthContext';
+import { useRecipes } from './hooks/useRecipes';
+import { useMeals } from './hooks/useMeals';
+import { Auth } from './components/Auth';
+import { AccountStatus } from './components/AccountStatus';
+import { AdminDashboard } from './components/AdminDashboard';
+import { RecipeList } from './components/RecipeList';
+import { RecipeForm } from './components/RecipeForm';
+import { RecipeDetail } from './components/RecipeDetail';
+import { RecipeSearch } from './components/RecipeSearch';
+import { AIChat } from './components/AIChat';
+import Settings from './components/Settings';
+import { MealList } from './components/MealList';
+import { MealForm } from './components/MealForm';
+import { MealDetail } from './components/MealDetail';
+import { CommunityRecipes } from './components/CommunityRecipes';
+import { RecipeImportModal } from './components/RecipeImportModal';
+import { RecipePhotoModal } from './components/RecipePhotoModal';
+import { OnboardingInterstitial } from './components/OnboardingInterstitial';
+import { Layout, View } from './components/Layout';
+import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
+import { Plus, ChefHat, BookOpen, Globe, Wine, Camera, Users, Calendar } from 'lucide-react';
+import { parseAIRecipe } from './utils/recipeParser';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -507,7 +530,10 @@ function App() {
             setEditingMeal(null);
             setEditingMealRecipeIds([]);
             setDefaultMealDate('');
+            setDefaultMealType('dinner');
           }}
+          initialDate={defaultMealDate}
+          initialMealType={defaultMealType}
         />
       )}
 

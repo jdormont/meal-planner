@@ -63,7 +63,6 @@ export type Meal = {
   description: string;
   notes: string;
   is_archived: boolean;
-  is_event: boolean;
   created_at: string;
   updated_at: string;
 };
