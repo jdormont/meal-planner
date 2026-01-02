@@ -1,254 +1,274 @@
 import React, { useMemo } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Clock, ChefHat } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Plus, Coffee, Sun, Moon } from 'lucide-react';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, addWeeks, subWeeks, isSameDay, isToday as isDateToday, startOfDay } from 'date-fns';
 import { MealWithRecipes } from '../lib/supabase';
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner';
 
 type MealCalendarProps = {
   meals: MealWithRecipes[];
-  onMoveMeal?: (mealId: string, newDate: string) => void;
-  onMealClick: (meal: MealWithRecipes) => void;
+  onMoveMeal?: (mealId: string, newDate: string, newMealType: MealType) => void;
+  onAddMeal: (date: string, mealType: MealType) => void;
+  onMealClick?: (meal: MealWithRecipes) => void;
 };
 
-export function MealCalendar({ meals, onMoveMeal, onMealClick }: MealCalendarProps) {
-  const [currentDate, setCurrentDate] = React.useState(new Date());
+const MEAL_TYPES: { type: MealType; label: string; icon: React.ReactNode }[] = [
+  { type: 'breakfast', label: 'Breakfast', icon: <Coffee className="w-4 h-4" /> },
+  { type: 'lunch', label: 'Lunch', icon: <Sun className="w-4 h-4" /> },
+  { type: 'dinner', label: 'Dinner', icon: <Moon className="w-4 h-4" /> },
+];
 
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
+export function MealCalendar({ meals, onMoveMeal, onAddMeal, onMealClick }: MealCalendarProps) {
+  const [currentWeekStart, setCurrentWeekStart] = React.useState(() =>
+    startOfWeek(new Date(), { weekStartsOn: 0 })
+  );
 
-  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const weekDays = useMemo(() => {
+    const weekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 0 });
+    return eachDayOfInterval({ start: currentWeekStart, end: weekEnd });
+  }, [currentWeekStart]);
 
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-  const daysInMonth = lastDayOfMonth.getDate();
-  const startDayOfWeek = firstDayOfMonth.getDay();
-
-  const calendarDays = useMemo(() => {
-    const days: (Date | null)[] = [];
-
-    for (let i = 0; i < startDayOfWeek; i++) {
-      days.push(null);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(new Date(currentYear, currentMonth, day));
-    }
-
-    return days;
-  }, [currentYear, currentMonth, daysInMonth, startDayOfWeek]);
-
-  const getMealsForDate = (date: Date | null): MealWithRecipes[] => {
-    if (!date) return [];
-
-    const dateStr = date.toISOString().split('T')[0];
-    return meals.filter(meal => meal.date === dateStr);
-  };
-
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
-  };
-
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-
-  const isToday = (date: Date | null): boolean => {
-    if (!date) return false;
-    const today = new Date();
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
+  const getMealForSlot = (date: Date, mealType: MealType): MealWithRecipes | undefined => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return meals.find(meal =>
+      meal.date === dateStr &&
+      meal.meal_type === mealType
     );
   };
 
-  const isPastDate = (date: Date | null): boolean => {
-    if (!date) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const compareDate = new Date(date);
-    compareDate.setHours(0, 0, 0, 0);
-    return compareDate < today;
+  const goToPreviousWeek = () => {
+    setCurrentWeekStart(prev => subWeeks(prev, 1));
   };
 
-  const upcomingMeals = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const goToNextWeek = () => {
+    setCurrentWeekStart(prev => addWeeks(prev, 1));
+  };
 
-    return meals
-      .filter(meal => {
-        const mealDate = new Date(meal.date);
-        mealDate.setHours(0, 0, 0, 0);
-        return mealDate >= today;
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 10);
-  }, [meals]);
+  const goToToday = () => {
+    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }));
+  };
+
+  const isCurrentWeek = isSameDay(currentWeekStart, startOfWeek(new Date(), { weekStartsOn: 0 }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Calendar className="w-6 h-6 text-terracotta-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Meal Calendar</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Weekly Meal Plan</h2>
         </div>
-        <button
-          onClick={goToToday}
-          className="px-4 py-2 text-sm font-medium text-terracotta-600 hover:bg-terracotta-50 rounded-lg transition"
-        >
-          Today
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={goToPreviousWeek}
+            className="p-2 hover:bg-sage-100 rounded-lg transition"
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <button
+            onClick={goToToday}
+            disabled={isCurrentWeek}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+              isCurrentWeek
+                ? 'text-gray-400 cursor-not-allowed'
+                : 'text-terracotta-600 hover:bg-terracotta-50'
+            }`}
+          >
+            This Week
+          </button>
+          <button
+            onClick={goToNextWeek}
+            className="p-2 hover:bg-sage-100 rounded-lg transition"
+            aria-label="Next week"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-700" />
+          </button>
+        </div>
       </div>
 
-      <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-sage-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">{monthName}</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={goToPreviousMonth}
-              className="p-2 hover:bg-sage-100 rounded-lg transition"
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={goToNextMonth}
-              className="p-2 hover:bg-sage-100 rounded-lg transition"
-              aria-label="Next month"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+      <div className="text-sm text-gray-600 text-center md:text-left">
+        {format(currentWeekStart, 'MMMM d')} - {format(weekDays[6], 'MMMM d, yyyy')}
+      </div>
 
-        <div className="grid grid-cols-7 gap-px bg-sage-200 rounded-lg overflow-hidden">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-sage-200 overflow-hidden">
+        <div className="grid grid-cols-8 divide-x divide-sage-200">
+          <div className="bg-sage-50 p-4">
+            <div className="text-sm font-semibold text-gray-600">Meal</div>
+          </div>
+          {weekDays.map(day => (
             <div
-              key={day}
-              className="bg-sage-50 px-2 py-3 text-center text-xs font-semibold text-gray-600"
+              key={day.toISOString()}
+              className={`p-4 ${
+                isDateToday(day) ? 'bg-terracotta-50' : 'bg-sage-50'
+              }`}
             >
-              {day}
+              <div className="text-center">
+                <div className={`text-xs font-semibold uppercase ${
+                  isDateToday(day) ? 'text-terracotta-600' : 'text-gray-600'
+                }`}>
+                  {format(day, 'EEE')}
+                </div>
+                <div className={`text-lg font-bold mt-1 ${
+                  isDateToday(day) ? 'text-terracotta-700' : 'text-gray-900'
+                }`}>
+                  {format(day, 'd')}
+                </div>
+              </div>
             </div>
           ))}
+        </div>
 
-          {calendarDays.map((date, index) => {
-            const mealsForDay = getMealsForDate(date);
-            const isCurrentDay = isToday(date);
-            const isPast = isPastDate(date);
-
-            return (
-              <div
-                key={index}
-                className={`bg-white min-h-[120px] p-2 ${
-                  date ? 'cursor-pointer hover:bg-cream-100 transition' : ''
-                } ${isCurrentDay ? 'ring-2 ring-terracotta-500 ring-inset' : ''}`}
-              >
-                {date && (
-                  <>
-                    <div
-                      className={`text-sm font-medium mb-2 ${
-                        isCurrentDay
-                          ? 'text-terracotta-600'
-                          : isPast
-                          ? 'text-gray-400'
-                          : 'text-gray-700'
-                      }`}
-                    >
-                      {date.getDate()}
-                    </div>
-                    <div className="space-y-1">
-                      {mealsForDay.map(meal => (
-                        <button
-                          key={meal.id}
-                          onClick={() => onMealClick(meal)}
-                          className={`w-full text-left text-xs px-2 py-1.5 rounded-lg transition truncate ${
-                            isPast
-                              ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                              : 'bg-terracotta-100 text-terracotta-700 hover:bg-terracotta-200'
-                          }`}
-                          title={meal.name}
-                        >
-                          <div className="flex items-center gap-1">
-                            <ChefHat className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{meal.name}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+        <div className="divide-y divide-sage-200">
+          {MEAL_TYPES.map(({ type, label, icon }) => (
+            <div key={type} className="grid grid-cols-8 divide-x divide-sage-200">
+              <div className="bg-sage-50 p-4 flex items-center gap-2">
+                <div className="text-sage-600">{icon}</div>
+                <div className="text-sm font-medium text-gray-700">{label}</div>
               </div>
-            );
-          })}
+              {weekDays.map(day => {
+                const meal = getMealForSlot(day, type);
+                const dateStr = format(day, 'yyyy-MM-dd');
+
+                return (
+                  <div
+                    key={`${day.toISOString()}-${type}`}
+                    className={`p-3 min-h-[120px] ${
+                      isDateToday(day) ? 'bg-cream-50' : 'bg-white'
+                    }`}
+                  >
+                    {meal ? (
+                      <button
+                        onClick={() => onMealClick?.(meal)}
+                        className="w-full h-full text-left group"
+                      >
+                        <div className="border-2 border-sage-200 rounded-lg p-2 h-full hover:border-terracotta-400 hover:shadow-md transition">
+                          {meal.recipes[0]?.recipe.image_url && (
+                            <div className="w-full aspect-video rounded overflow-hidden mb-2">
+                              <img
+                                src={meal.recipes[0].recipe.image_url}
+                                alt={meal.recipes[0].recipe.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition"
+                              />
+                            </div>
+                          )}
+                          <div className="text-sm font-medium text-gray-900 line-clamp-2">
+                            {meal.recipes[0]?.recipe.title || meal.name}
+                          </div>
+                          {meal.recipes.length > 1 && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              +{meal.recipes.length - 1} more
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onAddMeal(dateStr, type)}
+                        className="w-full h-full flex items-center justify-center border-2 border-dashed border-sage-200 rounded-lg hover:border-terracotta-400 hover:bg-terracotta-50 transition group"
+                      >
+                        <Plus className="w-6 h-6 text-gray-400 group-hover:text-terracotta-600 transition" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="lg:hidden bg-white rounded-2xl shadow-sm border border-sage-200 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Upcoming Meals</h3>
-          <Clock className="w-5 h-5 text-sage-600" />
-        </div>
+      <div className="md:hidden space-y-4">
+        {weekDays.map(day => {
+          const dateStr = format(day, 'yyyy-MM-dd');
+          const isToday = isDateToday(day);
 
-        {upcomingMeals.length === 0 ? (
-          <div className="text-center py-12">
-            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">No upcoming meals planned</p>
-            <p className="text-gray-400 text-xs mt-1">Tap the + button to create your first meal</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {upcomingMeals.map(meal => {
-              const mealDate = new Date(meal.date);
-              const dateStr = mealDate.toLocaleDateString('default', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              });
-              const isCurrentDay = isToday(mealDate);
-
-              return (
-                <button
-                  key={meal.id}
-                  onClick={() => onMealClick(meal)}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition ${
-                    isCurrentDay
-                      ? 'border-terracotta-500 bg-terracotta-50'
-                      : 'border-sage-200 bg-white hover:bg-sage-50'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-900 truncate">{meal.name}</h4>
-                      {meal.description && (
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{meal.description}</p>
-                      )}
+          return (
+            <div
+              key={day.toISOString()}
+              className={`bg-white rounded-2xl shadow-sm border-2 overflow-hidden ${
+                isToday ? 'border-terracotta-500' : 'border-sage-200'
+              }`}
+            >
+              <div className={`p-4 ${isToday ? 'bg-terracotta-50' : 'bg-sage-50'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className={`text-sm font-semibold uppercase ${
+                      isToday ? 'text-terracotta-600' : 'text-gray-600'
+                    }`}>
+                      {format(day, 'EEEE')}
                     </div>
-                    <div
-                      className={`text-xs font-medium px-2 py-1 rounded-lg whitespace-nowrap ${
-                        isCurrentDay
-                          ? 'bg-terracotta-600 text-white'
-                          : 'bg-sage-100 text-sage-700'
-                      }`}
-                    >
-                      {dateStr}
+                    <div className={`text-xl font-bold ${
+                      isToday ? 'text-terracotta-700' : 'text-gray-900'
+                    }`}>
+                      {format(day, 'MMMM d, yyyy')}
                     </div>
                   </div>
-
-                  {meal.recipes.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <ChefHat className="w-4 h-4" />
-                      <span>
-                        {meal.recipes.length} {meal.recipes.length === 1 ? 'recipe' : 'recipes'}
-                      </span>
+                  {isToday && (
+                    <div className="px-3 py-1 bg-terracotta-600 text-white text-xs font-bold rounded-full">
+                      TODAY
                     </div>
                   )}
-                </button>
-              );
-            })}
-          </div>
-        )}
+                </div>
+              </div>
+
+              <div className="divide-y divide-sage-200">
+                {MEAL_TYPES.map(({ type, label, icon }) => {
+                  const meal = getMealForSlot(day, type);
+
+                  return (
+                    <div key={type} className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="text-sage-600">{icon}</div>
+                        <div className="text-sm font-semibold text-gray-700">{label}</div>
+                      </div>
+
+                      {meal ? (
+                        <button
+                          onClick={() => onMealClick?.(meal)}
+                          className="w-full text-left group"
+                        >
+                          <div className="border-2 border-sage-200 rounded-lg overflow-hidden hover:border-terracotta-400 hover:shadow-md transition">
+                            {meal.recipes[0]?.recipe.image_url && (
+                              <div className="w-full aspect-video">
+                                <img
+                                  src={meal.recipes[0].recipe.image_url}
+                                  alt={meal.recipes[0].recipe.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition"
+                                />
+                              </div>
+                            )}
+                            <div className="p-3">
+                              <div className="font-medium text-gray-900 mb-1">
+                                {meal.recipes[0]?.recipe.title || meal.name}
+                              </div>
+                              {meal.recipes.length > 1 && (
+                                <div className="text-sm text-gray-500">
+                                  +{meal.recipes.length - 1} more recipe{meal.recipes.length > 2 ? 's' : ''}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onAddMeal(dateStr, type)}
+                          className="w-full py-8 flex items-center justify-center border-2 border-dashed border-sage-200 rounded-lg hover:border-terracotta-400 hover:bg-terracotta-50 transition group"
+                        >
+                          <div className="text-center">
+                            <Plus className="w-8 h-8 text-gray-400 group-hover:text-terracotta-600 transition mx-auto mb-2" />
+                            <div className="text-sm text-gray-500 group-hover:text-terracotta-600 transition">
+                              Add {label.toLowerCase()}
+                            </div>
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
