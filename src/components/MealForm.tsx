@@ -13,6 +13,8 @@ type MealFormProps = {
 export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }: MealFormProps) {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
+  const [mealType, setMealType] = useState<Meal['meal_type']>('dinner');
+  const [isEvent, setIsEvent] = useState(false);
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [selectedRecipes, setSelectedRecipes] = useState<string[]>([]);
@@ -23,6 +25,8 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
     if (meal) {
       setName(meal.name);
       setDate(meal.date);
+      setMealType(meal.meal_type || 'dinner');
+      setIsEvent(meal.is_event || false);
       setDescription(meal.description);
       setNotes(meal.notes);
     } else {
@@ -40,6 +44,8 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
       {
         name: name.trim(),
         date,
+        meal_type: mealType,
+        is_event: isEvent,
         description: description.trim(),
         notes: notes.trim(),
         is_archived: false,
@@ -79,33 +85,63 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                Meal Name *
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Passover Seder 2025"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
-                required
-              />
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Meal Name *
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g., Tuesday Dinner"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
+                  required
+                />
+              </div>
+              <div className="flex items-center pt-8">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isEvent}
+                    onChange={(e) => setIsEvent(e.target.checked)}
+                    className="w-5 h-5 text-terracotta-600 rounded focus:ring-terracotta-500 border-gray-300"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Save as Collection</span>
+                </label>
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="date" className="block text-sm font-semibold text-gray-700 mb-2">
-                Date *
-              </label>
-              <input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="date" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Date *
+                </label>
+                <input
+                  id="date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="mealType" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Meal Type
+                </label>
+                <select
+                  id="mealType"
+                  value={mealType}
+                  onChange={(e) => setMealType(e.target.value as Meal['meal_type'])}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
+                >
+                  <option value="breakfast">Breakfast</option>
+                  <option value="lunch">Lunch</option>
+                  <option value="dinner">Dinner</option>
+                </select>
+              </div>
             </div>
 
             <div>
@@ -178,11 +214,10 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel }:
                           key={recipe.id}
                           type="button"
                           onClick={() => toggleRecipe(recipe.id)}
-                          className={`w-full px-4 py-3 text-left hover:bg-sage-50 transition border-b border-gray-100 ${
-                            selectedRecipes.includes(recipe.id)
+                          className={`w-full px-4 py-3 text-left hover:bg-sage-50 transition border-b border-gray-100 ${selectedRecipes.includes(recipe.id)
                               ? 'bg-cream-50 font-medium text-terracotta-900'
                               : 'text-gray-700'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center justify-between">
                             <span>{recipe.title}</span>

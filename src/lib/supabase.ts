@@ -59,6 +59,7 @@ export type Meal = {
   name: string;
   date: string;
   meal_type: 'breakfast' | 'lunch' | 'dinner';
+  is_event: boolean;
   description: string;
   notes: string;
   is_archived: boolean;
