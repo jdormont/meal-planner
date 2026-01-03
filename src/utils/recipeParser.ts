@@ -65,8 +65,8 @@ export const parseAIRecipe = (text: string): ParsedRecipe => {
         } else if (lowerLine.includes('instruction') || lowerLine.includes('direction') || lowerLine.includes('step')) {
             section = 'instructions';
             console.log('Switched to instructions section at line', index);
-        } else if (section === 'ingredients' && line.match(/^[-*•]\s/)) {
-            const cleaned = line.replace(/^[-*•]\s/, '').trim();
+        } else if (section === 'ingredients' && line.match(/^\s*[-*•]\s/)) {
+            const cleaned = line.replace(/^\s*[-*•]\s/, '').trim();
             const parts = cleaned.match(/^([\d./]+)?\s*([a-z]+)?\s*(.+)$/i);
             if (parts) {
                 ingredients.push({
