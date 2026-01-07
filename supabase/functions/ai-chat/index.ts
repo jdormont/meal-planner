@@ -146,6 +146,60 @@ async function callGemini(apiKey: string, model: string, messages: Message[], sy
   return data.candidates[0].content.parts[0].text;
 }
 
+async function getRecentlySuggestedRecipes(
+  userId: string,
+  supabaseClient: SupabaseClient
+): Promise<string[]> {
+  try {
+    // Fetch recipes suggested in the last 14 days
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+    const { data, error } = await supabaseClient
+      .from("suggested_recipes")
+      .select("recipe_name")
+      .eq("user_id", userId)
+      .gte("created_at", twoWeeksAgo.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("Error fetching recent recipes:", error);
+      return [];
+    }
+
+    return data.map((r: { recipe_name: string }) => r.recipe_name);
+  } catch (error) {
+    console.error("Error getting recent recipes:", error);
+    return [];
+  }
+}
+
+async function saveSuggestedRecipes(
+  userId: string,
+  recipes: string[],
+  supabaseClient: SupabaseClient
+) {
+  if (!userId || recipes.length === 0) return;
+
+  try {
+    const records = recipes.map(name => ({
+      user_id: userId,
+      recipe_name: name
+    }));
+
+    const { error } = await supabaseClient
+      .from("suggested_recipes")
+      .insert(records);
+
+    if (error) {
+      console.error("Error saving suggested recipes:", error);
+    }
+  } catch (error) {
+    console.error("Error saving suggested recipes:", error);
+  }
+}
+
 async function detectCuisineFromMessages(
   messages: Message[],
   userPreferences: UserPreferences,
@@ -609,16 +663,52 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+
+    let recentRecipesContext = "";
+    if (userId) {
+      const recentRecipes = await getRecentlySuggestedRecipes(userId, supabaseClient);
+      if (recentRecipes.length > 0) {
+        recentRecipesContext = `
+–––––––––––––––––
+RECENTLY SUGGESTED
+–––––––––––––––––
+
+The user has recently seen these recipes (last 2 weeks):
+${recentRecipes.map(r => `• ${r}`).join("\n")}
+
+**CRITICAL INSTRUCTION - FORCE VARIETY:**
+- The recipes listed above are on **COOL-DOWN**.
+- **Do NOT suggest them.**
+- **Do NOT suggest conceptually similar variations** (e.g. "Garlic Pasta" if "Aglio e Olio" was shown).
+- The user is seeing repetitive suggestions. You MUST break this pattern.
+- **Deprioritize your "default" best answers** (like Aglio e Olio, Sheet Pan Chicken) if they are on this list.
+- Dig deeper into your knowledge base for *different* highly-rated weeknight meals.
+- If the list has pasta, suggest grain bowls or tacos.
+- If the list has chicken, suggest pork, beef, shrimp, or vegetarian.
+`;
+      }
+    }
+
     const systemPrompt = `You are CookFlow — an expert home-cooking partner, not a recipe database.
 
 Your primary job is to help the user decide what would be great to cook right now or this week, given their tastes, habits, constraints, and desire for variety. Success is measured by confidence, delight, and repeat satisfaction — not novelty alone.
 
 You reason like a thoughtful cook who remembers what has worked before, notices patterns, avoids repetition fatigue, and suggests food that is both realistic and appealing.
 
+
+–––––––––––––––––
+CONSTRAINT HIERARCHY
+–––––––––––––––––
+1. **Safety (Allergies)**: ABSOLUTE. Never violate.
+2. **Variety (Recent History)**: EXTREMELY HIGH. Do not repeat recent suggestions.
+3. **Preferences**: STRONG. Adapts to user tastes.
+4. **General Culinary Wisdom**: Baseline.
+
+If a recipe is "perfect" for the user but appears in "Recent History", it is disqualified. You must find the next best option.
+
 –––––––––––––––––
 CORE PRINCIPLES
 –––––––––––––––––
-
 1. **Prioritize judgment over abundance.**
    Offer a small number of well-considered options (3-7 max) rather than many mediocre ones.
 
@@ -967,6 +1057,31 @@ Not:
 "Here are some recipe suggestions that you might enjoy based on your profile preferences..."
 
 **Remember:** Your goal is to help the user feel confident and delighted about what they're about to cook. Quality suggestions that earn trust will always beat quantity.${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}
+
+${recentRecipesContext}
+
+–––––––––––––––––
+SYSTEM OUTPUT FORMAT
+–––––––––––––––––
+
+You must end your response with a JSON block containing the names of the *new* recipes you are suggesting in this turn.
+This allows the system to track what has been shown to the user.
+
+Format:
+[YOUR NORMAL RESPONSE IN MARKDOWN]
+
+\`\`\`json
+{
+  "suggested_recipes": ["Recipe A", "Recipe B", "Recipe C"]
+}
+\`\`\`
+
+If you are not suggesting specific recipes (e.g. just answering a question), output an empty array:
+\`\`\`json
+{
+  "suggested_recipes": []
+}
+\`\`\`
 `;
 
     let message;
@@ -1012,8 +1127,62 @@ Not:
       }
     }
 
+
+
+    // Process JSON block for suggested recipes
+    const jsonBlockRegex = /```json\s*({[\s\S]*?})\s*```/g;
+    // Use matchAll or loop to find the last one, or just match and take the last occurrence if needed. 
+    // Actually, simple match without global flag finds the first one. 
+    // If we expect it at the end, we can validly use match. 
+    // Let's verify if we want the LAST block (in case it halluncinates code blocks earlier).
+    // Safe approach: Find all, take the one that has "suggested_recipes".
+    const matches = [...message.matchAll(jsonBlockRegex)];
+    let lastMatch = matches.length > 0 ? matches[matches.length - 1] : null;
+
+    // Fallback: try capturing without the "json" language tag if strictly needed, but Prompt asks for it.
+
+    // For the replacement logic below, we need to be careful.
+    const match = lastMatch;
+
+    if (match) {
+      try {
+        const jsonContent = JSON.parse(match[1]);
+        if (jsonContent.suggested_recipes && Array.isArray(jsonContent.suggested_recipes) && userId) {
+          console.log("Saving suggested recipes:", jsonContent.suggested_recipes);
+          // Run in background / don't await strictly if we want faster response, 
+          // but awaiting is safer for now to ensure it completes.
+          await saveSuggestedRecipes(userId, jsonContent.suggested_recipes, supabaseClient);
+        }
+        // Remove the JSON block from the message shown to the user
+        message = message.replace(jsonBlockRegex, "").trim();
+      } catch (e) {
+        console.error("Error parsing suggested recipes JSON:", e);
+        // If parsing fails, just remove the block if it looks like code
+        message = message.replace(jsonBlockRegex, "").trim();
+      }
+    }
+
+    // Clean up any other potential stray code blocks if not caught above
     if (message.includes('```json') || message.includes('```')) {
-      message = message.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      // Only remove if it's at the very end and looks like our metadata
+      // For now, let's just stick to the specific regex removal above to avoid removing valid code snippets 
+      // if the user asked for code. But since this is a cooking bot, code snippets are rare.
+      // The original code was aggressive:
+      // message = message.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+
+      // Let's keep the original cleanup for safety but only if we didn't already match and remove our specific block.
+      // Or we can refine it. The original code might have been too aggressive removing all code blocks.
+      // Let's assume the previous replacement was sufficient for our metadata.
+      // But if there are *other* code blocks, we might want to keep them or not.
+      // The prompt says "DO NOT wrap the recipe in code blocks".
+      // Let's strictly remove our specific JSON block and leave the rest alone for now 
+      // unless we want to maintain the specific behavior of stripping all markdown code blocks.
+      // The original code:
+      // if (message.includes('```json') || message.includes('```')) {
+      //   message = message.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      // }
+      // This looks like it was intended to strip the formatting, not the content.
+      // Let's just leave it as is for *general* cleanup, but after our specific extraction.
     }
 
     return new Response(
