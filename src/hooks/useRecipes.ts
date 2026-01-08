@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, Recipe } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useAnalytics } from './useAnalytics';
 
 export function useRecipes() {
     const { user } = useAuth();
@@ -72,6 +73,12 @@ export function useRecipes() {
         }
     }, []);
 
+
+
+    // ... (inside useRecipes)
+
+    const { track } = useAnalytics();
+
     const saveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>, editingId?: string) => {
         if (!user) return;
 
@@ -89,6 +96,16 @@ export function useRecipes() {
                     .insert([{ ...recipeData, user_id: user.id, recipe_type: recipeData.recipe_type || recipeType }]);
 
                 if (error) throw error;
+
+                // Track creation
+                const creationSource = recipeData.source_url ? 'import' : (recipeData.tags?.includes('AI Generated') ? 'ai' : 'manual');
+                track('recipe_created', {
+                    type: creationSource,
+                    title_length: recipeData.title.length,
+                    has_image: !!recipeData.image_url,
+                    recipe_type: recipeData.recipe_type || recipeType,
+                    tags_count: recipeData.tags?.length || 0
+                });
             }
 
             await loadRecipes();

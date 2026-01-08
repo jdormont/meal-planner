@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, Meal, MealWithRecipes } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useAnalytics } from './useAnalytics';
 
 export function useMeals() {
     const { user } = useAuth();
     const [meals, setMeals] = useState<MealWithRecipes[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { track } = useAnalytics();
 
     const loadMeals = useCallback(async () => {
         if (!user) return;
@@ -76,6 +78,13 @@ export function useMeals() {
 
                 if (error) throw error;
                 mealId = data.id;
+
+                track('meal_scheduled', {
+                    date: mealData.date,
+                    meal_type: mealData.meal_type,
+                    count: recipeIds.length,
+                    is_new: true
+                });
             }
 
             if (recipeIds.length > 0) {
@@ -179,6 +188,12 @@ export function useMeals() {
                 .eq('id', mealId);
 
             if (error) throw error;
+
+            track('meal_scheduled', {
+                date: newDate,
+                meal_type: newType,
+                is_move: true
+            });
 
             // Background re-fetch to ensure consistency
             loadMeals();

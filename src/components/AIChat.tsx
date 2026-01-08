@@ -3,6 +3,7 @@ import { Send, User, Loader2, Save, Trash2, Plus, ArrowLeft, MessageSquare } fro
 import { marked } from 'marked';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -46,6 +47,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
   const [currentModel, setCurrentModel] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { track } = useAnalytics();
 
   useEffect(() => {
     marked.setOptions({
@@ -188,6 +190,12 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
     const newUserMessage = { role: 'user' as const, content: userMessage };
     setMessages((prev) => [...prev, newUserMessage]);
     setLoading(true);
+
+    track('ai_message_sent', {
+      message_length: userMessage.length,
+      is_quick_prompt: !!messageText,
+      weekly_brief: !!weeklyBrief
+    });
 
     if (currentChatId) {
       await saveNewMessage(newUserMessage);

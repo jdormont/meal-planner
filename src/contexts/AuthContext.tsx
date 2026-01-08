@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, AuthError } from '@supabase/supabase-js';
 import { supabase, UserProfile } from '../lib/supabase';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 type AuthContextType = {
   user: User | null;
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { identify } = useAnalytics();
 
   const loadUserProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         loadUserProfile(session.user.id);
+        identify(session.user.id, { email: session.user.email });
       }
       setLoading(false);
     });
@@ -46,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         if (session?.user) {
           await loadUserProfile(session.user.id);
+          identify(session.user.id, { email: session.user.email });
         } else {
           setUserProfile(null);
         }
@@ -57,6 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
+
+    // We already identified in the session check, but we could update traits here if profile changes
+    // avoiding redundant calls for now unless profile has distinct traits we want in PostHog people profiles
 
     const channel = supabase
       .channel('profile-changes')
