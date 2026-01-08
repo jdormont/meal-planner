@@ -18,5 +18,16 @@ export const useAnalytics = () => {
         }
     }, []);
 
-    return { track, identify };
+    const pageView = useCallback((url: string, properties?: Record<string, any>) => {
+        if (import.meta.env.VITE_POSTHOG_KEY) {
+            posthog.capture('$pageview', {
+                $current_url: url,
+                ...properties
+            });
+        } else {
+            console.log(`[Analytics] PageView: ${url}`, properties);
+        }
+    }, []);
+
+    return { track, identify, pageView };
 };

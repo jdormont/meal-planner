@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { useRecipes } from './hooks/useRecipes';
 import { useMeals } from './hooks/useMeals';
+import { useAnalytics } from './hooks/useAnalytics';
 import { Auth } from './components/Auth';
 import { AccountStatus } from './components/AccountStatus';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -68,9 +69,40 @@ function App() {
   }, [authLoading, recipesLoading, mealsLoading]);
 
   // Initial load handled by useRecipes and useMeals hooks
+  const { pageView } = useAnalytics();
 
   const [view, setView] = useState<View>('recipes');
   const [mealViewMode, setMealViewMode] = useState<'calendar' | 'list'>('calendar');
+
+  // Track page views for virtual routing
+  useEffect(() => {
+    let virtualPath = '/';
+    switch (view) {
+      case 'recipes':
+        virtualPath = '/recipes';
+        break;
+      case 'meals':
+        virtualPath = mealViewMode === 'calendar' ? '/calendar' : '/collections';
+        break;
+      case 'chat':
+        virtualPath = '/ai-chat';
+        break;
+      case 'community':
+        virtualPath = '/community';
+        break;
+      case 'admin':
+        virtualPath = '/admin';
+        break;
+      case 'settings':
+        virtualPath = '/settings';
+        break;
+      default:
+        virtualPath = `/${view}`;
+    }
+
+    // Construct simplified URL without query params for cleaner analytics
+    pageView(virtualPath);
+  }, [view, mealViewMode, pageView]);
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);

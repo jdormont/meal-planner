@@ -13,7 +13,7 @@ if (posthogKey && posthogHost) {
   posthog.init(posthogKey, {
     api_host: posthogHost,
     person_profiles: 'identified_only',
-    capture_pageview: false // We'll handle this manually if needed, or stick to auto
+    capture_pageview: true // Enable distinct pageview events
   });
 } else {
   console.log('PostHog analytics disabled: Missing API key or host');
