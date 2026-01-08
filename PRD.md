@@ -3,66 +3,84 @@
 ## Executive Summary
 A comprehensive recipe management and meal planning application with AI-powered assistance for discovering recipes, planning weekly meals, and organizing multi-dish special occasion meals.
 
-**Last Updated:** January 1, 2026
-**Current Status:** Phase 2 Complete + Phase 4 Enhancements - Full recipe management, AI chat, meal planning, admin system, recipe sharing, and import capabilities operational
+**Last Updated: January 7, 2026
+Current Status: Phase 2 Complete + Phase 4 Enhancements - Full recipe management, AI chat, meal planning (with drag-and-drop), admin system, and AI image generation operational
 
-## Recent Updates (December 2025) 
+## Recent Updates (Dec 2025 - Jan 2026)
 
-### ✅ Completed This Week (Dec 21)
-1. **Empty State Onboarding Flow Optimization**
+### ✅ Completed This Week (Jan 1-7)
+1. **Drag-and-Drop Meal Planning**
+   - Interactive calendar with drag-and-drop support
+   - Seamlessly move meals between days
+   - Visual feedback during drag operations
+   - Improved meal creation flow
+
+2. **AI Image Generation (DALL-E 3)**
+   - Replaced stock photo integration with custom AI image generation
+   - Generates photorealistic, appetizing food images
+   - Uses recipe title, description, and key ingredients for context
+   - Automatically stores images in Supabase Storage
+
+### ✅ Completed Last Month (Dec 2025)
+1. **Advanced Cuisine Profiles**
+   - Detailed cuisine preference management
+   - Granular control over favorite cuisines and dishes
+   - Better personalization for AI suggestions
+
+2. **Empty State Onboarding Flow Optimization**
    - Reordered initial action CTAs for better UX flow (left-to-right)
    - Moved "Suggested starting point" badge to "Ask the AI" to guide new users toward AI assistance first
    - New order: Ask the AI → Import from Web or Photo → Create a Recipe
    - Improved user guidance for new recipe collection discovery
 
-### ✅ Completed This Month
-1. **Recipe Sharing & Community Features**
+3. **Recipe Sharing & Community Features**
    - Public/private recipe visibility toggle
    - Community recipes browsing
    - View and adopt recipes shared by other users
    - Copy community recipes to personal collection
 
-2. **Recipe Import from URLs**
+4. **Recipe Import from URLs**
    - Automatic recipe extraction from popular cooking websites
    - AI-powered parsing of ingredients, instructions, and metadata
    - One-click import directly into recipe collection
 
-3. **Cocktail & Beverage Support**
+5. **Cocktail & Beverage Support**
    - Recipe type field (food/drink) added
    - Dedicated cocktail recipe management
    - Beverage-specific categorization and filtering
 
-4. **Advanced Allergy Safety System**
+6. **Advanced Allergy Safety System**
    - Comprehensive handling of dietary restrictions in AI prompts
    - Safe substitution suggestions with explanations
    - Flagging of hidden allergen sources in cuisine-specific ingredients
    - Multi-allergy coordination without conflicts
 
-5. **Recipe Time Parsing Fix**
+7. **Recipe Time Parsing Fix**
    - Fixed AI recipe parsing to correctly extract prep and cook times
    - Now supports "min", "minute", and "minutes" formats
 
-6. **Admin System Enhancements**
+8. **Admin System Enhancements**
    - User approval workflow fully operational
    - Admin dashboard with user management
    - Login tracking and account status monitoring
 
-7. **AI Personalization Improvements**
+9. **AI Personalization Improvements**
    - Recipe recommendations based on rating history
    - Context-aware suggestions using user preferences
    - Comprehensive user settings integration
 
-8. **Mobile Responsiveness & Cooking Mode**
-   - Optimized "Cooking Mode" for tablet landscape users
-   - Sticky ingredients list for easy reference while cooking
-   - Improved touch targets and mobile navigation
-   - Custom scrollbars for better utility
+10. **Mobile Responsiveness & Cooking Mode**
+    - Optimized "Cooking Mode" for tablet landscape users
+    - Sticky ingredients list for easy reference while cooking
+    - Improved touch targets and mobile navigation
+    - Custom scrollbars for better utility
 
-9. **Chat-to-Plan (AI Meal Planning)**
-   - AI-driven weekly meal plan generation
-   - "Weekly Brief" mode for quick planning
-   - Integration with user preferences and constraints
-10. **Weekly Meal Calendar & Collections**
+11. **Chat-to-Plan (AI Meal Planning)**
+    - AI-driven weekly meal plan generation
+    - "Weekly Brief" mode for quick planning
+    - Integration with user preferences and constraints
+
+12. **Weekly Meal Calendar & Collections**
     - Interactive weekly/monthly calendar view
     - Support for Breakfast, Lunch, and Dinner slots
     - "Collections" feature for grouping meals (e.g., event planning)
@@ -103,10 +121,11 @@ A comprehensive recipe management and meal planning application with AI-powered 
 - **Auto-Tagging** - AI-powered automatic recipe categorization
 - **Mobile Optimization** - Responsive design with tablet-specific "Cooking Mode"
 - **Chat-to-Plan** - AI converts user requests into structured weekly meal plans
-
-- [x] **Calendar View** - Interactive weekly/monthly planner with multiple meal slots
-- [x] **Meal Collections** - Group meals for events or special occasions separate from the calendar
-- [x] **Responsive UI** - Optimized meal creation flow for all devices
+- **Calendar View** - Interactive weekly/monthly planner with multiple meal slots
+- **Meal Collections** - Group meals for events or special occasions separate from the calendar
+- **Responsive UI** - Optimized meal creation flow for all devices
+- **Drag-and-Drop** - Drag-and-drop interface for organizing meals on the calendar
+- **AI Image Generation** - Custom food images generated via DALL-E 3
 
 ### 🚧 In Progress
 - Shopping list generation from meal plans
@@ -146,7 +165,7 @@ A comprehensive recipe management and meal planning application with AI-powered 
   - ✅ Prep time, cook time, total time
   - ✅ Serving size
   - ✅ Tags/categories (cuisine, dietary restrictions, meal type)
-  - ✅ Auto-generated images from stock photo sources
+  - ✅ Auto-generated images (DALL-E 3)
   - ✅ Notes field
   - ✅ AI-generated tag suggestions
 - ✅ Edit and delete recipes
@@ -177,7 +196,7 @@ A comprehensive recipe management and meal planning application with AI-powered 
 - ✅ Archive system for past meals
 - ✅ View meal history
 - ✅ Calendar view for 7-day planning
-- 📋 Drag-and-drop interface (planned)
+- ✅ Drag-and-drop interface (implemented)
 - ✅ Multiple meal types per day (breakfast, lunch, dinner)
 - ✅ **New Feature: Collections** - Create independent lists of meals (e.g., "Camping Trip 2026")
 - 📋 Clone/duplicate meal plans (planned)
@@ -299,7 +318,7 @@ A comprehensive recipe management and meal planning application with AI-powered 
 ### Supabase Edge Functions ✅ DEPLOYED
 - ✅ **ai-chat** - Main AI assistant with personalization
 - ✅ **auto-tag-recipe** - Automatic recipe categorization
-- ✅ **get-recipe-image** - Stock photo integration
+- ✅ **get-recipe-image** - AI Image Generation (DALL-E 3)
 - ✅ **import-recipe** - Import recipes from URLs with AI extraction
 - ✅ **admin-get-users** - User management for admins
 - ✅ **admin-update-user-status** - User approval workflow
@@ -605,8 +624,9 @@ A comprehensive recipe management and meal planning application with AI-powered 
    - System detects provider based on API key format
 
 2. **Should recipe images be required or optional?**
-   - ✅ Optional - Auto-generated from stock photos (Pexels)
+   - ✅ Optional - Auto-generated using DALL-E 3 AI
    - Users not required to provide images
+   - System automatically generates high-quality food images based on recipe details
 
 3. **User approval workflow?**
    - ✅ Implemented admin approval system
@@ -637,10 +657,10 @@ A comprehensive recipe management and meal planning application with AI-powered 
 
 ### Immediate Priorities (Q1 2026)
 1. **Complete Meal Planning Features**
-   - Implement calendar view for weekly meal planning
-   - Add drag-and-drop interface for recipes
-   - Support multiple meal types per day (breakfast, lunch, dinner)
-   - Clone/duplicate meal plans for easy reuse
+   - ✅ Implement calendar view for weekly meal planning
+   - ✅ Add drag-and-drop interface for recipes
+   - ✅ Support multiple meal types per day (breakfast, lunch, dinner)
+   - 📋 Clone/duplicate meal plans for easy reuse
 
 2. **Shopping List Generator**
    - Auto-generate shopping lists from meals
