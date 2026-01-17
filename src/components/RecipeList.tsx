@@ -9,9 +9,11 @@ type RecipeListProps = {
   onCreateNew?: () => void;
   onOpenChat?: () => void;
   onImportFromWeb?: () => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
 };
 
-export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, onOpenChat, onImportFromWeb }: RecipeListProps) {
+export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, onOpenChat, onImportFromWeb, onLoadMore, hasMore }: RecipeListProps) {
   if (recipes.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -129,11 +131,10 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
               </div>
             )}
             {recipe.rating && (
-              <div className={`absolute top-2 left-2 p-1.5 rounded-full shadow-lg ${
-                recipe.rating === 'thumbs_up'
-                  ? 'bg-green-500'
-                  : 'bg-red-500'
-              }`}>
+              <div className={`absolute top-2 left-2 p-1.5 rounded-full shadow-lg ${recipe.rating === 'thumbs_up'
+                ? 'bg-green-500'
+                : 'bg-red-500'
+                }`}>
                 {recipe.rating === 'thumbs_up' ? (
                   <ThumbsUp className="w-4 h-4 text-white" />
                 ) : (
@@ -212,6 +213,16 @@ export function RecipeList({ recipes, onEdit, onDelete, onSelect, onCreateNew, o
           </div>
         </div>
       ))}
+      {hasMore && onLoadMore && (
+        <div className="col-span-full flex justify-center mt-8 pb-8">
+          <button
+            onClick={onLoadMore}
+            className="px-6 py-3 bg-white border-2 border-terracotta-200 text-terracotta-700 font-semibold rounded-xl hover:bg-terracotta-50 hover:border-terracotta-300 transition shadow-sm"
+          >
+            Load More Recipes
+          </button>
+        </div>
+      )}
     </div>
   );
 }
