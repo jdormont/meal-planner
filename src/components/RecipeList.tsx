@@ -4,6 +4,7 @@ import { Recipe } from '../lib/supabase';
 import { RecipeLane } from './RecipeLane';
 import { FeaturedBanner } from './FeaturedBanner';
 import { useRecipeDashboard } from '../hooks/useRecipeDashboard';
+import { OnboardingLaunchpad } from './OnboardingLaunchpad';
 
 type RecipeListProps = {
   recipes: Recipe[];
@@ -15,6 +16,8 @@ type RecipeListProps = {
   onImportFromWeb?: () => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
+  totalRecipeCount?: number;
+  onScanPhoto?: () => void;
 };
 
 export function RecipeList({
@@ -26,7 +29,9 @@ export function RecipeList({
   onOpenChat,
   onImportFromWeb,
   onLoadMore,
-  hasMore
+  hasMore,
+  totalRecipeCount,
+  onScanPhoto
 }: RecipeListProps) {
   const [viewMode, setViewMode] = useState<'dashboard' | 'grid'>('dashboard');
   const {
@@ -48,7 +53,13 @@ export function RecipeList({
 
     return (
       <div className="pb-20">
-        {recipes.length === 0 ? (
+        {!dashboardLoading && totalRecipeCount === 0 ? (
+          <OnboardingLaunchpad
+            onScan={onScanPhoto || (() => { })}
+            onChat={onOpenChat || (() => { })}
+            onImport={onImportFromWeb || (() => { })}
+          />
+        ) : recipes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             {/* Empty State reused */}
             <div className="bg-terracotta-50 p-6 rounded-full mb-4">

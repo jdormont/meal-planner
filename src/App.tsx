@@ -615,6 +615,8 @@ function App() {
                 }}
                 onLoadMore={loadMore}
                 hasMore={hasMore}
+                totalRecipeCount={recipes.length}
+                onScanPhoto={() => setShowPhotoModal(true)}
               />
             </>
           )}
