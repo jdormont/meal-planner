@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, UserPlus, Loader2, ChefHat, Globe, Calendar, Sparkles } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, ChefHat, Globe, Calendar, Sparkles, Chrome } from 'lucide-react';
 
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -9,7 +9,7 @@ export function Auth() {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,6 +114,25 @@ export function Auth() {
                   ? 'Your personal recipe collection awaits'
                   : 'Your recipes are waiting for you'}
               </p>
+
+              <div className="space-y-4 mb-6">
+                <button
+                  onClick={() => signInWithGoogle()}
+                  className="w-full bg-white hover:bg-gray-50 text-gray-900 border border-sage-300 font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-3 shadow-sm"
+                >
+                  <Chrome className="w-5 h-5 text-gray-900" />
+                  Sign in with Google
+                </button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-sage-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-cream-50 text-gray-500">Or continue with email</span>
+                  </div>
+                </div>
+              </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 {isSignUp && (

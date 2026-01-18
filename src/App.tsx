@@ -134,6 +134,13 @@ function App() {
     }
   };
 
+  // Check for onboarding on initial load
+  useEffect(() => {
+    if (!loading && user && userProfile) {
+      checkAndShowOnboarding();
+    }
+  }, [loading, user, userProfile]);
+
   const markOnboardingSeen = async () => {
     if (!user) return;
 
