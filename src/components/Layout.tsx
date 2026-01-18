@@ -45,8 +45,8 @@ export function Layout({
                             <button
                                 onClick={() => onViewChange('recipes')}
                                 className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${currentView === 'recipes'
-                                        ? 'bg-terracotta-500 text-white shadow-sm'
-                                        : 'text-gray-700 hover:bg-sage-100'
+                                    ? 'bg-terracotta-500 text-white shadow-sm'
+                                    : 'text-gray-700 hover:bg-sage-100'
                                     }`}
                                 title="My Recipes"
                             >
@@ -57,8 +57,8 @@ export function Layout({
                             <button
                                 onClick={() => onViewChange('community')}
                                 className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${currentView === 'community'
-                                        ? 'bg-terracotta-500 text-white shadow-sm'
-                                        : 'text-gray-700 hover:bg-sage-100'
+                                    ? 'bg-terracotta-500 text-white shadow-sm'
+                                    : 'text-gray-700 hover:bg-sage-100'
                                     }`}
                                 title="Community Recipes"
                             >
@@ -69,8 +69,8 @@ export function Layout({
                             <button
                                 onClick={() => onViewChange('meals')}
                                 className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${currentView === 'meals'
-                                        ? 'bg-terracotta-500 text-white shadow-sm'
-                                        : 'text-gray-700 hover:bg-sage-100'
+                                    ? 'bg-terracotta-500 text-white shadow-sm'
+                                    : 'text-gray-700 hover:bg-sage-100'
                                     }`}
                                 title="Meal Planning"
                             >
@@ -81,8 +81,8 @@ export function Layout({
                             <button
                                 onClick={() => onViewChange('chat')}
                                 className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${currentView === 'chat'
-                                        ? 'bg-terracotta-500 text-white shadow-sm'
-                                        : 'text-gray-700 hover:bg-sage-100'
+                                    ? 'bg-terracotta-500 text-white shadow-sm'
+                                    : 'text-gray-700 hover:bg-sage-100'
                                     }`}
                                 title="Chef Assistant"
                             >
@@ -158,6 +158,13 @@ export function Layout({
                                                 <LogOut className="w-4 h-4" />
                                                 Sign Out
                                             </button>
+                                            <hr className="my-1 border-gray-200" />
+                                            <a
+                                                href="/privacy"
+                                                className="w-full px-4 py-2 text-left text-xs text-gray-500 hover:bg-gray-50 flex items-center gap-3"
+                                            >
+                                                Privacy & Terms
+                                            </a>
                                         </div>
                                     </>
                                 )}

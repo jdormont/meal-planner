@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import posthog from 'posthog-js';
 import { AuthProvider } from './contexts/AuthContext';
 import App from './App.tsx';
+import PrivacyPage from './pages/PrivacyPage';
 import './index.css';
 
 // Initialize PostHog
@@ -22,7 +23,7 @@ if (posthogKey && posthogHost) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      {window.location.pathname === '/privacy' ? <PrivacyPage /> : <App />}
     </AuthProvider>
   </StrictMode>
 );
