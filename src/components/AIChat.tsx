@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, User, Loader2, Save, Trash2, Plus, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Send, User, Loader2, Save, Trash2, Plus, ArrowLeft, MessageSquare, Bug } from 'lucide-react';
 import { marked } from 'marked';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,6 +8,7 @@ import { useAnalytics } from '../hooks/useAnalytics';
 type Message = {
   role: 'user' | 'assistant';
   content: string;
+  rawPayload?: any;
   cuisineMetadata?: {
     applied: boolean;
     cuisine: string;
@@ -46,6 +47,7 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
   const [currentModel, setCurrentModel] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { track } = useAnalytics();
 
@@ -269,9 +271,18 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
       }
 
       const data = await response.json();
-      const assistantMessage = {
-        role: 'assistant' as const,
-        content: data.message,
+
+      // Fallback content generation if message is empty but structured data exists
+      let displayContent = data.message;
+      if (!displayContent && data.data && data.data.suggestions) {
+        const suggestions = data.data.suggestions.map((s: any) => `**${s.title}**\n${s.description}`).join('\n\n');
+        displayContent = suggestions || "Received structured data.";
+      }
+
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: displayContent || " ",
+        rawPayload: data,
         ...(data.cuisineMetadata && { cuisineMetadata: data.cuisineMetadata })
       };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -404,6 +415,15 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
                 {currentModel ? `Powered by ${currentModel}` : 'Ask me anything about recipes and cooking'}
               </p>
             </div>
+            {isAdmin && (
+              <button
+                onClick={() => setShowDebug(!showDebug)}
+                className={`p-2 rounded-lg transition ${showDebug ? 'bg-white text-terracotta-600' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                title="Toggle Debug View"
+              >
+                <Bug className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -500,6 +520,16 @@ export function AIChat({ onSaveRecipe, onFirstAction }: AIChatProps) {
                       )}
                     </div>
                   </div>
+                )}
+                {message.role === 'assistant' && showDebug && message.rawPayload && (
+                  <details className="mt-4 pt-4 border-t border-sage-200">
+                    <summary className="text-xs font-semibold text-gray-700 cursor-pointer hover:text-terracotta-600">
+                      🔍 View Raw Payload
+                    </summary>
+                    <pre className="mt-2 p-3 bg-gray-900 text-green-400 text-xs font-mono rounded-lg overflow-x-auto">
+                      {JSON.stringify(message.rawPayload, null, 2)}
+                    </pre>
+                  </details>
                 )}
               </div>
               {message.role === 'user' && (
