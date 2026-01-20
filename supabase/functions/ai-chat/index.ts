@@ -643,17 +643,14 @@ Deno.serve(async (req: Request) => {
     let weeklyBriefContext = '';
     if (weeklyBrief) {
       weeklyBriefContext = '\n\n**IMPORTANT INSTRUCTION - WEEKLY COOKING BRIEF MODE:**\n\n';
-      weeklyBriefContext += 'The user has requested help with weekly meal planning. You MUST immediately enter "Weekly Cooking Brief" mode as described in your core instructions.\n\n';
-      weeklyBriefContext += '**CRITICAL: Start by asking clarifying questions FIRST.** Follow the "CONVERSATION APPROACH" section in your Weekly Cooking Brief Mode instructions:\n\n';
+      weeklyBriefContext += 'The user has requested help with weekly meal planning. You MUST immediately enter "Weekly Cooking Brief" mode.\n\n';
+      weeklyBriefContext += '**CRITICAL: Start by asking clarifying questions FIRST.**\n\n';
       weeklyBriefContext += 'Your response should:\n';
-      weeklyBriefContext += '• Begin with a short, empathetic acknowledgment (1-2 sentences)\n';
-      weeklyBriefContext += '• Ask up to 3 lightweight, conversational questions to understand:\n';
-      weeklyBriefContext += '  - Time and energy patterns across the week (tight days vs more open days)\n';
-      weeklyBriefContext += '  - Appetite or mood (light, cozy, familiar, fresh)\n';
-      weeklyBriefContext += '  - Openness to novelty (mostly familiar vs one or two new ideas)\n';
-      weeklyBriefContext += '• Make the questions feel optional and human, not like a form\n';
-      weeklyBriefContext += '• DO NOT provide meal recommendations yet - wait for their answers first\n\n';
-      weeklyBriefContext += 'Remember: Be conversational, warm, and collaborative. You\'re gathering context to help plan together, not executing a checklist.';
+      weeklyBriefContext += '• Begin with a short, empathetic acknowledgment (1-2 sentences) in the "reply" field.\n';
+      weeklyBriefContext += '• Ask up to 3 lightweight, conversational questions to understand their schedule and hunger in the "reply" field.\n';
+      weeklyBriefContext += '• DO NOT provide meal recommendations yet - wait for their answers first.\n';
+      weeklyBriefContext += '• **YOU MUST RETURN AN EMPTY ARRAY [] FOR "suggestions"** while asking these questions.\n\n';
+      weeklyBriefContext += 'Remember: Be conversational, warm, and collaborative. Put all your text in the "reply" JSON field.';
     }
 
     let cuisineProfileContext = '';
@@ -738,11 +735,17 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
        - Return 3-5 distinct, high-quality options in the "suggestions" array.
        - "reply" should be brief and encouraging.
 
-    2. **Planner Mode** (User asks for a weekly plan):
-       - FIRST: Return a "reply" with clarifying questions (schedule, novelty, hunger). Return "suggestions": [].
+    3. **Planner Mode** (User asks for a weekly plan):
+       - FIRST: Return a "reply" with clarifying questions (schedule, novelty, hunger). **"suggestions" MUST be [] (empty array)**.
        - SECOND (After user answers): Return "suggestions" containing the planned meals (4-6 meals).
+       - IMPORTANT: Put ALL conversational text, including questions, into the "reply" field. Do not put it in the "suggestions" array.
 
-    3. **Q&A Mode** (User asks a general cooking question):
+    4. **Advisor Mode** (User asks for ideas/what to cook) OR **Hybrid Mode**:
+       - Return 3-5 distinct, high-quality options in the "suggestions" array.
+       - "reply" should be brief and encouraging.
+       - If the user provides feedback (e.g. "make it spicy"), use the "reply" to acknowledge the change and "suggestions" for the NEW recipes.
+
+    5. **Q&A Mode** (User asks a general cooking question):
        - Answer in "reply". Return "suggestions": [].
     
     ${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}
