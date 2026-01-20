@@ -788,6 +788,8 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
 
     5. **Q&A Mode** (User asks a general cooking question):
        - Answer in "reply". Return "suggestions": [].
+
+    CRITICAL: If the user asks for a substitution (e.g. "use tofu instead"), you MUST return the NEW, MODIFIED recipes in the "suggestions" array. Do not just describe the change in text.
     
     ${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}
 
@@ -844,7 +846,10 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
     try {
       // The model might wrap the JSON in markdown code blocks despite instructions, handle that.
       const cleanMessage = message.trim();
-      const jsonString = cleanMessage.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+      const jsonString = cleanMessage
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/, "")
+        .replace(/\s*```$/, "");
 
       const rawData = JSON.parse(jsonString);
       const validation = RecipeResponseSchema.safeParse(rawData);
@@ -858,12 +863,21 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
         }
       } else {
         console.error("Schema validation failed:", validation.error);
-        // Attempt to salvage if possible, or just throw
-        throw new Error("Response did not match the required schema: " + validation.error.message);
+        // Attempt to use what we have
+        parsedData = {
+          reply: rawData.reply || message,
+          suggestions: Array.isArray(rawData.suggestions) ? rawData.suggestions : []
+        };
       }
     } catch (e) {
       console.error("Error parsing JSON response:", e);
-      throw new Error("Failed to generate structured data. Please try again.");
+      console.log("Raw message:", message);
+      // Fallback: If JSON parsing fails, assume the entire message is the reply text.
+      // This prevents 500 errors when the model decides to be chatty and skip JSON.
+      parsedData = {
+        reply: message,
+        suggestions: []
+      };
     }
 
     // We no longer have a free-form text message. 

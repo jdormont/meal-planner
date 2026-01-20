@@ -48,15 +48,15 @@ export const parseAIRecipe = (text: string): ParsedRecipe => {
     lines.forEach((line, index) => {
         const lowerLine = line.toLowerCase();
 
-        // Parse prep time - handle formats like "**Prep Time:** 10 minutes" or "Prep Time: 10 minutes"
-        const prepMatch = line.match(/\*?\*?prep\s+time:?\*?\*?\s*(\d+)/i);
+        // Parse prep time - handle formats like "**Prep Time:** 10 minutes", "Prep Time: approx 10 mins", etc.
+        const prepMatch = line.match(/(?:prep|preparation)\s+time.*?(\d+)/i);
         if (prepMatch) {
             prepTime = parseInt(prepMatch[1]);
             return;
         }
 
-        // Parse cook time - handle formats like "**Cook Time:** 30 minutes" or "Cook Time: 30 minutes"
-        const cookMatch = line.match(/\*?\*?cook\s+time:?\*?\*?\s*(\d+)/i);
+        // Parse cook time - handle formats like "**Cook Time:** 30 minutes", "Cook Time: ~30 mins"
+        const cookMatch = line.match(/(?:cook|cooking)\s+time.*?(\d+)/i);
         if (cookMatch) {
             cookTime = parseInt(cookMatch[1]);
             return;

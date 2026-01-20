@@ -103,7 +103,14 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
       .order('created_at', { ascending: true });
 
     if (chatMessages) {
-      setMessages(chatMessages as Message[]);
+      // Map DB columns to state structure
+      const formattedMessages = chatMessages.map(msg => ({
+        ...msg,
+        role: msg.role as 'user' | 'assistant',
+        suggestions: msg.suggestions || [],
+        cuisineMetadata: msg.cuisine_metadata || undefined
+      }));
+      setMessages(formattedMessages as Message[]);
       setCurrentChatId(chatId);
       setShowChatList(false);
       setShowQuickPrompts(false);
@@ -122,10 +129,13 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
     setShowQuickPrompts(true);
   };
 
-  const saveCurrentChat = async () => {
-    if (!user || messages.length <= 1) return;
+  const saveCurrentChat = async (messagesToSaveOverride?: Message[]) => {
+    // Use override if provided, otherwise fall back to state (though state might be stale in some contexts)
+    const msgs = messagesToSaveOverride || messages;
+    
+    if (!user || msgs.length <= 1) return;
 
-    const firstUserMessage = messages.find(m => m.role === 'user')?.content || 'New Chat';
+    const firstUserMessage = msgs.find(m => m.role === 'user')?.content || 'New Chat';
     const title = firstUserMessage.length > 50
       ? firstUserMessage.substring(0, 50) + '...'
       : firstUserMessage;
@@ -145,19 +155,15 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
       if (newChat) {
         setCurrentChatId(newChat.id);
 
-        const messagesToSave = messages.map(msg => ({
+        const dbMessages = msgs.map(msg => ({
           chat_id: newChat.id,
           role: msg.role,
           content: msg.content,
-          // We should ideally save structured data/suggestions properly in valid JSON columns
-          // But for now we stick to content.
-          // Note: If we want to restore history with cards, we need to save 'suggestions' to DB schema or serialize it.
-          // Currently the schema for 'chat_messages' likely only has 'content'.
-          // We can serialize the whole hybrid message into 'content' if we wanted, or just save the text.
-          // For this immediate task, we'll assume 'content' saves the text part.
+          suggestions: msg.suggestions || [],
+          cuisine_metadata: msg.cuisineMetadata || {}
         }));
 
-        await supabase.from('chat_messages').insert(messagesToSave);
+        await supabase.from('chat_messages').insert(dbMessages);
       }
     }
 
@@ -176,6 +182,8 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
       chat_id: currentChatId,
       role: message.role,
       content: message.content,
+      suggestions: message.suggestions || [],
+      cuisine_metadata: message.cuisineMetadata || {},
     });
 
     await supabase
@@ -350,7 +358,8 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
       if (currentChatId) {
         await saveNewMessage(assistantMessage);
       } else {
-        await saveCurrentChat();
+        // Pass the FULL up-to-date conversation to save
+        await saveCurrentChat([...messages, newUserMessage, assistantMessage]);
       }
 
       if (onFirstAction) {
