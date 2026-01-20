@@ -24,7 +24,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
   const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [addingToMeal, setAddingToMeal] = useState(false);
-  const totalTime = recipe.prep_time_minutes + recipe.cook_time_minutes;
+  const totalTime = recipe.total_time;
 
   const renderMarkdown = (text: string) => {
     return { __html: marked(text, { breaks: true, gfm: true }) as string };
@@ -211,18 +211,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
                 <div className="font-semibold">{recipe.servings}</div>
               </div>
             </div>
-            {recipe.prep_time_minutes > 0 && (
-              <div>
-                <div className="text-sm text-gray-500">Prep Time</div>
-                <div className="font-semibold text-gray-700">{recipe.prep_time_minutes} min</div>
-              </div>
-            )}
-            {recipe.cook_time_minutes > 0 && (
-              <div>
-                <div className="text-sm text-gray-500">{recipe.recipe_type === 'cocktail' ? 'Mix/Chill Time' : 'Cook Time'}</div>
-                <div className="font-semibold text-gray-700">{recipe.cook_time_minutes} min</div>
-              </div>
-            )}
+
           </div>
 
           {recipe.recipe_type === 'cocktail' && recipe.cocktail_metadata && (

@@ -16,8 +16,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
     { name: '', quantity: '', unit: '' },
   ]);
   const [instructions, setInstructions] = useState<string[]>(['']);
-  const [prepTime, setPrepTime] = useState(0);
-  const [cookTime, setCookTime] = useState(0);
+  const [totalTime, setTotalTime] = useState(0);
   const [servings, setServings] = useState(4);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -43,8 +42,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       setDescription(recipe.description);
       setIngredients(recipe.ingredients.length > 0 ? recipe.ingredients : [{ name: '', quantity: '', unit: '' }]);
       setInstructions(recipe.instructions.length > 0 ? recipe.instructions : ['']);
-      setPrepTime(recipe.prep_time_minutes);
-      setCookTime(recipe.cook_time_minutes);
+      setTotalTime(recipe.total_time);
       setServings(recipe.servings);
       setTags(recipe.tags);
       setImageUrl(recipe.image_url || '');
@@ -152,8 +150,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         description,
         ingredients: ingredients.filter(i => i.name.trim()),
         instructions: instructions.filter(i => i.trim()),
-        prepTime,
-        cookTime,
+        totalTime,
         recipeType,
       };
       console.log('Sending auto-tag request:', payload);
@@ -325,8 +322,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       description,
       ingredients: ingredients.filter((i) => i.name.trim()),
       instructions: instructions.filter((i) => i.trim()),
-      prep_time_minutes: prepTime,
-      cook_time_minutes: cookTime,
+      total_time: totalTime,
       servings,
       tags,
       image_url: finalImageUrl || undefined,
@@ -425,27 +421,15 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {recipeType === 'cocktail' ? 'Prep Time (min)' : 'Prep Time (min)'}
+                Total Time (min)
               </label>
               <input
                 type="number"
-                value={prepTime}
-                onChange={(e) => setPrepTime(Number(e.target.value))}
-                min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {recipeType === 'cocktail' ? 'Mix/Chill Time (min)' : 'Cook Time (min)'}
-              </label>
-              <input
-                type="number"
-                value={cookTime}
-                onChange={(e) => setCookTime(Number(e.target.value))}
+                value={totalTime}
+                onChange={(e) => setTotalTime(Number(e.target.value))}
                 min="0"
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
               />

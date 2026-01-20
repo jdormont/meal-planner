@@ -9,8 +9,7 @@ export interface ParsedRecipe {
     description: string;
     ingredients: ParsedIngredient[];
     instructions: string[];
-    prepTime: number;
-    cookTime: number;
+    totalTime: number;
 }
 
 export const parseIngredient = (line: string): ParsedIngredient => {
@@ -42,11 +41,19 @@ export const parseAIRecipe = (text: string): ParsedRecipe => {
     let section: 'none' | 'ingredients' | 'instructions' = 'none';
     let prepTime = 0;
     let cookTime = 0;
+    let totalTime = 0;
     let titleFound = false;
     const descriptionLines: string[] = [];
 
     lines.forEach((line, index) => {
         const lowerLine = line.toLowerCase();
+
+        // Parse total time
+        const totalMatch = line.match(/\*?\*?total\s+time:?\*?\*?\s*(\d+)/i);
+        if (totalMatch) {
+            totalTime = parseInt(totalMatch[1]);
+            return;
+        }
 
         // Parse prep time - handle formats like "**Prep Time:** 10 minutes" or "Prep Time: 10 minutes"
         const prepMatch = line.match(/\*?\*?prep\s+time:?\*?\*?\s*(\d+)/i);
@@ -103,7 +110,6 @@ export const parseAIRecipe = (text: string): ParsedRecipe => {
         description,
         ingredients,
         instructions,
-        prepTime,
-        cookTime
+        totalTime: totalTime > 0 ? totalTime : (prepTime + cookTime)
     };
 };

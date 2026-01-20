@@ -28,8 +28,7 @@ export type Recipe = {
     unit: string;
   }>;
   instructions: string[];
-  prep_time_minutes: number;
-  cook_time_minutes: number;
+  total_time: number;
   servings: number;
   tags: string[];
   image_url?: string;

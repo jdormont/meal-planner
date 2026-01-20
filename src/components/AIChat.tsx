@@ -213,8 +213,7 @@ ${suggestion.title}
 
 ${suggestion.description}
 
-Prep time: ${suggestion.time_estimate}
-Cook time: ${suggestion.time_estimate} (Estimated)
+Total Time: ${suggestion.time_estimate}
 
 Ingredients:
 ${suggestion.full_details?.ingredients?.map((i: string) => `- ${i}`).join('\n') || '- (Ingredients will be generated)'}

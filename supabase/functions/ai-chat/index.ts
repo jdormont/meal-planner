@@ -9,6 +9,7 @@ const RecipeResponseSchema = z.object({
     title: z.string(),
     type: z.enum(["recipe", "cocktail"]),
     description: z.string(),
+    time_estimate: z.string().optional(),
     difficulty: z.string(),
     reason_for_recommendation: z.string(),
     cuisine: z.string().optional(),

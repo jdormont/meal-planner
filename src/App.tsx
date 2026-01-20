@@ -224,8 +224,7 @@ function App() {
       description: parsed.description,
       ingredients: parsed.ingredients,
       instructions: parsed.instructions,
-      prep_time_minutes: parsed.prepTime,
-      cook_time_minutes: parsed.cookTime,
+      total_time: parsed.totalTime,
       servings: 4,
       tags: ['AI Generated'],
       image_url: '',
@@ -247,19 +246,18 @@ function App() {
       user_id: user?.id || '',
       title: suggestion.title,
       description: suggestion.description,
-      ingredients: suggestion.full_details.ingredients.map((line: string) => parseIngredient(line)),
-      instructions: suggestion.full_details.instructions,
-      prep_time_minutes: parseInt(suggestion.time_estimate) || 0, // Approximate
-      cook_time_minutes: 0,
+      ingredients: suggestion.full_details?.ingredients.map((line: string) => parseIngredient(line)) || [],
+      instructions: suggestion.full_details?.instructions || [],
+      total_time: parseInt(suggestion.time_estimate) || 0, // Approximate
       servings: 4, // Default
       tags: ['AI Generated'],
       image_url: suggestion.image_url || '',
       source_url: '',
-      notes: suggestion.full_details.nutrition_notes || '',
+      notes: suggestion.full_details?.nutrition_notes || '',
       is_shared: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      recipe_type: 'recipe'
+      recipe_type: 'food' // Fixed type to match allowed values
     };
 
     setEditingRecipe(tempRecipe);
