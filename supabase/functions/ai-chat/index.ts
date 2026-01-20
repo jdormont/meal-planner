@@ -9,9 +9,9 @@ const RecipeResponseSchema = z.object({
     title: z.string(),
     type: z.enum(["recipe", "cocktail"]),
     description: z.string(),
-    time_estimate: z.string(),
     difficulty: z.string(),
     reason_for_recommendation: z.string(),
+    cuisine: z.string().optional(),
     full_details: z.optional(z.object({
       ingredients: z.array(z.string()),
       instructions: z.array(z.string()),
@@ -441,7 +441,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief, isAdmin } = await req.json();
+    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief, isAdmin, forceCuisine } = await req.json();
 
     const authHeader = req.headers.get("Authorization");
 
@@ -662,27 +662,64 @@ Deno.serve(async (req: Request) => {
       rationale: '',
       allMatches: ''
     };
-    const detectedCuisine = await detectCuisineFromMessages(messages, userPreferences, supabaseClient);
 
-    if (detectedCuisine) {
-      const cuisineProfile = await getCuisineProfile(detectedCuisine.cuisine, supabaseClient);
+    // Logic: 
+    // 1. If forceCuisine is provided (from clicking "View Recipe"), use THAT cuisine profile strict mode.
+    // 2. If NO forceCuisine, we check for detection BUT we might NOT inject the strict profile if we want diversity.
+    //    However, the plan says: "Disable global profile injection for the initial Suggestion phase".
+    //    So if !forceCuisine, we skip profile injection (or maybe just keep detection for metadata but don't inject prompt).
+    
+    let detectedCuisine = null;
+    let targetCuisine = forceCuisine;
+
+    if (!targetCuisine) {
+        // Run detection just for metadata or potential future use, but DON'T enforce it on the generation
+        // UNLESS we want "smart" detection for Q&A. 
+        // For now, per plan: "Disable global profile injection for initial phase".
+        // So we only use detection for tagging, not prompting? 
+        // Actually, the plan implies we simply DON'T inject the profile context unless forceCuisine is set.
+        // But let's see if the user explicitly asked for "Thai food".
+        // If they asked for "Thai food", we SHOULD probably still give Thai suggestions.
+        // But the user wants "Tacos" + "Curry" variety. 
+        // So we rely on the generic model knowledge for suggestions, and only STRICT profile for details.
+        
+        // Let's still run detection so we can log it, but NOT inject it into system prompt
+        // OR we can inject it as "User seems interested in X", but not "STRICT MODE".
+        // Evaluating the Plan again: "Disable global profile injection for the initial 'Suggestion' phase".
+        // Okay, so we only inject if forceCuisine is true.
+        detectedCuisine = await detectCuisineFromMessages(messages, userPreferences, supabaseClient);
+    }
+
+    if (targetCuisine) {
+      const cuisineProfile = await getCuisineProfile(targetCuisine, supabaseClient);
       if (cuisineProfile) {
         cuisineProfileContext = formatCuisineProfile(cuisineProfile);
         cuisineMetadata = {
           applied: true,
           cuisine: cuisineProfile.cuisine_name,
           styleFocus: cuisineProfile.style_focus,
-          confidence: detectedCuisine.confidence,
-          rationale: detectedCuisine.rationale,
-          allMatches: detectedCuisine.allMatches
+          confidence: "forced",
+          rationale: "User selected cuisine suggestion",
+          allMatches: "Force Cuisine"
         };
-        console.log(`Injecting ${detectedCuisine.cuisine} cuisine profile into system prompt`);
+        console.log(`Injecting FORCED ${targetCuisine} cuisine profile into system prompt`);
       }
+    } else if (detectedCuisine && !weeklyBrief) { 
+        // Optional: We can still track what was detected, but we do NOT inject it.
+        // Metadata tracking for debug
+        cuisineMetadata = {
+            applied: false,
+            cuisine: detectedCuisine.cuisine,
+            styleFocus: "",
+            confidence: detectedCuisine.confidence,
+            rationale: detectedCuisine.rationale,
+            allMatches: detectedCuisine.allMatches
+        };
     }
 
 
     let recentRecipesContext = "";
-    if (userId) {
+    if (userId && !forceCuisine) {
       const recentRecipes = await getRecentlySuggestedRecipes(userId, supabaseClient);
       if (recentRecipes.length > 0) {
         recentRecipesContext = `
@@ -719,6 +756,7 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
           "time_estimate": "string (e.g. '30 mins')",
           "difficulty": "string",
           "reason_for_recommendation": "string (Why this fits the user's request)",
+          "cuisine": "string (Optional: If the recipe belongs to a specific cuisine, e.g. 'Mexican', 'Thai', 'Italian')",
           "full_details": { // Optional: Only populated if the user explicitly asked for the full recipe
             "ingredients": ["string"],
             "instructions": ["string (Step-by-step)"],
@@ -733,6 +771,8 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
     MODES:
     1. **Advisor Mode** (User asks for ideas/what to cook):
        - Return 3-5 distinct, high-quality options in the "suggestions" array.
+       - **IMPORTANT: Do NOT populate "full_details". Set it to null or omit it.**
+       - We want to generate the full authentic details ONLY when the user clicks the recipe.
        - "reply" should be brief and encouraging.
 
     3. **Planner Mode** (User asks for a weekly plan):
@@ -742,6 +782,7 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
 
     4. **Advisor Mode** (User asks for ideas/what to cook) OR **Hybrid Mode**:
        - Return 3-5 distinct, high-quality options in the "suggestions" array.
+       - **IMPORTANT: Do NOT populate "full_details". Set it to null or omit it.**
        - "reply" should be brief and encouraging.
        - If the user provides feedback (e.g. "make it spicy"), use the "reply" to acknowledge the change and "suggestions" for the NEW recipes.
 

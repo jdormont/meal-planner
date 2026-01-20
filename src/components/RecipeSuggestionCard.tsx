@@ -6,6 +6,7 @@ export type RecipeSuggestion = {
     description: string;
     time_estimate: string;
     difficulty: string;
+    cuisine?: string;
     reason_for_recommendation: string;
     full_details?: {
         ingredients: string[];
@@ -71,6 +72,13 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick }: RecipeSugg
                     <Signal size={14} className="text-gray-400" />
                     <span>{suggestion.difficulty || 'Easy'}</span>
                 </div>
+                {suggestion.cuisine && (
+                    <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-md font-medium text-[10px] uppercase tracking-wider">
+                            {suggestion.cuisine}
+                        </span>
+                    </div>
+                )}
             </div>
 
             <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">

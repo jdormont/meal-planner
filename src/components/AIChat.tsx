@@ -238,7 +238,7 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
     onSaveRecipe(markdownRecipe, "Saved from card");
   };
 
-  const sendMessage = async (messageText?: string, weeklyBrief?: boolean) => {
+  const sendMessage = async (messageText?: string, weeklyBrief?: boolean, forceCuisine?: string) => {
     const userMessage = (messageText || input).trim();
     if (!userMessage || loading) return;
 
@@ -318,6 +318,7 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
             userId: user?.id,
             weeklyBrief: weeklyBrief || false,
             isAdmin,
+            forceCuisine,
           }),
         }
       );
@@ -548,7 +549,7 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
                               if (suggestion.full_details && onViewRecipe) {
                                 onViewRecipe(suggestion);
                               } else {
-                                sendMessage(`Show me the full recipe for ${suggestion.title}`);
+                                sendMessage(`Show me the full recipe for ${suggestion.title}`, false, suggestion.cuisine);
                               }
                             }}
                           />
