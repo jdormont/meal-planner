@@ -13,6 +13,20 @@ export interface ParsedRecipe {
     cookTime: number;
 }
 
+export const parseIngredient = (line: string): ParsedIngredient => {
+    const cleaned = line.replace(/^\s*[-*•]\s/, '').trim();
+    const parts = cleaned.match(/^([\d./]+)?\s*([a-z]+)?\s*(.+)$/i);
+    if (parts) {
+        return {
+            quantity: parts[1]?.trim() || '1',
+            unit: parts[2]?.trim() || '',
+            name: parts[3]?.trim() || cleaned,
+        };
+    } else {
+        return { quantity: '', unit: '', name: cleaned };
+    }
+};
+
 export const parseAIRecipe = (text: string): ParsedRecipe => {
     console.log('=== PARSING RECIPE ===');
     console.log('Raw text length:', text.length);
@@ -66,17 +80,7 @@ export const parseAIRecipe = (text: string): ParsedRecipe => {
             section = 'instructions';
             console.log('Switched to instructions section at line', index);
         } else if (section === 'ingredients' && line.match(/^\s*[-*•]\s/)) {
-            const cleaned = line.replace(/^\s*[-*•]\s/, '').trim();
-            const parts = cleaned.match(/^([\d./]+)?\s*([a-z]+)?\s*(.+)$/i);
-            if (parts) {
-                ingredients.push({
-                    quantity: parts[1]?.trim() || '1',
-                    unit: parts[2]?.trim() || '',
-                    name: parts[3]?.trim() || cleaned,
-                });
-            } else {
-                ingredients.push({ quantity: '', unit: '', name: cleaned });
-            }
+            ingredients.push(parseIngredient(line));
         } else if (section === 'instructions' && line.match(/^(\d+\.|-|\*|•)/)) {
             const instruction = line.replace(/^(\d+\.|-|\*|•)\s*/, '').trim();
             console.log('Found instruction:', instruction.substring(0, 50));

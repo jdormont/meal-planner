@@ -24,7 +24,8 @@ import { OnboardingInterstitial } from './components/OnboardingInterstitial';
 import { Layout, View } from './components/Layout';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
 import { Plus, BookOpen, Globe, Camera, Users, Calendar, ChevronDown, Sparkles } from 'lucide-react';
-import { parseAIRecipe } from './utils/recipeParser';
+import { parseAIRecipe, parseIngredient } from './utils/recipeParser';
+import { RecipeSuggestion } from './components/RecipeSuggestionCard';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -239,6 +240,32 @@ function App() {
     setShowForm(true);
   };
 
+  const handleViewAIRecipe = (suggestion: RecipeSuggestion) => {
+    // Convert AI suggestion with full_details to a Recipe object
+    const tempRecipe: Recipe = {
+      id: `temp-view-${Date.now()}`,
+      user_id: user?.id || '',
+      title: suggestion.title,
+      description: suggestion.description,
+      ingredients: suggestion.full_details.ingredients.map((line: string) => parseIngredient(line)),
+      instructions: suggestion.full_details.instructions,
+      prep_time_minutes: parseInt(suggestion.time_estimate) || 0, // Approximate
+      cook_time_minutes: 0,
+      servings: 4, // Default
+      tags: ['AI Generated'],
+      image_url: suggestion.image_url || '',
+      source_url: '',
+      notes: suggestion.full_details.nutrition_notes || '',
+      is_shared: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      recipe_type: 'recipe'
+    };
+
+    setEditingRecipe(tempRecipe);
+    setShowForm(true);
+  };
+
   const handleCalendarAddMeal = (date: string, type: MealType) => {
     setDefaultMealDate(date);
     setDefaultMealType(type);
@@ -315,7 +342,11 @@ function App() {
         <Settings />
       ) : view === 'chat' ? (
         <div className="h-[calc(100vh-10rem)]">
-          <AIChat onSaveRecipe={handleAIRecipe} onFirstAction={checkAndShowOnboarding} />
+          <AIChat
+            onSaveRecipe={handleAIRecipe}
+            onFirstAction={checkAndShowOnboarding}
+            onViewRecipe={handleViewAIRecipe}
+          />
         </div>
       ) : view === 'community' ? (
         <div>

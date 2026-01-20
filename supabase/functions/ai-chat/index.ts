@@ -4,6 +4,7 @@ import { Message, UserPreferences, ModelConfig, CuisineProfile, RatingHistoryIte
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RecipeResponseSchema = z.object({
+  reply: z.string().optional(),
   suggestions: z.array(z.object({
     title: z.string(),
     type: z.enum(["recipe", "cocktail"]),
@@ -712,6 +713,7 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
 
     Schema:
     {
+      "reply": "string (The conversational response to the user)",
       "suggestions": [
         {
           "title": "string",
@@ -728,11 +730,20 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
         }
       ]
     }
-    
-    IMPORTANT:
-    - If you are just chatting or answering a question without suggesting specific recipes, return an empty "suggestions" array.
-    - If the user asks for a full recipe, populate "full_details".
-    - If the user asks for ideas/suggestions, leave "full_details" undefined.
+
+    IMPORTANT: "suggestions" MUST ALWAYS be an array. If no suggestions, return [].
+
+    MODES:
+    1. **Advisor Mode** (User asks for ideas/what to cook):
+       - Return 3-5 distinct, high-quality options in the "suggestions" array.
+       - "reply" should be brief and encouraging.
+
+    2. **Planner Mode** (User asks for a weekly plan):
+       - FIRST: Return a "reply" with clarifying questions (schedule, novelty, hunger). Return "suggestions": [].
+       - SECOND (After user answers): Return "suggestions" containing the planned meals (4-6 meals).
+
+    3. **Q&A Mode** (User asks a general cooking question):
+       - Answer in "reply". Return "suggestions": [].
     
     ${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}
 
