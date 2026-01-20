@@ -129,13 +129,10 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
     setShowQuickPrompts(true);
   };
 
-  const saveCurrentChat = async (messagesToSaveOverride?: Message[]) => {
-    // Use override if provided, otherwise fall back to state (though state might be stale in some contexts)
-    const msgs = messagesToSaveOverride || messages;
-    
-    if (!user || msgs.length <= 1) return;
+  const saveCurrentChat = async () => {
+    if (!user || messages.length <= 1) return;
 
-    const firstUserMessage = msgs.find(m => m.role === 'user')?.content || 'New Chat';
+    const firstUserMessage = messages.find(m => m.role === 'user')?.content || 'New Chat';
     const title = firstUserMessage.length > 50
       ? firstUserMessage.substring(0, 50) + '...'
       : firstUserMessage;
@@ -155,7 +152,7 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
       if (newChat) {
         setCurrentChatId(newChat.id);
 
-        const dbMessages = msgs.map(msg => ({
+        const messagesToSave = messages.map(msg => ({
           chat_id: newChat.id,
           role: msg.role,
           content: msg.content,
@@ -163,7 +160,7 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
           cuisine_metadata: msg.cuisineMetadata || {}
         }));
 
-        await supabase.from('chat_messages').insert(dbMessages);
+        await supabase.from('chat_messages').insert(messagesToSave);
       }
     }
 
@@ -358,8 +355,7 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
       if (currentChatId) {
         await saveNewMessage(assistantMessage);
       } else {
-        // Pass the FULL up-to-date conversation to save
-        await saveCurrentChat([...messages, newUserMessage, assistantMessage]);
+        await saveCurrentChat();
       }
 
       if (onFirstAction) {

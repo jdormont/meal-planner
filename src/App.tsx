@@ -249,8 +249,8 @@ function App() {
       description: suggestion.description,
       ingredients: suggestion.full_details.ingredients.map((line: string) => parseIngredient(line)),
       instructions: suggestion.full_details.instructions,
-      prep_time_minutes: parseInt(suggestion.time_estimate.match(/\d+/)?.[0] || '0') || 0,
-      cook_time_minutes: parseInt(suggestion.time_estimate.match(/\d+/)?.[0] || '0') || 0,
+      prep_time_minutes: parseInt(suggestion.time_estimate) || 0, // Approximate
+      cook_time_minutes: 0,
       servings: 4, // Default
       tags: ['AI Generated'],
       image_url: suggestion.image_url || '',
