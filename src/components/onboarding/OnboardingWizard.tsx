@@ -9,13 +9,14 @@ import { SkillStep } from './steps/SkillStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { RecipeSuggestion } from '../RecipeSuggestionCard';
+import { LogOut } from 'lucide-react';
 
 type OnboardingWizardProps = {
   onComplete: (suggestion: RecipeSuggestion) => void;
 };
 
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [step, setStep] = useState(0); // 0 is now WelcomeStep
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -247,6 +248,17 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   return (
     <div className="fixed inset-0 bg-cream-50 z-50 overflow-y-auto">
       <div className="min-h-screen flex flex-col">
+        {/* Header Actions */}
+        <div className="absolute top-4 right-4 z-50">
+            <button 
+                onClick={() => signOut()}
+                className="flex items-center gap-2 px-4 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+            >
+                <LogOut size={16} />
+                Sign Out
+            </button>
+        </div>
+
         {/* Progress Bar */}
         <div className="w-full h-2 bg-gray-200">
           <motion.div 

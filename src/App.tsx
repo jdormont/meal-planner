@@ -26,6 +26,7 @@ import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
 import { Plus, BookOpen, Globe, Camera, Users, Calendar, ChevronDown, Sparkles } from 'lucide-react';
 import { parseAIRecipe, parseIngredient } from './utils/recipeParser';
 import { RecipeSuggestion } from './components/RecipeSuggestionCard';
+import { ProfileNudgeModal } from './components/ProfileNudgeModal';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -121,6 +122,7 @@ function App() {
 
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showProfileNudge, setShowProfileNudge] = useState(false);
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
 
@@ -164,14 +166,24 @@ function App() {
   };
 
   const handleSaveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    // Check if this is likely the first recipe (before saving)
+    const isFirstRecipe = recipes.length === 0;
+
     const success = await saveRecipe(recipeData, editingRecipe?.id);
     if (success) {
       setShowForm(false);
       setEditingRecipe(null);
 
       const isNewRecipe = !editingRecipe || !editingRecipe.id || editingRecipe.id.startsWith('temp-');
+      
+      // If it's a new recipe AND it was the first one, show nudge
+      if (isNewRecipe && isFirstRecipe) {
+          setShowProfileNudge(true);
+      }
+      
+      // Legacy onboarding check (can leave or remove if redundant)
       if (isNewRecipe) {
-        await checkAndShowOnboarding();
+       // await checkAndShowOnboarding(); // We've moved away from generic onboarding check on save, trusting the Wizard flow instead or this Nudge.
       }
     }
   };
@@ -765,6 +777,16 @@ function App() {
             } as Recipe);
             setShowForm(true);
           }}
+        />
+      )}
+
+      {showProfileNudge && (
+        <ProfileNudgeModal 
+            onClose={() => setShowProfileNudge(false)}
+            onGoToSettings={() => {
+                setView('settings');
+                setShowProfileNudge(false);
+            }}
         />
       )}
 
