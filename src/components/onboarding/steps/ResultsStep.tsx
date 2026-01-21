@@ -7,16 +7,24 @@ export type ResultsStepProps = {
   suggestions: RecipeSuggestion[];
   onSelect: (suggestion: RecipeSuggestion) => void;
   onRestart: () => void;
+  isProcessing?: boolean;
 };
 
-export function ResultsStep({ suggestions, onSelect, onRestart }: ResultsStepProps) {
+export function ResultsStep({ suggestions, onSelect, onRestart, isProcessing }: ResultsStepProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-4xl mx-auto w-full"
+      className="max-w-4xl mx-auto w-full relative"
     >
+        {isProcessing && (
+            <div className="absolute inset-0 z-50 bg-white/50 backdrop-blur-[1px] rounded-2xl flex flex-col items-center justify-center">
+                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-terracotta-200 border-t-terracotta-600 mb-4"></div>
+                 <p className="text-terracotta-800 font-medium animate-pulse">Preparing your recipe...</p>
+            </div>
+        )}
+
       <div className="text-center mb-8">
         <div className="inline-flex p-3 bg-terracotta-100 text-terracotta-600 rounded-full mb-4">
           <Sparkles className="w-6 h-6" />
@@ -25,7 +33,7 @@ export function ResultsStep({ suggestions, onSelect, onRestart }: ResultsStepPro
         <p className="text-gray-600">Pick one to start cooking instantly.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 transition-opacity duration-300 ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
         {suggestions.map((suggestion, idx) => (
           <motion.div
             key={idx}
@@ -38,7 +46,6 @@ export function ResultsStep({ suggestions, onSelect, onRestart }: ResultsStepPro
                 <RecipeSuggestionCard 
                     suggestion={suggestion}
                     onSave={async () => {
-                        // For the onboarding "wow", save/view are similar actions - "I want this one"
                         onSelect(suggestion);
                     }}
                     onClick={() => onSelect(suggestion)}
@@ -51,7 +58,8 @@ export function ResultsStep({ suggestions, onSelect, onRestart }: ResultsStepPro
       <div className="flex justify-center">
         <button
           onClick={onRestart}
-          className="text-gray-400 hover:text-gray-600 font-medium text-sm flex items-center gap-2"
+          disabled={isProcessing}
+          className="text-gray-400 hover:text-gray-600 font-medium text-sm flex items-center gap-2 disabled:opacity-50"
         >
           Start over
         </button>

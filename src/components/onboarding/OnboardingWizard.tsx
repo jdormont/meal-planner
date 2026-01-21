@@ -318,6 +318,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         suggestions={suggestions}
                         onSelect={(s) => expandRecipeDetails(s)}
                         onRestart={() => setStep(0)}
+                        isProcessing={isGenerating}
                     />
                 )}
              </AnimatePresence>
