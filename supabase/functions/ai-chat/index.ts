@@ -13,6 +13,11 @@ const RecipeResponseSchema = z.object({
     difficulty: z.string(),
     reason_for_recommendation: z.string(),
     cuisine: z.string().optional(),
+    tags: z.object({
+      protein: z.string(),
+      carb: z.string(),
+      method: z.string()
+    }).optional(),
     full_details: z.optional(z.object({
       ingredients: z.array(z.string()),
       instructions: z.array(z.string()),
@@ -170,7 +175,7 @@ async function callGemini(apiKey: string, model: string, messages: Message[], sy
 async function getRecentlySuggestedRecipes(
   userId: string,
   supabaseClient: SupabaseClient
-): Promise<string[]> {
+): Promise<{recipe_name: string, protein: string | null, carb: string | null}[]> {
   try {
     // Fetch recipes suggested in the last 14 days
     const twoWeeksAgo = new Date();
@@ -178,7 +183,7 @@ async function getRecentlySuggestedRecipes(
 
     const { data, error } = await supabaseClient
       .from("suggested_recipes")
-      .select("recipe_name")
+      .select("recipe_name, protein, carb")
       .eq("user_id", userId)
       .gte("created_at", twoWeeksAgo.toISOString())
       .order("created_at", { ascending: false })
@@ -189,7 +194,7 @@ async function getRecentlySuggestedRecipes(
       return [];
     }
 
-    return data.map((r: { recipe_name: string }) => r.recipe_name);
+    return data as {recipe_name: string, protein: string | null, carb: string | null}[];
   } catch (error) {
     console.error("Error getting recent recipes:", error);
     return [];
@@ -198,15 +203,18 @@ async function getRecentlySuggestedRecipes(
 
 async function saveSuggestedRecipes(
   userId: string,
-  recipes: string[],
+  recipes: any[],
   supabaseClient: SupabaseClient
 ) {
   if (!userId || recipes.length === 0) return;
 
   try {
-    const records = recipes.map(name => ({
+    const records = recipes.map(r => ({
       user_id: userId,
-      recipe_name: name
+      recipe_name: r.title,
+      protein: r.tags?.protein || null,
+      carb: r.tags?.carb || null,
+      method: r.tags?.method || null
     }));
 
     const { error } = await supabaseClient
@@ -723,23 +731,38 @@ Deno.serve(async (req: Request) => {
     if (userId && !forceCuisine) {
       const recentRecipes = await getRecentlySuggestedRecipes(userId, supabaseClient);
       if (recentRecipes.length > 0) {
+        
+        // Basic list of names
+        const namesList = recentRecipes.map(r => `• ${r.recipe_name}`).join("\n");
+        
+        // Analysis of recent types
+        const proteinCounts: Record<string, number> = {};
+        const carbCounts: Record<string, number> = {};
+        
+        recentRecipes.forEach(r => {
+            if (r.protein) proteinCounts[r.protein] = (proteinCounts[r.protein] || 0) + 1;
+            if (r.carb) carbCounts[r.carb] = (carbCounts[r.carb] || 0) + 1;
+        });
+
+        const heavyRotationProteins = Object.entries(proteinCounts).filter(([_, count]) => count >= 2).map(([k]) => k);
+        const heavyRotationCarbs = Object.entries(carbCounts).filter(([_, count]) => count >= 2).map(([k]) => k);
+
         recentRecipesContext = `
 –––––––––––––––––
 RECENTLY SUGGESTED
 –––––––––––––––––
 
 The user has recently seen these recipes (last 2 weeks):
-${recentRecipes.map(r => `• ${r}`).join("\n")}
+${namesList}
 
 **CRITICAL INSTRUCTION - FORCE VARIETY:**
-- The recipes listed above are on **COOL-DOWN**.
-- **Do NOT suggest them.**
-- **Do NOT suggest conceptually similar variations** (e.g. "Garlic Pasta" if "Aglio e Olio" was shown).
-- The user is seeing repetitive suggestions. You MUST break this pattern.
-- **Deprioritize your "default" best answers** (like Aglio e Olio, Sheet Pan Chicken) if they are on this list.
-- Dig deeper into your knowledge base for *different* highly-rated weeknight meals.
-- If the list has pasta, suggest grain bowls or tacos.
-- If the list has chicken, suggest pork, beef, shrimp, or vegetarian.
+1. **Cool-Down Rule:** Do NOT suggest recipes on the list above. Do NOT suggest conceptually similar variations.
+2. **Feature Variety Rule:** 
+   - We have recently suggested these proteins: ${heavyRotationProteins.join(", ") || "None in excess"}.
+   - We have recently suggested these carbohydrates: ${heavyRotationCarbs.join(", ") || "None in excess"}.
+   - **YOU MUST AVOID** suggesting more dishes with these main ingredients if possible.
+   - If we have seen Chicken 2+ times, suggest Pork, Beef, Fish, or Veg.
+   - If we have seen Pasta 2+ times, suggest Rice, Potatoes, or Bread.
 `;
       }
     }
@@ -758,6 +781,11 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
           "difficulty": "string",
           "reason_for_recommendation": "string (Why this fits the user's request)",
           "cuisine": "string (Optional: If the recipe belongs to a specific cuisine, e.g. 'Mexican', 'Thai', 'Italian')",
+          "tags": {
+            "protein": "string (Primary protein, e.g. 'chicken', 'beef', 'tofu', 'beans', 'none')",
+            "carb": "string (Primary carb base, e.g. 'pasta', 'rice', 'potato', 'bread', 'none')",
+            "method": "string (Primary cooking method, e.g. 'roast', 'fry', 'simmer', 'grill', 'raw')"
+          },
           "full_details": { // Optional: Only populated if the user explicitly asked for the full recipe
             "ingredients": ["string"],
             "instructions": ["string (Step-by-step)"],
@@ -858,9 +886,9 @@ ${recentRecipes.map(r => `• ${r}`).join("\n")}
       if (validation.success) {
         parsedData = validation.data;
 
-        if (parsedData.suggestions.length > 0 && userId) {
+         if (parsedData.suggestions.length > 0 && userId) {
           console.log("Saving suggested recipes:", parsedData.suggestions.map((s: any) => s.title));
-          await saveSuggestedRecipes(userId, parsedData.suggestions.map((s: any) => s.title), supabaseClient);
+          await saveSuggestedRecipes(userId, parsedData.suggestions, supabaseClient);
         }
       } else {
         console.error("Schema validation failed:", validation.error);
