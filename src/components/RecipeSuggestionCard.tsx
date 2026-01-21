@@ -63,7 +63,7 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick }: RecipeSugg
                 </button>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
                 <div className="flex items-center gap-1">
                     <Clock size={14} className="text-gray-400" />
                     <span>{suggestion.time_estimate}</span>
@@ -74,7 +74,7 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick }: RecipeSugg
                 </div>
                 {suggestion.cuisine && (
                     <div className="flex items-center gap-1">
-                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-md font-medium text-[10px] uppercase tracking-wider">
+                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-md font-medium text-[10px] uppercase tracking-wider whitespace-nowrap">
                             {suggestion.cuisine}
                         </span>
                     </div>

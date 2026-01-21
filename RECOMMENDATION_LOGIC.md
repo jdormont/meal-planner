@@ -89,9 +89,9 @@ To enhance the intelligence of the "Cool-Down" system and general variety, we pr
 
 1. **Frontend Tracking:** Explicitly track "Click Through" (user expanded details) vs. "Viewed Only" (suggestion shown but ignored).
 2. **Cooldown Tiers:**
-    * **Cooked:** 30-day cooldown (High saturation).
-    * **Ignored:** 5-day cooldown (User wasn't interested *now*, but maybe later).
-    * **Thumbs Down:** Permanent ban on that specific recipe vector.
+    - **Cooked:** 30-day cooldown (High saturation).
+    - **Ignored:** 5-day cooldown (User wasn't interested *now*, but maybe later).
+    - **Thumbs Down:** Permanent ban on that specific recipe vector.
 
 ## Phase 3: Vector Similarity & Meal Archetypes
 

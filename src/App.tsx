@@ -20,7 +20,7 @@ import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
 import { RecipeImportModal } from './components/RecipeImportModal';
 import { RecipePhotoModal } from './components/RecipePhotoModal';
-import { OnboardingInterstitial } from './components/OnboardingInterstitial';
+import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { Layout, View } from './components/Layout';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
 import { Plus, BookOpen, Globe, Camera, Users, Calendar, ChevronDown, Sparkles } from 'lucide-react';
@@ -121,7 +121,7 @@ function App() {
 
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [showOnboardingInterstitial, setShowOnboardingInterstitial] = useState(false);
+  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
 
   // ... (keeping existing checkAndShowOnboarding, markOnboardingSeen, handleSaveRecipe, etc. as they are mostly unchanged logic-wise, just need to ensure imports are right) ...
@@ -130,8 +130,8 @@ function App() {
     if (!user || !userProfile) return;
 
     if (userProfile.has_seen_onboarding === false) {
-      setShowOnboardingInterstitial(true);
-      await markOnboardingSeen();
+      setShowOnboardingWizard(true);
+      // Do NOT mark seen yet - wait for wizard completion
     }
   };
 
@@ -153,6 +153,14 @@ function App() {
     } catch (error) {
       console.error('Error marking onboarding as seen:', error);
     }
+  };
+
+  const handleWizardComplete = async (suggestion: RecipeSuggestion) => {
+      setShowOnboardingWizard(false);
+      await markOnboardingSeen();
+      
+      // Open the suggestion
+      handleViewAIRecipe(suggestion);
   };
 
   const handleSaveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
@@ -760,8 +768,8 @@ function App() {
         />
       )}
 
-      {showOnboardingInterstitial && (
-        <OnboardingInterstitial onClose={() => setShowOnboardingInterstitial(false)} />
+      {showOnboardingWizard && (
+        <OnboardingWizard onComplete={handleWizardComplete} />
       )}
     </Layout>
   );
