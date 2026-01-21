@@ -472,155 +472,73 @@ function App() {
           ) : (
             <>
               {recipes.length > 0 && (
-                <div className="mb-6">
-                  {/* ... existing recipes header ... */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">My Recipes</h2>
-                      <p className="text-gray-600 mt-1">
-                        {filteredRecipes.length} {filteredRecipes.length === 1 ? (recipeType === 'cocktail' ? 'cocktail' : 'recipe') : (recipeType === 'cocktail' ? 'cocktails' : 'recipes')}
-                      </p>
-                    </div>
-                    {/* ... (rest of recipe list header) ... */}
-                    <div className="flex gap-2 sm:gap-3">
-                      {/* Desktop Dropdown */}
-                      <div className="hidden md:block relative">
-                        <button
-                          onClick={() => setShowAddMenu(!showAddMenu)}
-                          className="px-4 py-2 bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-xl transition flex items-center gap-2 font-medium shadow-sm"
-                        >
-                          <Plus className="w-5 h-5" />
-                          <span>Add Recipe</span>
-                          <ChevronDown className={`w-4 h-4 transition-transform ${showAddMenu ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {showAddMenu && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setShowAddMenu(false)} />
-                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20">
-                              <button
-                                onClick={() => {
-                                  setShowPhotoModal(true);
-                                  setShowAddMenu(false);
-                                }}
-                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 transition"
-                              >
-                                <div className="p-2 bg-warmtan-100 text-warmtan-700 rounded-lg">
-                                  <Camera className="w-4 h-4" />
-                                </div>
-                                <span className="font-medium text-gray-700">Scan from Photo</span>
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setShowImportModal(true);
-                                  setShowAddMenu(false);
-                                }}
-                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 transition"
-                              >
-                                <div className="p-2 bg-sage-100 text-sage-700 rounded-lg">
-                                  <Globe className="w-4 h-4" />
-                                </div>
-                                <span className="font-medium text-gray-700">Import from Web</span>
-                              </button>
-                              <div className="h-px bg-gray-100 my-1" />
-                              <button
-                                onClick={() => {
-                                  setEditingRecipe(null);
-                                  setShowForm(true);
-                                  setShowAddMenu(false);
-                                }}
-                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 transition"
-                              >
-                                <div className="p-2 bg-terracotta-100 text-terracotta-700 rounded-lg">
-                                  <Plus className="w-4 h-4" />
-                                </div>
-                                <span className="font-medium text-gray-700">Create Manually</span>
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setView('chat');
-                                  setShowAddMenu(false);
-                                }}
-                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 transition"
-                              >
-                                <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg">
-                                  <Sparkles className="w-4 h-4" />
-                                </div>
-                                <span className="font-medium text-gray-700">Generate with AI</span>
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Mobile FAB */}
-                      <div className="md:hidden fixed bottom-6 right-6 z-50">
-                        <div className={`absolute bottom-full right-0 mb-4 flex flex-col items-end gap-3 transition-all duration-200 ${showAddMenu ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-                          <button
-                            onClick={() => {
-                              setView('chat');
-                              setShowAddMenu(false);
-                            }}
-                            className="flex items-center gap-2 pr-2"
-                          >
-                            <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Generate with AI</span>
-                            <div className="p-3 bg-indigo-500 text-white rounded-full shadow-lg">
-                              <Sparkles className="w-5 h-5" />
-                            </div>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowPhotoModal(true);
-                              setShowAddMenu(false);
-                            }}
-                            className="flex items-center gap-2 pr-2"
-                          >
-                            <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Scan Photo</span>
-                            <div className="p-3 bg-warmtan-500 text-white rounded-full shadow-lg">
-                              <Camera className="w-5 h-5" />
-                            </div>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowImportModal(true);
-                              setShowAddMenu(false);
-                            }}
-                            className="flex items-center gap-2 pr-2"
-                          >
-                            <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Import Web</span>
-                            <div className="p-3 bg-sage-500 text-white rounded-full shadow-lg">
-                              <Globe className="w-5 h-5" />
-                            </div>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingRecipe(null);
-                              setShowForm(true);
-                              setShowAddMenu(false);
-                            }}
-                            className="flex items-center gap-2 pr-2"
-                          >
-                            <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Manually</span>
-                            <div className="p-3 bg-terracotta-500 text-white rounded-full shadow-lg">
-                              <Plus className="w-5 h-5" />
-                            </div>
-                          </button>
+                <>
+                  {/* Floating Action Button for Add Recipe - Visible on all devices */}
+                  <div className="fixed bottom-6 right-6 z-50">
+                    <div className={`absolute bottom-full right-0 mb-4 flex flex-col items-end gap-3 transition-all duration-200 ${showAddMenu ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+                      <button
+                        onClick={() => {
+                          setView('chat');
+                          setShowAddMenu(false);
+                        }}
+                        className="flex items-center gap-2 pr-2"
+                      >
+                        <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Generate with AI</span>
+                        <div className="p-3 bg-indigo-500 text-white rounded-full shadow-lg">
+                          <Sparkles className="w-5 h-5" />
                         </div>
-
-                        <button
-                          onClick={() => setShowAddMenu(!showAddMenu)}
-                          className={`p-4 rounded-full shadow-xl transition-transform duration-200 ${showAddMenu ? 'bg-gray-800 rotate-45' : 'bg-terracotta-500 hover:bg-terracotta-600'
-                            } text-white`}
-                        >
-                          <Plus className="w-7 h-7" />
-                        </button>
-                        {showAddMenu && (
-                          <div className="fixed inset-0 z-[-1] bg-black/50 backdrop-blur-sm md:hidden" onClick={() => setShowAddMenu(false)} />
-                        )}
-                      </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowPhotoModal(true);
+                          setShowAddMenu(false);
+                        }}
+                        className="flex items-center gap-2 pr-2"
+                      >
+                        <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Scan Photo</span>
+                        <div className="p-3 bg-warmtan-500 text-white rounded-full shadow-lg">
+                          <Camera className="w-5 h-5" />
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowImportModal(true);
+                          setShowAddMenu(false);
+                        }}
+                        className="flex items-center gap-2 pr-2"
+                      >
+                        <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Import Web</span>
+                        <div className="p-3 bg-sage-500 text-white rounded-full shadow-lg">
+                          <Globe className="w-5 h-5" />
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingRecipe(null);
+                          setShowForm(true);
+                          setShowAddMenu(false);
+                        }}
+                        className="flex items-center gap-2 pr-2"
+                      >
+                        <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Manually</span>
+                        <div className="p-3 bg-terracotta-500 text-white rounded-full shadow-lg">
+                          <Plus className="w-5 h-5" />
+                        </div>
+                      </button>
                     </div>
+
+                    <button
+                      onClick={() => setShowAddMenu(!showAddMenu)}
+                      className={`p-4 rounded-full shadow-xl transition-transform duration-200 ${showAddMenu ? 'bg-gray-800 rotate-45' : 'bg-terracotta-500 hover:bg-terracotta-600'
+                        } text-white`}
+                    >
+                      <Plus className="w-7 h-7" />
+                    </button>
+                    {showAddMenu && (
+                      <div className="fixed inset-0 z-[-1] bg-black/50 backdrop-blur-sm" onClick={() => setShowAddMenu(false)} />
+                    )}
                   </div>
-                </div>
+                </>
               )}
               {recipes.length > 0 && (
                 <RecipeSearch
