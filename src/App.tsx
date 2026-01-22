@@ -18,6 +18,7 @@ import { MealList } from './components/MealList';
 import { MealForm } from './components/MealForm';
 import { MealDetail } from './components/MealDetail';
 import { CommunityRecipes } from './components/CommunityRecipes';
+import { WeeklyMealCarousel } from './components/WeeklyMealCarousel';
 import { RecipeImportModal } from './components/RecipeImportModal';
 import { RecipePhotoModal } from './components/RecipePhotoModal';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
@@ -376,6 +377,8 @@ function App() {
             </div>
           ) : (
             <>
+              <WeeklyMealCarousel />
+              
               {communityRecipes.length > 0 && (
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">Community Recipes</h2>
