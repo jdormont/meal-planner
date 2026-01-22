@@ -127,7 +127,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error signing out:', error);
       // Force local cleanup if server request fails
-      localStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_URL + '-auth-token');
+      // Supabase default key format: sb-<project_id>-auth-token
+      try {
+        const url = new URL(import.meta.env.VITE_SUPABASE_URL);
+        const projectId = url.hostname.split('.')[0];
+        localStorage.removeItem(`sb-${projectId}-auth-token`);
+      } catch (e) {
+        console.warn('Could not determine Supabase project ID for cleanup', e);
+      }
+      
       setUser(null);
       setUserProfile(null);
     }

@@ -29,7 +29,7 @@ export function Auth() {
 
   return (
     <div className="min-h-screen bg-cream-200 texture-linen">
-      <div className="min-h-screen flex flex-col lg:flex-row">
+      <div className="min-h-screen flex flex-col-reverse lg:flex-row">
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
           <div className="max-w-xl w-full">
             <div className="mb-8 lg:mb-12">
