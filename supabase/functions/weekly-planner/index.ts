@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-// --- Shared LLM Logic (Duplicated from ai-chat to avoid refactor risks) ---
+// --- Shared LLM Logic ---
 
 async function getUserModel(supabaseClient: SupabaseClient, userId: string): Promise<ModelConfig | null> {
   try {
@@ -95,6 +95,91 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
     throw new Error(`Unknown provider: ${provider}`);
 }
 
+// --- Image Generation Logic ---
+
+async function generateRecipeImage(title: string, description: string, supabaseClient: SupabaseClient): Promise<string | null> {
+    try {
+        const apiKey = Deno.env.get("OPENAI_API_KEY");
+        if (!apiKey) return null;
+
+        const basePrompt = `Create a realistic, accurate image of the finished dish as it would appear when freshly cooked at home.
+The image should be:
+- Photorealistic but natural (not overly stylized or hyper-saturated)
+- Shot in soft, diffused natural light
+- Clearly focused on the food, centered in frame
+- Served in simple, everyday dishware (ceramic bowl or plate)
+- Set on a neutral surface (wood, stone, or linen), with minimal background detail
+
+Avoid:
+- Stock photography look
+- Excessive props, garnishes, or decorative elements
+- Restaurant plating or fine-dining presentation
+- Hands, people, text, or utensils in motion
+- The dish should look warm, comforting, and realistically portioned.`;
+
+        const fullPrompt = `${basePrompt}\n\nDish to create: ${title}${description ? `: ${description}` : ''}`;
+
+        console.log(`Generating image for: ${title}`);
+        const response = await fetch("https://api.openai.com/v1/images/generations", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                model: "dall-e-3",
+                prompt: fullPrompt,
+                n: 1,
+                size: "1024x1024",
+                quality: "standard",
+                style: "natural"
+            }),
+        });
+
+        if (!response.ok) {
+            console.error(`DALL-E Error for ${title}:`, await response.text());
+            return null;
+        }
+
+        const data = await response.json();
+        const temporaryImageUrl = data.data?.[0]?.url;
+
+        if (!temporaryImageUrl) return null;
+
+        // Download and Upload to Supabase
+        const imageResponse = await fetch(temporaryImageUrl);
+        if (!imageResponse.ok) return null;
+
+        const imageBlob = await imageResponse.blob();
+        const imageBuffer = await imageBlob.arrayBuffer();
+
+        const timestamp = Date.now();
+        const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);
+        const filename = `weekly/${sanitizedTitle}-${timestamp}.png`;
+
+        const { error: uploadError } = await supabaseClient
+            .storage
+            .from('recipe-images')
+            .upload(filename, imageBuffer, {
+                contentType: 'image/png',
+                cacheControl: '31536000',
+                upsert: false
+            });
+
+        if (uploadError) {
+            console.error(`Upload Error for ${title}:`, uploadError);
+            return null;
+        }
+
+        const { data: urlData } = supabaseClient.storage.from('recipe-images').getPublicUrl(filename);
+        return urlData.publicUrl;
+
+    } catch (err) {
+        console.error(`Image Gen Exception for ${title}:`, err);
+        return null;
+    }
+}
+
 // --- Specific Weekly Planner Logic ---
 
 const RecipeResponseSchema = z.object({
@@ -110,30 +195,28 @@ const RecipeResponseSchema = z.object({
       protein: z.string(),
       carb: z.string(),
       method: z.string()
-    }).optional()
+    }).optional(),
+    ingredients: z.array(z.object({
+        name: z.string(),
+        amount: z.string(),
+        unit: z.string()
+    })),
+    instructions: z.array(z.string())
   }))
 });
 
-async function getRecentExclusions(supabase: SupabaseClient, userId: string): Promise<string[]> {
-    // Get recipes from last 5 weeks (35 days)
+async function getGlobalRecentExclusions(supabase: SupabaseClient): Promise<string[]> {
     const thirtyFiveDaysAgo = new Date();
     thirtyFiveDaysAgo.setDate(thirtyFiveDaysAgo.getDate() - 35);
     
-    // Check both suggested_recipes AND weekly_meal_sets
-    const { data: suggested } = await supabase
-        .from('suggested_recipes')
-        .select('recipe_name')
-        .eq('user_id', userId)
-        .gte('created_at', thirtyFiveDaysAgo.toISOString());
-        
+    // Fetch from Global Sets (user_id is NULL)
     const { data: weekly } = await supabase
         .from('weekly_meal_sets')
         .select('recipes')
-        .eq('user_id', userId)
+        .is('user_id', null)
         .gte('created_at', thirtyFiveDaysAgo.toISOString());
         
     const names = new Set<string>();
-    suggested?.forEach(r => names.add(r.recipe_name));
     weekly?.forEach(row => {
         const recipes = row.recipes as any[];
         if (Array.isArray(recipes)) {
@@ -148,195 +231,184 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
   try {
-    const { userId } = await req.json();
-    if (!userId) return new Response(JSON.stringify({ error: "userId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const { userId } = await req.json().catch(() => ({}));
+    // userId is optional now for generation context (maybe just for auth check), 
+    // but we need it if we want to send a test email to the admin who clicked the button.
 
-    // Init Supabase (Service Role needed for writing to weekly_meal_sets without RLS acting up if triggered by Cron?)
-    // Actually, if we pass the user's token it's fine. But Cron won't have it.
-    // So we use Service Role Key for the scheduled job.
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Get User Model & Preferences
-    const modelConfig = await getUserModel(supabase, userId);
-    if (!modelConfig) throw new Error("No active LLM model found for user.");
+    console.log("Starting Global Weekly Menu Generation...");
 
-    const { data: prefs } = await supabase.from('user_preferences').select('*').eq('user_id', userId).maybeSingle();
+    // 1. Get Exclusions (Global Context)
+    const excludedNames = await getGlobalRecentExclusions(supabase);
+    console.log(`Excluding ${excludedNames.length} recent global recipes.`);
     
-    // 2. Get Exclusions
-    const excludedNames = await getRecentExclusions(supabase, userId);
+    // 2. Construct System Prompt (Generic / Community Focused)
+    const prompt = `You are a professional chef creating the "Community Menu of the Week" for a popular meal planning app.
     
-    // 3. Construct System Prompt
-    let prompt = `You are a professional chef creating a "Weekly Meal Drop" for a client.
-    
-    YOUR GOAL: Generate exactly 5 unique, diverse dinner recipes for the week.
+    YOUR GOAL: Generate exactly 5 unique, diverse dinner recipes that appeal to a wide audience.
     
     CRITICAL VARIETY RULES (The "Archetypes"):
     You MUST include one of each:
-    1. Poultry dish (Chicken, Turkey, Duck)
-    2. Red Meat dish (Beef, Pork, Lamb) OR Heavy Plant Protein (e.g. Lentil Stew, rich Tofu curry) if vegetarian.
-    3. Fish/Seafood dish (or light Plant Protein if vegetarian/allergy)
-    4. Vegetarian/Vegan dish (Grain bowl, Pasta, Salad)
-    5. Wildcard (Something fun: Tacos, Pizza, Stir Fry, Casserole)
+    1. Poultry dish (Chicken, Turkey, Duck) - Crowd pleaser.
+    2. Red Meat dish (Beef, Pork, Lamb) OR Rich Plant Protein - Comfort food.
+    3. Fish/Seafood dish (or light Plant Protein) - Lighter option.
+    4. Vegetarian/Vegan dish (Grain bowl, Pasta, Salad) - Plant forward.
+    5. Wildcard (Something fun: Tacos, Pizza, Stir Fry, Casserole) - Family favorite.
     
     COOKING METHODS MIX:
     Ensure a mix of: 1 Sheet Pan/One Pot (Easy), 1 Slow Cook/Simmer, 1 Quick Sauté/Grill.
 
     AVOID REPEATS:
-    Do NOT suggest these recently seen recipes: ${excludedNames.slice(0, 50).join(', ')}.
-    `;
+    Do NOT suggest these recently featured global recipes: ${excludedNames.slice(0, 50).join(', ')}.
     
-    if (prefs) {
-        if (prefs.food_restrictions?.length) {
-            prompt += `\n\n🚨 CRITICAL ALLERGIES: ${prefs.food_restrictions.join(', ')}. NEVER INCLUDE THESE.`;
-        }
-        if (prefs.favorite_cuisines?.length) {
-            prompt += `\n\nUser loves: ${prefs.favorite_cuisines.join(', ')}.`;
-        }
-    }
-    
-    prompt += `\n\nOUTPUT FORMAT: Return a valid JSON object matching this schema. NO Markdown.
+    OUTPUT FORMAT: Return a valid JSON object matching this schema. NO Markdown.
     {
       "suggestions": [
         {
           "title": "string",
-          "type": "recipe" | "cocktail" (Always "recipe" for this task),
+          "type": "recipe",
           "description": "string (Appetizing visual description)",
           "time_estimate": "string",
           "difficulty": "string",
-          "reason_for_recommendation": "string (Why this archetype fits)",
+          "reason_for_recommendation": "Featured Community Pick",
           "cuisine": "string",
-          "tags": { "protein": "string", "carb": "string", "method": "string" }
+          "tags": { "protein": "string", "carb": "string", "method": "string" },
+          "ingredients": [ { "name": "string", "amount": "string", "unit": "string" } ],
+          "instructions": [ "string (step 1)", "string (step 2)" ]
         }
       ]
     }`;
 
-    // 4. Call LLM
-    let apiKey = Deno.env.get(`${modelConfig.provider.toUpperCase()}_API_KEY`);
-    // Fallback logic for keys if needed... (simplified)
-    if (!apiKey && modelConfig.provider === 'openai') apiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!apiKey) throw new Error(`No API Key for ${modelConfig.provider}`);
+    // 3. Call LLM (Use OpenAI by default for system tasks)
+    const apiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!apiKey) throw new Error("No OPENAI_API_KEY found.");
 
-    const jsonStr = await callLLM(modelConfig.provider, apiKey, modelConfig.model_identifier, [{role: "user", content: "Generate this week's 5 meals."}], prompt);
+    // Using GPT-4o or 3.5-turbo if 4 not avail, let's try 4o-mini or 4 for quality
+    const model = "gpt-4o"; 
+
+    const jsonStr = await callLLM("openai", apiKey, model, [{role: "user", content: "Generate this week's community menu."}], prompt);
     
-    // 5. Validate & Parse
+    // 4. Validate & Parse
     let result;
     try {
         result = JSON.parse(jsonStr);
-        // Clean markdown if present
     } catch {
-        // Try to clean markdown
         const clean = jsonStr.replace(/```json/g, "").replace(/```/g, "");
         result = JSON.parse(clean);
     }
     
     const parsed = RecipeResponseSchema.parse(result);
-    // TODO: Extra validation for Archetype count? For now, we trust the prompt.
 
-    // 6. Save to DB
-    // Get start of week (Sunday)
+    // 5. Generate Images (Parallel) & Add Community Tags
+    console.log("Starting image generation...");
+    const recipesWithImages = await Promise.all(parsed.suggestions.map(async (recipe) => {
+        const imageUrl = await generateRecipeImage(recipe.title, recipe.description, supabase);
+        return {
+            ...recipe,
+            image_url: imageUrl,
+            is_shared: true, // Community Tag
+            is_public: true  // Visibility Tag
+        };
+    }));
+
+    // 6. Save to DB (Global Set -> user_id = NULL)
     const today = new Date();
     const day = today.getDay(); // 0 is Sunday
-    const diff = today.getDate() - day; // Adjust to Sunday
-    const sunday = new Date(today.setDate(diff));
-    sunday.setHours(0,0,0,0);
-    const dateStr = sunday.toISOString().split('T')[0];
+    const diff = today.getDate() - day + (day === 0 ? 0 : 7); // Calculate NEXT Sunday? Or CURRENT week's Sunday?
+    // Usually "Week of..." implies the start date. 
+    // If run on Tuesday, it's for THIS week (last Sunday). 
+    // If run on Sunday, it's for THIS week (today).
+    const currentSunday = new Date(today);
+    currentSunday.setDate(today.getDate() - day);
+    currentSunday.setHours(0,0,0,0);
+    const dateStr = currentSunday.toISOString().split('T')[0];
 
-    const { error: insertError } = await supabase.from('weekly_meal_sets').upsert({
-        user_id: userId,
-        week_start_date: dateStr,
-        recipes: parsed.suggestions 
-    }, { onConflict: 'user_id, week_start_date' });
+    console.log(`Saving Global Set for week: ${dateStr}`);
 
-    if (insertError) throw insertError;
+    // Check if set exists
+    const { data: existing } = await supabase.from('weekly_meal_sets')
+        .select('id')
+        .is('user_id', null)
+        .eq('week_start_date', dateStr)
+        .maybeSingle();
 
-    // 7. Send Email via Resend
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (resendApiKey) {
-        try {
-            // Fetch User Email
-            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
-            if (userError || !userData.user?.email) throw new Error("Could not fetch user email");
+    if (existing) {
+        // Update existing
+        const { error: updateError } = await supabase.from('weekly_meal_sets')
+            .update({ recipes: recipesWithImages })
+            .eq('id', existing.id);
+        if (updateError) throw updateError;
+    } else {
+        // Insert new
+        const { error: insertError } = await supabase.from('weekly_meal_sets').insert({
+            user_id: null,
+            week_start_date: dateStr,
+            recipes: recipesWithImages 
+        });
+        if (insertError) throw insertError;
+    }
 
-            const emailHtml = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body { font-family: sans-serif; color: #333; line-height: 1.6; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background-color: #fce7e4; padding: 20px; text-align: center; border-radius: 12px 12px 0 0; }
-                    .header h1 { color: #c2410c; margin: 0; }
-                    .meal-card { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; }
-                    .meal-info { flex: 1; }
-                    .meal-title { font-weight: bold; font-size: 18px; margin-bottom: 4px; color: #1f2937; }
-                    .meal-meta { font-size: 14px; color: #6b7280; }
-                    .cta-button { display: inline-block; background-color: #c2410c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; }
-                    .footer { text-align: center; font-size: 12px; color: #9ca3af; margin-top: 40px; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>Your Weekly Menu 🍽️</h1>
-                        <p>5 fresh ideas curated just for you.</p>
-                    </div>
-                    
-                    <div style="padding: 20px 0;">
-                        ${parsed.suggestions.map((r: any) => `
-                            <div class="meal-card">
-                                <div class="meal-info">
-                                    <div class="meal-title">${r.title}</div>
-                                    <div class="meal-meta">${r.time_estimate} • ${r.difficulty}</div>
-                                    <div style="font-size: 14px; margin-top: 5px;">${r.description}</div>
+    // 7. Send Test Email (to Admin/Invoker)
+    // In production, this would trigger a bulk email job or be picked up by a separate cron.
+    // For now, we confirm to the admin.
+    if (userId) {
+        const resendApiKey = Deno.env.get("RESEND_API_KEY");
+        if (resendApiKey) {
+            try {
+                // Try fetching email from user_profiles or auth admin
+                const { data: userData } = await supabase.auth.admin.getUserById(userId);
+                if (userData?.user?.email) {
+                     const emailHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <body style="font-family: system-ui, sans-serif; color: #333;">
+                        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h1 style="color: #c2410c;">Community Menu Generated! 🚀</h1>
+                            <p>The global weekly menu for <strong>${dateStr}</strong> has been generated.</p>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            ${recipesWithImages.map((r) => `
+                                <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
+                                    <div style="font-weight: bold;">${r.title}</div>
+                                    <div style="font-size: 12px; color: #666;">${r.time_estimate}</div>
                                 </div>
+                            `).join('')}
                             </div>
-                        `).join('')}
-                    </div>
+                            
+                            <p style="margin-top: 20px;">
+                                <a href="${Deno.env.get("SITE_URL") || 'http://localhost:5173'}/community" style="background: #c2410c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">View Live</a>
+                            </p>
+                        </div>
+                    </body>
+                    </html>
+                    `;
 
-                    <div style="text-align: center;">
-                        <a href="${Deno.env.get("SITE_URL") || 'https://your-app-url.com'}/community" class="cta-button">View & Plan Your Week</a>
-                    </div>
-
-                    <div class="footer">
-                        <p>You received this because you are subscribed to Weekly Planner updates.</p>
-                        <p><a href="#" style="color: #9ca3af;">Unsubscribe</a></p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            `;
-
-            const res = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${resendApiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    from: 'Sous Chef <planner@yourdomain.com>', // User needs to configure domain
-                    to: userData.user.email,
-                    subject: `Your Menu for the Week of ${new Date(dateStr).toLocaleDateString()}`,
-                    html: emailHtml
-                })
-            });
-
-            if (!res.ok) console.error("Resend Error:", await res.text());
-            else console.log("Email sent successfully to", userData.user.email);
-
-        } catch (emailErr) {
-            console.error("Failed to send email:", emailErr);
-            // Don't fail the request, just log
+                    await fetch('https://api.resend.com/emails', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            from: 'Meal Planner Admin <system@yourdomain.com>',
+                            to: userData.user.email,
+                            subject: `[Admin] Global Menu Generated: ${dateStr}`,
+                            html: emailHtml
+                        })
+                    });
+                }
+            } catch (err) {
+                console.error("Email Error:", err);
+            }
         }
     }
 
-    return new Response(JSON.stringify({ success: true, date: dateStr, count: parsed.suggestions.length }), {
+    return new Response(JSON.stringify({ success: true, date: dateStr, count: recipesWithImages.length }), {
        headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
 
   } catch (error) {
     console.error("Weekly Planner Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
