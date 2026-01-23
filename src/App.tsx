@@ -62,7 +62,8 @@ function App() {
     deleteMeal,
     moveMeal,
     removeRecipeFromMeal,
-    toggleRecipeCompletion
+    toggleRecipeCompletion,
+    loadMeals
   } = useMeals();
 
   // Combined loading state
@@ -377,7 +378,7 @@ function App() {
             </div>
           ) : (
             <>
-              <WeeklyMealCarousel />
+              <WeeklyMealCarousel onMealAdded={loadMeals} />
               
               {communityRecipes.length > 0 && (
                 <div className="mb-6">

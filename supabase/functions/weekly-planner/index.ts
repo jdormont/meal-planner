@@ -264,6 +264,13 @@ Deno.serve(async (req) => {
     AVOID REPEATS:
     Do NOT suggest these recently featured global recipes: ${excludedNames.slice(0, 50).join(', ')}.
     
+    DATA QUALITY REQUIREMENTS (CRITICAL):
+    - **Ingredients**: Must be precise (e.g., "1.5 lbs", "2 tbsp", "1 large bunch"). Avoid vague terms like "some" or "to taste".
+    - **Instructions**: Must be DETAILED and STEP-BY-STEP. 
+      - Bad: "Cook chicken then add sauce."
+      - Good: "Heat 2 tbsp oil in a large skillet over medium-high heat. Pat chicken dry and sear for 4-5 minutes per side until golden. Remove from pan..."
+      - Aim for 5-8 steps per recipe.
+    
     OUTPUT FORMAT: Return a valid JSON object matching this schema. NO Markdown.
     {
       "suggestions": [
@@ -276,8 +283,8 @@ Deno.serve(async (req) => {
           "reason_for_recommendation": "Featured Community Pick",
           "cuisine": "string",
           "tags": { "protein": "string", "carb": "string", "method": "string" },
-          "ingredients": [ { "name": "string", "amount": "string", "unit": "string" } ],
-          "instructions": [ "string (step 1)", "string (step 2)" ]
+          "ingredients": [ { "name": "string (Butter)", "amount": "string (2 tbsp)", "unit": "string (tbsp)" } ],
+          "instructions": [ "string (Detailed step 1)", "string (Detailed step 2)..." ]
         }
       ]
     }`;

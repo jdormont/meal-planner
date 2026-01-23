@@ -10,7 +10,11 @@ type WeeklyMealSet = {
     week_start_date: string;
 };
 
-export function WeeklyMealCarousel() {
+type WeeklyMealCarouselProps = {
+    onMealAdded?: () => void;
+};
+
+export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
     const { user, userProfile } = useAuth();
     const [weeklySet, setWeeklySet] = useState<WeeklyMealSet | null>(null);
     const [loading, setLoading] = useState(true);
@@ -115,10 +119,15 @@ export function WeeklyMealCarousel() {
             // 3. Link Recipe to Meal
             const { error: linkError } = await supabase.from('meal_recipes').insert({
                 meal_id: meal.id,
-                recipe_id: stringRecipe.id
+                recipe_id: stringRecipe.id,
+                user_id: user.id, // Mandatory for RLS
+                sort_order: 0
             });
 
             if (linkError) throw linkError;
+
+            // Trigger main app refresh so it shows on calendar immediately
+            if (onMealAdded) onMealAdded();
 
             setAddedToWeek(prev => ({ ...prev, [recipeTitle]: true }));
             setTimeout(() => {
