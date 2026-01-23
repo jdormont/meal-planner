@@ -397,7 +397,7 @@ Deno.serve(async (req) => {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            from: 'Meal Planner Admin <jdormont@gmail.com>',
+                            from: 'Meal Planner Admin <josh@joshdormont.com>',
                             to: userData.user.email,
                             subject: `[Admin] Global Menu Generated: ${dateStr}`,
                             html: emailHtml
