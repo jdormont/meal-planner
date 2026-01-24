@@ -81,6 +81,38 @@ export type MealWithRecipes = Meal & {
   recipes: (MealRecipe & { recipe: Recipe })[];
 };
 
+export type ShoppingListItem = {
+  id: string;
+  list_id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  display_text?: string;
+  is_checked: boolean;
+  recipe_id?: string;
+  product_id?: string;
+  upc?: string;
+  meta_data?: {
+    filters?: {
+      brand_filters?: string[];
+      health_filters?: string[];
+    };
+    line_item_measurements?: any[];
+  };
+  created_at: string;
+  updated_at: string;
+};
+
+export type ShoppingList = {
+  id: string;
+  user_id: string;
+  title: string;
+  status: 'active' | 'archived';
+  created_at: string;
+  updated_at: string;
+  items?: ShoppingListItem[];
+};
+
 export type UserProfile = {
   id: string;
   user_id: string;

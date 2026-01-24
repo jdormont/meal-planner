@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
-import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2 } from 'lucide-react';
+import { useShoppingList } from '../contexts/ShoppingListContext';
+import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, ShoppingCart } from 'lucide-react';
 import { marked } from 'marked';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,6 +16,7 @@ type RecipeDetailProps = {
 export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }: RecipeDetailProps) {
   const { user } = useAuth();
   const isOwner = user?.id === recipe.user_id;
+  const { addItem } = useShoppingList();
   const [currentRating, setCurrentRating] = useState<RecipeRating | null>(null);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [pendingRating, setPendingRating] = useState<'thumbs_up' | 'thumbs_down' | null>(null);
@@ -24,11 +26,30 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
   const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [addingToMeal, setAddingToMeal] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
   const totalTime = recipe.total_time;
+
+  const handleAddToShoppingList = async () => {
+    if (!user) return;
+    setAddingToCart(true);
+    try {
+      const promises = recipe.ingredients.map(ingredient => 
+        addItem(ingredient.name, parseFloat(ingredient.quantity) || 1, ingredient.unit, recipe.id)
+      );
+      await Promise.all(promises);
+      alert('Ingredients added to shopping list!');
+    } catch (error) {
+      console.error('Error adding to list:', error);
+      alert('Failed to add ingredients to list.');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
 
   const renderMarkdown = (text: string) => {
     return { __html: marked(text, { breaks: true, gfm: true }) as string };
   };
+
 
   const loadCurrentRating = useCallback(async () => {
     if (!user) return;
@@ -406,6 +427,16 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
                 Copy Recipe
               </button>
             ) : null}
+            
+            <button
+               onClick={handleAddToShoppingList}
+               disabled={addingToCart}
+               className="flex-1 px-6 py-3 bg-sage-600 hover:bg-sage-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {addingToCart ? 'Adding...' : 'Add Ingredients'}
+            </button>
+
             <button
               onClick={() => setShowMealSelector(true)}
               className="flex-1 px-6 py-3 border-2 border-sage-600 text-sage-600 rounded-xl hover:bg-sage-50 transition font-medium flex items-center justify-center gap-2"

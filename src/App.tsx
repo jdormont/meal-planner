@@ -28,6 +28,8 @@ import { Plus, BookOpen, Globe, Camera, Users, Calendar, ChevronDown, Sparkles }
 import { parseAIRecipe, parseIngredient } from './utils/recipeParser';
 import { RecipeSuggestion } from './components/RecipeSuggestionCard';
 import { ProfileNudgeModal } from './components/ProfileNudgeModal';
+import { ShoppingListProvider } from './contexts/ShoppingListContext';
+import { ShoppingListDrawer } from './components/ShoppingListDrawer';
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -127,6 +129,7 @@ function App() {
   const [showProfileNudge, setShowProfileNudge] = useState(false);
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showShoppingList, setShowShoppingList] = useState(false);
 
   // ... (keeping existing checkAndShowOnboarding, markOnboardingSeen, handleSaveRecipe, etc. as they are mostly unchanged logic-wise, just need to ensure imports are right) ...
 
@@ -328,397 +331,401 @@ function App() {
   }
 
   return (
-    <Layout
-      currentView={view}
-      onViewChange={(newView) => {
-        setView(newView);
-        if (newView !== 'recipes') {
-          setSelectedRecipe(null);
-          setEditingRecipe(null);
-          setShowForm(false);
-        }
-        if (newView !== 'meals') {
-          setSelectedMeal(null);
-          setEditingMeal(null);
-          setShowMealForm(false);
-        }
-      }}
-      userProfile={userProfile}
-      signOut={signOut}
-      onNewRecipe={() => {
-        setEditingRecipe(null);
-        setShowForm(true);
-      }}
-      onNewMeal={() => {
-        setEditingMeal(null);
-        setEditingMealRecipeIds([]);
-        setDefaultMealDate(new Date().toISOString().split('T')[0]);
-        setShowMealForm(true);
-      }}
-    >
-      {view === 'admin' ? (
-        <AdminDashboard />
-      ) : view === 'settings' ? (
-        <Settings />
-      ) : view === 'chat' ? (
-        <div className="h-[calc(100vh-10rem)]">
-          <AIChat
-            onSaveRecipe={handleAIRecipe}
-            onFirstAction={checkAndShowOnboarding}
-            onViewRecipe={handleViewAIRecipe}
-          />
-        </div>
-      ) : view === 'community' ? (
-        <div>
-          {/* ... existing community view ... */}
-          {loading ? (
-            <div className="text-center py-12">
-              <Users className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
-              <p className="text-gray-600">Loading community recipes...</p>
-            </div>
-          ) : (
-            <>
-              <WeeklyMealCarousel onMealAdded={loadMeals} />
-              
-              {communityRecipes.length > 0 && (
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Community Recipes</h2>
-                  <p className="text-gray-600">
-                    Discover and copy recipes shared by other users
-                  </p>
-                </div>
-              )}
-              {communityRecipes.length > 0 && (
-                <RecipeSearch
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  selectedTags={selectedTags}
-                  onTagToggle={toggleTag}
-                  availableTags={getAllTags(true)}
-                  recipeType={recipeType}
-                  selectedTimeFilter={selectedTimeFilter}
-                  onTimeFilterChange={setSelectedTimeFilter}
-                />
-              )}
-              <CommunityRecipes
-                recipes={filteredCommunityRecipes}
-                onSelect={setSelectedRecipe}
-                onCopy={copyRecipe}
-                onEdit={(recipe) => {
-                  setEditingRecipe(recipe);
-                  setShowForm(true);
-                  setView('recipes');
-                }}
-                currentUserId={user!.id}
-              />
-            </>
-          )}
-        </div>
-      ) : view === 'meals' ? (
-        <div>
-          <div className="flex gap-4 mb-6">
-            <button
-              onClick={() => setMealViewMode('calendar')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${mealViewMode === 'calendar'
-                ? 'bg-terracotta-500 text-white shadow-sm'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-            >
-              Weekly Plan
-            </button>
-            <button
-              onClick={() => setMealViewMode('list')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${mealViewMode === 'list'
-                ? 'bg-terracotta-500 text-white shadow-sm'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-            >
-              Collections
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-12">
-              <Calendar className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
-              <p className="text-gray-600">Loading your meals...</p>
-            </div>
-          ) : mealViewMode === 'calendar' ? (
-            <MealCalendar
-              meals={meals.filter(m => !m.is_event)}
-              onMoveMeal={moveMeal}
-              onAddMeal={handleCalendarAddMeal}
-              onMealClick={setSelectedMeal}
-              onRecipeClick={setSelectedRecipe}
-              onRemoveRecipe={removeRecipeFromMeal}
-            />
-          ) : (
-            <MealList
-              meals={collectionMeals}
-              onSelect={setSelectedMeal}
-              onCreateNew={() => {
-                setEditingMeal(null);
-                setEditingMealRecipeIds([]);
-                setShowMealForm(true);
-                // Note: The form handles defaulting is_event based on user input, 
-                // but we could set a default here if we wanted "New Collection" specifically
-              }}
-            />
-          )}
-        </div>
-      ) : (
-        <div>
-          {/* ... existing recipes view ... */}
-          {loading ? (
-            <div className="text-center py-12">
-              <BookOpen className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
-              <p className="text-gray-600">Loading your recipes...</p>
-            </div>
-          ) : (
-            <>
-              {recipes.length > 0 && (
-                <>
-                  {/* Floating Action Button for Add Recipe - Visible on all devices */}
-                  <div className="fixed bottom-6 right-6 z-50">
-                    <div className={`absolute bottom-full right-0 mb-4 flex flex-col items-end gap-3 transition-all duration-200 ${showAddMenu ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-                      <button
-                        onClick={() => {
-                          setView('chat');
-                          setShowAddMenu(false);
-                        }}
-                        className="flex items-center gap-2 pr-2"
-                      >
-                        <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Generate with AI</span>
-                        <div className="p-3 bg-indigo-500 text-white rounded-full shadow-lg">
-                          <Sparkles className="w-5 h-5" />
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowPhotoModal(true);
-                          setShowAddMenu(false);
-                        }}
-                        className="flex items-center gap-2 pr-2"
-                      >
-                        <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Scan Photo</span>
-                        <div className="p-3 bg-warmtan-500 text-white rounded-full shadow-lg">
-                          <Camera className="w-5 h-5" />
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowImportModal(true);
-                          setShowAddMenu(false);
-                        }}
-                        className="flex items-center gap-2 pr-2"
-                      >
-                        <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Import Web</span>
-                        <div className="p-3 bg-sage-500 text-white rounded-full shadow-lg">
-                          <Globe className="w-5 h-5" />
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingRecipe(null);
-                          setShowForm(true);
-                          setShowAddMenu(false);
-                        }}
-                        className="flex items-center gap-2 pr-2"
-                      >
-                        <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Manually</span>
-                        <div className="p-3 bg-terracotta-500 text-white rounded-full shadow-lg">
-                          <Plus className="w-5 h-5" />
-                        </div>
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={() => setShowAddMenu(!showAddMenu)}
-                      className={`p-4 rounded-full shadow-xl transition-transform duration-200 ${showAddMenu ? 'bg-gray-800 rotate-45' : 'bg-terracotta-500 hover:bg-terracotta-600'
-                        } text-white`}
-                    >
-                      <Plus className="w-7 h-7" />
-                    </button>
-                    {showAddMenu && (
-                      <div className="fixed inset-0 z-[-1] bg-black/50 backdrop-blur-sm" onClick={() => setShowAddMenu(false)} />
-                    )}
-                  </div>
-                </>
-              )}
-              {recipes.length > 0 && (
-                <RecipeSearch
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  selectedTags={selectedTags}
-                  onTagToggle={toggleTag}
-                  availableTags={getAllTags(false)}
-                  recipeType={recipeType}
-                  selectedTimeFilter={selectedTimeFilter}
-                  onTimeFilterChange={setSelectedTimeFilter}
-                  onRecipeTypeChange={(type) => {
-                    setRecipeType(type);
-                    if (type === 'cocktail') {
-                      setSelectedTags([]);
-                      setSelectedTimeFilter('');
-                    } else {
-                      setSelectedTags([]);
-                      setSelectedTimeFilter('');
-                    }
-                  }}
-                />
-              )}
-              <RecipeList
-                recipes={filteredRecipes}
-                onEdit={(recipe) => {
-                  setEditingRecipe(recipe);
-                  setShowForm(true);
-                }}
-                onDelete={handleDeleteRecipe}
-                onSelect={setSelectedRecipe}
-                onCreateNew={() => {
-                  setEditingRecipe(null);
-                  setShowForm(true);
-                }}
-                onOpenChat={() => {
-                  setView('chat');
-                }}
-                onImportFromWeb={() => {
-                  setShowImportModal(true);
-                }}
-                onLoadMore={loadMore}
-                hasMore={hasMore}
-                totalRecipeCount={recipes.length}
-                onScanPhoto={() => setShowPhotoModal(true)}
-              />
-            </>
-          )}
-        </div>
-      )}
-
-      {showForm && (
-        <RecipeForm
-          recipe={editingRecipe}
-          onSave={handleSaveRecipe}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingRecipe(null);
-            // Default reset
-          }}
-          onDelete={editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-') ? async () => {
-            if (confirm('Are you sure you want to delete this recipe?')) {
-              const success = await deleteRecipe(editingRecipe.id);
-              if (success) {
-                setShowForm(false);
-                setEditingRecipe(null);
-              } else {
-                alert('Failed to delete recipe. Please try again.');
-              }
-            }
-          } : undefined}
-        />
-      )}
-
-
-
-      {showMealForm && (
-        <MealForm
-          meal={editingMeal}
-          recipes={[...recipes, ...communityRecipes]}
-          selectedRecipeIds={editingMealRecipeIds}
-          onSave={handleSaveMeal}
-          onCancel={() => {
-            setShowMealForm(false);
-            setEditingMeal(null);
-            setEditingMealRecipeIds([]);
-            setDefaultMealDate('');
-            setDefaultMealType('dinner');
-          }}
-          initialDate={defaultMealDate}
-          initialMealType={defaultMealType}
-        />
-      )}
-
-      {selectedMeal && (
-        <MealDetail
-          meal={selectedMeal}
-          onClose={() => setSelectedMeal(null)}
-          onToggleRecipeCompletion={handleToggleRecipeCompletion}
-          onViewRecipe={(recipe) => {
-            setSelectedRecipe(recipe);
-          }}
-          onEdit={() => {
-            setEditingMeal(selectedMeal);
-            setEditingMealRecipeIds(selectedMeal.recipes.map(mr => mr.recipe_id));
-            setSelectedMeal(null);
-            setShowMealForm(true);
-            setDefaultMealDate(selectedMeal.date);
-          }}
-          onDelete={() => selectedMeal && handleDeleteMeal(selectedMeal.id)}
-        />
-      )}
-
-      {selectedRecipe && (
-        <RecipeDetail
-          recipe={selectedRecipe}
-          onClose={() => setSelectedRecipe(null)}
-          onEdit={() => {
-            setEditingRecipe(selectedRecipe);
+    <ShoppingListProvider>
+      <Layout
+        currentView={view}
+        onViewChange={(newView) => {
+          setView(newView);
+          if (newView !== 'recipes') {
             setSelectedRecipe(null);
-            setShowForm(true);
-          }}
-          onCopy={handleCopyRecipe}
-          onFirstAction={checkAndShowOnboarding}
-        />
-      )}
+            setEditingRecipe(null);
+            setShowForm(false);
+          }
+          if (newView !== 'meals') {
+            setSelectedMeal(null);
+            setEditingMeal(null);
+            setShowMealForm(false);
+          }
+        }}
+        userProfile={userProfile}
+        signOut={signOut}
+        onNewRecipe={() => {
+          setEditingRecipe(null);
+          setShowForm(true);
+        }}
+        onNewMeal={() => {
+          setEditingMeal(null);
+          setEditingMealRecipeIds([]);
+          setDefaultMealDate(new Date().toISOString().split('T')[0]);
+          setShowMealForm(true);
+        }}
+        onOpenShoppingList={() => setShowShoppingList(true)}
+      >
+        {view === 'admin' ? (
+          <AdminDashboard />
+        ) : view === 'settings' ? (
+          <Settings />
+        ) : view === 'chat' ? (
+          <div className="h-[calc(100vh-10rem)]">
+            <AIChat
+              onSaveRecipe={handleAIRecipe}
+              onFirstAction={checkAndShowOnboarding}
+              onViewRecipe={handleViewAIRecipe}
+            />
+          </div>
+        ) : view === 'community' ? (
+          <div>
+            {/* ... existing community view ... */}
+            {loading ? (
+              <div className="text-center py-12">
+                <Users className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
+                <p className="text-gray-600">Loading community recipes...</p>
+              </div>
+            ) : (
+              <>
+                <WeeklyMealCarousel onMealAdded={loadMeals} />
+                
+                {communityRecipes.length > 0 && (
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Community Recipes</h2>
+                    <p className="text-gray-600">
+                      Discover and copy recipes shared by other users
+                    </p>
+                  </div>
+                )}
+                {communityRecipes.length > 0 && (
+                  <RecipeSearch
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    selectedTags={selectedTags}
+                    onTagToggle={toggleTag}
+                    availableTags={getAllTags(true)}
+                    recipeType={recipeType}
+                    selectedTimeFilter={selectedTimeFilter}
+                    onTimeFilterChange={setSelectedTimeFilter}
+                  />
+                )}
+                <CommunityRecipes
+                  recipes={filteredCommunityRecipes}
+                  onSelect={setSelectedRecipe}
+                  onCopy={copyRecipe}
+                  onEdit={(recipe) => {
+                    setEditingRecipe(recipe);
+                    setShowForm(true);
+                    setView('recipes');
+                  }}
+                  currentUserId={user!.id}
+                />
+              </>
+            )}
+          </div>
+        ) : view === 'meals' ? (
+          <div>
+            <div className="flex gap-4 mb-6">
+              <button
+                onClick={() => setMealViewMode('calendar')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${mealViewMode === 'calendar'
+                  ? 'bg-terracotta-500 text-white shadow-sm'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                Weekly Plan
+              </button>
+              <button
+                onClick={() => setMealViewMode('list')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${mealViewMode === 'list'
+                  ? 'bg-terracotta-500 text-white shadow-sm'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                Collections
+              </button>
+            </div>
 
-      {showImportModal && (
-        <RecipeImportModal
-          onClose={() => setShowImportModal(false)}
-          onImportComplete={(recipe) => {
-            setEditingRecipe({
-              ...recipe,
-              id: `temp-${Date.now()}`,
-              user_id: user!.id,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            } as Recipe);
-            setShowForm(true);
-          }}
-        />
-      )}
+            {loading ? (
+              <div className="text-center py-12">
+                <Calendar className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
+                <p className="text-gray-600">Loading your meals...</p>
+              </div>
+            ) : mealViewMode === 'calendar' ? (
+              <MealCalendar
+                meals={meals.filter(m => !m.is_event)}
+                onMoveMeal={moveMeal}
+                onAddMeal={handleCalendarAddMeal}
+                onMealClick={setSelectedMeal}
+                onRecipeClick={setSelectedRecipe}
+                onRemoveRecipe={removeRecipeFromMeal}
+              />
+            ) : (
+              <MealList
+                meals={collectionMeals}
+                onSelect={setSelectedMeal}
+                onCreateNew={() => {
+                  setEditingMeal(null);
+                  setEditingMealRecipeIds([]);
+                  setShowMealForm(true);
+                  // Note: The form handles defaulting is_event based on user input, 
+                  // but we could set a default here if we wanted "New Collection" specifically
+                }}
+              />
+            )}
+          </div>
+        ) : (
+          <div>
+            {/* ... existing recipes view ... */}
+            {loading ? (
+              <div className="text-center py-12">
+                <BookOpen className="w-12 h-12 text-terracotta-500 mx-auto mb-4 animate-pulse" />
+                <p className="text-gray-600">Loading your recipes...</p>
+              </div>
+            ) : (
+              <>
+                {recipes.length > 0 && (
+                  <>
+                    {/* Floating Action Button for Add Recipe - Visible on all devices */}
+                    <div className="fixed bottom-6 right-6 z-50">
+                      <div className={`absolute bottom-full right-0 mb-4 flex flex-col items-end gap-3 transition-all duration-200 ${showAddMenu ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+                        <button
+                          onClick={() => {
+                            setView('chat');
+                            setShowAddMenu(false);
+                          }}
+                          className="flex items-center gap-2 pr-2"
+                        >
+                          <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Generate with AI</span>
+                          <div className="p-3 bg-indigo-500 text-white rounded-full shadow-lg">
+                            <Sparkles className="w-5 h-5" />
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowPhotoModal(true);
+                            setShowAddMenu(false);
+                          }}
+                          className="flex items-center gap-2 pr-2"
+                        >
+                          <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Scan Photo</span>
+                          <div className="p-3 bg-warmtan-500 text-white rounded-full shadow-lg">
+                            <Camera className="w-5 h-5" />
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowImportModal(true);
+                            setShowAddMenu(false);
+                          }}
+                          className="flex items-center gap-2 pr-2"
+                        >
+                          <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Import Web</span>
+                          <div className="p-3 bg-sage-500 text-white rounded-full shadow-lg">
+                            <Globe className="w-5 h-5" />
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingRecipe(null);
+                            setShowForm(true);
+                            setShowAddMenu(false);
+                          }}
+                          className="flex items-center gap-2 pr-2"
+                        >
+                          <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Manually</span>
+                          <div className="p-3 bg-terracotta-500 text-white rounded-full shadow-lg">
+                            <Plus className="w-5 h-5" />
+                          </div>
+                        </button>
+                      </div>
 
-      {showPhotoModal && (
-        <RecipePhotoModal
-          onClose={() => setShowPhotoModal(false)}
-          onImportComplete={(recipe) => {
-            setEditingRecipe({
-              ...recipe,
-              id: `temp-photo-${Date.now()}`,
-              user_id: user!.id,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            } as Recipe);
-            setShowForm(true);
-          }}
-        />
-      )}
+                      <button
+                        onClick={() => setShowAddMenu(!showAddMenu)}
+                        className={`p-4 rounded-full shadow-xl transition-transform duration-200 ${showAddMenu ? 'bg-gray-800 rotate-45' : 'bg-terracotta-500 hover:bg-terracotta-600'
+                          } text-white`}
+                      >
+                        <Plus className="w-7 h-7" />
+                      </button>
+                      {showAddMenu && (
+                        <div className="fixed inset-0 z-[-1] bg-black/50 backdrop-blur-sm" onClick={() => setShowAddMenu(false)} />
+                      )}
+                    </div>
+                  </>
+                )}
+                {recipes.length > 0 && (
+                  <RecipeSearch
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    selectedTags={selectedTags}
+                    onTagToggle={toggleTag}
+                    availableTags={getAllTags(false)}
+                    recipeType={recipeType}
+                    selectedTimeFilter={selectedTimeFilter}
+                    onTimeFilterChange={setSelectedTimeFilter}
+                    onRecipeTypeChange={(type) => {
+                      setRecipeType(type);
+                      if (type === 'cocktail') {
+                        setSelectedTags([]);
+                        setSelectedTimeFilter('');
+                      } else {
+                        setSelectedTags([]);
+                        setSelectedTimeFilter('');
+                      }
+                    }}
+                  />
+                )}
+                <RecipeList
+                  recipes={filteredRecipes}
+                  onEdit={(recipe) => {
+                    setEditingRecipe(recipe);
+                    setShowForm(true);
+                  }}
+                  onDelete={handleDeleteRecipe}
+                  onSelect={setSelectedRecipe}
+                  onCreateNew={() => {
+                    setEditingRecipe(null);
+                    setShowForm(true);
+                  }}
+                  onOpenChat={() => {
+                    setView('chat');
+                  }}
+                  onImportFromWeb={() => {
+                    setShowImportModal(true);
+                  }}
+                  onLoadMore={loadMore}
+                  hasMore={hasMore}
+                  totalRecipeCount={recipes.length}
+                  onScanPhoto={() => setShowPhotoModal(true)}
+                />
+              </>
+            )}
+          </div>
+        )}
 
-      {showProfileNudge && (
-        <ProfileNudgeModal 
-            onClose={() => setShowProfileNudge(false)}
-            onGoToSettings={() => {
-                setView('settings');
-                setShowProfileNudge(false);
+        {showForm && (
+          <RecipeForm
+            recipe={editingRecipe}
+            onSave={handleSaveRecipe}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingRecipe(null);
+              // Default reset
             }}
-        />
-      )}
+            onDelete={editingRecipe && editingRecipe.id && !editingRecipe.id.startsWith('temp-') ? async () => {
+              if (confirm('Are you sure you want to delete this recipe?')) {
+                const success = await deleteRecipe(editingRecipe.id);
+                if (success) {
+                  setShowForm(false);
+                  setEditingRecipe(null);
+                } else {
+                  alert('Failed to delete recipe. Please try again.');
+                }
+              }
+            } : undefined}
+          />
+        )}
 
-      {showOnboardingWizard && (
-        <OnboardingWizard onComplete={handleWizardComplete} />
-      )}
-    </Layout>
+        {showMealForm && (
+          <MealForm
+            meal={editingMeal}
+            recipes={[...recipes, ...communityRecipes]}
+            selectedRecipeIds={editingMealRecipeIds}
+            onSave={handleSaveMeal}
+            onCancel={() => {
+              setShowMealForm(false);
+              setEditingMeal(null);
+              setEditingMealRecipeIds([]);
+              setDefaultMealDate('');
+              setDefaultMealType('dinner');
+            }}
+            initialDate={defaultMealDate}
+            initialMealType={defaultMealType}
+          />
+        )}
+
+        {selectedMeal && (
+          <MealDetail
+            meal={selectedMeal}
+            onClose={() => setSelectedMeal(null)}
+            onToggleRecipeCompletion={handleToggleRecipeCompletion}
+            onViewRecipe={(recipe) => {
+              setSelectedRecipe(recipe);
+            }}
+            onEdit={() => {
+              setEditingMeal(selectedMeal);
+              setEditingMealRecipeIds(selectedMeal.recipes.map(mr => mr.recipe_id));
+              setSelectedMeal(null);
+              setShowMealForm(true);
+              setDefaultMealDate(selectedMeal.date);
+            }}
+            onDelete={() => selectedMeal && handleDeleteMeal(selectedMeal.id)}
+          />
+        )}
+
+        {selectedRecipe && (
+          <RecipeDetail
+            recipe={selectedRecipe}
+            onClose={() => setSelectedRecipe(null)}
+            onEdit={() => {
+              setEditingRecipe(selectedRecipe);
+              setSelectedRecipe(null);
+              setShowForm(true);
+            }}
+            onCopy={handleCopyRecipe}
+            onFirstAction={checkAndShowOnboarding}
+          />
+        )}
+
+        {showImportModal && (
+          <RecipeImportModal
+            onClose={() => setShowImportModal(false)}
+            onImportComplete={(recipe) => {
+              setEditingRecipe({
+                ...recipe,
+                id: `temp-${Date.now()}`,
+                user_id: user!.id,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              } as Recipe);
+              setShowForm(true);
+            }}
+          />
+        )}
+
+        {showPhotoModal && (
+          <RecipePhotoModal
+            onClose={() => setShowPhotoModal(false)}
+            onImportComplete={(recipe) => {
+              setEditingRecipe({
+                ...recipe,
+                id: `temp-photo-${Date.now()}`,
+                user_id: user!.id,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              } as Recipe);
+              setShowForm(true);
+            }}
+          />
+        )}
+
+        {showProfileNudge && (
+          <ProfileNudgeModal 
+              onClose={() => setShowProfileNudge(false)}
+              onGoToSettings={() => {
+                  setView('settings');
+                  setShowProfileNudge(false);
+              }}
+          />
+        )}
+
+        {showOnboardingWizard && (
+          <OnboardingWizard onComplete={handleWizardComplete} />
+        )}
+
+        <ShoppingListDrawer
+          isOpen={showShoppingList}
+          onClose={() => setShowShoppingList(false)}
+        />
+      </Layout>
+    </ShoppingListProvider>
   );
 }
-
-
 
 export default App;

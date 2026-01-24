@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Users, Calendar, ChefHat, Sparkles, Plus, User, Shield, Settings as SettingsIcon, LogOut } from 'lucide-react';
+import { BookOpen, Users, Calendar, ChefHat, Sparkles, Plus, User, Shield, Settings as SettingsIcon, LogOut, ShoppingCart } from 'lucide-react';
 import { UserProfile } from '../lib/supabase';
 
 export type View = 'recipes' | 'community' | 'meals' | 'chat' | 'settings' | 'admin';
@@ -12,6 +12,7 @@ type LayoutProps = {
     signOut: () => Promise<void>;
     onNewRecipe: () => void;
     onNewMeal: () => void;
+    onOpenShoppingList?: () => void;
 };
 
 export function Layout({
@@ -22,6 +23,7 @@ export function Layout({
     signOut,
     onNewRecipe,
     onNewMeal,
+    onOpenShoppingList,
 }: LayoutProps) {
     const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -109,6 +111,16 @@ export function Layout({
                                 >
                                     <Plus className="w-5 h-5" />
                                     <span className="hidden lg:inline">{currentView === 'meals' ? 'New' : 'New'}</span>
+                                </button>
+                            )}
+                            
+                            {onOpenShoppingList && (
+                                <button
+                                    onClick={onOpenShoppingList}
+                                    className="p-2 min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition flex items-center justify-center touch-manipulation"
+                                    title="Shopping List"
+                                >
+                                    <ShoppingCart className="w-5 h-5" />
                                 </button>
                             )}
 
