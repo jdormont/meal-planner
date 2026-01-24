@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Users, Calendar, ChefHat, Sparkles, Plus, User, Shield, Settings as SettingsIcon, LogOut, ShoppingCart } from 'lucide-react';
 import { UserProfile } from '../lib/supabase';
+import { useShoppingList } from '../contexts/ShoppingListContext';
 
 export type View = 'recipes' | 'community' | 'meals' | 'chat' | 'settings' | 'admin';
 
@@ -26,6 +27,7 @@ export function Layout({
     onOpenShoppingList,
 }: LayoutProps) {
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const { items } = useShoppingList();
 
     return (
         <div className="min-h-screen bg-cream-200 texture-linen">
@@ -117,10 +119,13 @@ export function Layout({
                             {onOpenShoppingList && (
                                 <button
                                     onClick={onOpenShoppingList}
-                                    className="p-2 min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition flex items-center justify-center touch-manipulation"
+                                    className="p-2 min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition flex items-center justify-center touch-manipulation relative"
                                     title="Shopping List"
                                 >
                                     <ShoppingCart className="w-5 h-5" />
+                                    {items.length > 0 && (
+                                        <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                                    )}
                                 </button>
                             )}
 

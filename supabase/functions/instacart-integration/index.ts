@@ -5,7 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const INSTACART_API_URL = "https://connect.instacart.com/idp/v1/products/products_link";
+// Confirming this is the correct endpoint based on user feedback and docs
+const INSTACART_API_URL = "https://connect.dev.instacart.tools/idp/v1/products/products_link";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -20,9 +21,6 @@ serve(async (req) => {
       throw new Error('Missing Authorization header');
     }
 
-    // In a real scenario, you'd verification the JWT here or trust Supabase's gateway if configured.
-    // We'll proceed with the assumption that the caller is authenticated via the client.
-
     // 2. Parse Request Body
     const { items, landing_page_configuration, title } = await req.json();
 
@@ -31,8 +29,6 @@ serve(async (req) => {
     }
 
     // 3. Prepare Instacart Payload
-    // Map our internal items to Instacart LineItem schema if needed, 
-    // but assuming frontend sends pre-formatted or matching structure for MVP.
     const instacartPayload = {
       title: title || "Meal Planner Shopping List",
       link_type: "recipe",
@@ -40,43 +36,57 @@ serve(async (req) => {
         name: item.name,
         quantity: Number(item.quantity) || 1,
         unit: item.unit || "each",
-        // Optional fields
         display_text: item.display_text || item.name,
         filters: item.meta_data?.filters || undefined,
-        // Ensure quantity is a number
       })),
       landing_page_configuration: landing_page_configuration || {
         enable_pantry_items: true,
       }
     };
 
-    const instacartApiKey = Deno.env.get('INSTACART_CONNECT_API_KEY');
+    // 4. Get API Key
+    let instacartApiKey = Deno.env.get('INSTACART_CONNECT_API_KEY');
+    
     if (!instacartApiKey) {
       console.error("Missing INSTACART_CONNECT_API_KEY");
       throw new Error("Server configuration error: Missing Instacart API Key");
     }
 
-    console.log("Creating Instacart link with payload:", JSON.stringify(instacartPayload));
+    // Trim any potential whitespace from copy-pasting
+    instacartApiKey = instacartApiKey.trim();
 
-    // 4. Call Instacart API
-    const response = await fetch(INSTACART_API_URL, {
-      method: "POST",
-      headers: {
+    // Debug logging for API Key (masked)
+    const keyPrefix = instacartApiKey.substring(0, 8);
+    const keyLength = instacartApiKey.length;
+    console.log(`Using API Key starting with: ${keyPrefix}... (Total Length: ${keyLength})`);
+
+    const headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
         "Authorization": `Bearer ${instacartApiKey}`
-      },
+    };
+    
+    console.log("Creating Instacart link...");
+    console.log("Target URL:", INSTACART_API_URL);
+
+    // 5. Call Instacart API
+    const response = await fetch(INSTACART_API_URL, {
+      method: "POST",
+      headers: headers,
       body: JSON.stringify(instacartPayload)
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Instacart API Error:", data);
-      throw new Error(`Instacart API Error: ${JSON.stringify(data)}`);
+      console.error("Instacart API Error Status:", response.status);
+      console.error("Instacart API Error Body:", JSON.stringify(data));
+      throw new Error(`Instacart API Error (${response.status}): ${JSON.stringify(data)}`);
     }
 
-    // 5. Return Result
+    console.log("Instacart Success:", data);
+
+    // 6. Return Result
     return new Response(
       JSON.stringify(data),
       { 

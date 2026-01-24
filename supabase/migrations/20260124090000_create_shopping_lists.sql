@@ -1,3 +1,12 @@
+-- Create handle_updated_at function if it doesn't exist
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create shopping_lists table
 CREATE TABLE IF NOT EXISTS public.shopping_lists (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

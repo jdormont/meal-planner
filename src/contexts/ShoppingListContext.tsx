@@ -173,9 +173,25 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
       console.log("Instacart response:", data);
       return data.products_link_url;
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error interacting with Instacart:', err);
-      alert('Failed to create Instacart link. See console.');
+      
+      // Try to extract detailed error message
+      let errorMessage = 'Failed to create Instacart link.';
+      
+      if (err && typeof err === 'object') {
+        // Handle FunctionsHttpError explicitly if possible, or check for message property
+        if (err.context && typeof err.context.json === 'function') {
+           try {
+             const errorBody = await err.context.json();
+             if (errorBody.error) errorMessage += ` ${errorBody.error}`;
+           } catch (e) { /* ignore */ }
+        } else if (err.message) {
+           errorMessage += ` ${err.message}`;
+        }
+      }
+      
+      alert(errorMessage);
       return null;
     }
   };

@@ -33,9 +33,15 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
     if (!user) return;
     setAddingToCart(true);
     try {
-      const promises = recipe.ingredients.map(ingredient => 
-        addItem(ingredient.name, parseFloat(ingredient.quantity) || 1, ingredient.unit, recipe.id)
-      );
+      const promises = recipe.ingredients.map(ingredient => {
+        // Combined unit and name for better Instacart compatibility
+        // e.g. unit="Sesame", name="seeds" -> "Sesame seeds"
+        const combinedName = ingredient.unit 
+          ? `${ingredient.unit} ${ingredient.name}`
+          : ingredient.name;
+          
+        return addItem(combinedName, parseFloat(ingredient.quantity) || 1, 'each', recipe.id);
+      });
       await Promise.all(promises);
       alert('Ingredients added to shopping list!');
     } catch (error) {
