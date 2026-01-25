@@ -52,17 +52,26 @@ export default function PrivacyPage() {
                     <section className="mb-10">
                         <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <ChefHat className="w-6 h-6 text-gray-400" />
-                            2. AI & Third-Party Processors
+                            2. AI & Third-Party Integrations
                         </h2>
                         <p className="text-gray-700 leading-relaxed">
-                            Sous uses advanced Artificial Intelligence (AI) to help you generate recipes, parse ingredients, and answer cooking questions.
+                            Sous uses advanced Artificial Intelligence (AI) and third-party services to enhance your cooking experience.
                         </p>
-                        <div className="mt-4 pl-4 border-l-4 border-gray-200">
-                            <h4 className="font-bold text-gray-900 mb-2">How AI Data is Handled</h4>
-                            <p className="text-gray-700">
-                                When you use AI features (like "Generate with AI" or the "Chef Assistant"), the text and context you provide are sent to our AI providers (such as OpenAI or Google) for processing.
-                                <strong> This data is NOT used by our providers to train their models.</strong> We have strict agreements in place to ensure your data remains private.
-                            </p>
+                        <div className="mt-4 pl-4 border-l-4 border-gray-200 space-y-4">
+                            <div>
+                                <h4 className="font-bold text-gray-900 mb-2">How AI Data is Handled</h4>
+                                <p className="text-gray-700">
+                                    When you use AI features (like "Generate with AI" or the "Chef Assistant"), the text and context you provide are sent to our AI providers (such as OpenAI or Google) for processing.
+                                    <strong> This data is NOT used by our providers to train their models.</strong> We have strict agreements in place to ensure your data remains private.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900 mb-2">Instacart Integration</h4>
+                                <p className="text-gray-700">
+                                    If you choose to use the "Shop with Instacart" feature, we transmit the ingredients you select to Instacart to create a shopping cart.
+                                    Once this data is passed to Instacart, it is subject to <a href="https://www.instacart.com/company/privacy" target="_blank" rel="noopener noreferrer" className="text-terracotta-600 hover:text-terracotta-700 underline">Instacart's Privacy Policy</a>.
+                                </p>
+                            </div>
                         </div>
                     </section>
 
@@ -82,7 +91,10 @@ export default function PrivacyPage() {
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Terms of Service</h2>
                         <p className="text-gray-700 leading-relaxed">
                             By using Sous, you agree to these terms. You are responsible for maintaining the security of your account.
-                            We reserve the right to suspend accounts that violate our usage policies or engage in abusive behavior. Use of the Instacart integration is subject to Instacart's own terms and privacy policy.
+                            We reserve the right to suspend accounts that violate our usage policies or engage in abusive behavior.
+                        </p>
+                        <p className="text-gray-700 leading-relaxed mt-4">
+                            <strong>Instacart Integration:</strong> Use of the Instacart integration is subject to Instacart's <a href="https://www.instacart.com/terms" target="_blank" rel="noopener noreferrer" className="text-terracotta-600 hover:text-terracotta-700 underline">Terms of Service</a> and <a href="https://www.instacart.com/company/privacy" target="_blank" rel="noopener noreferrer" className="text-terracotta-600 hover:text-terracotta-700 underline">Privacy Policy</a>.
                         </p>
                     </section>
 
