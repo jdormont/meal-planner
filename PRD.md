@@ -1,6 +1,7 @@
 # Product Requirements Document: AI Recipe & Meal Planning App
 
 ## Executive Summary
+
 A comprehensive recipe management and meal planning application with AI-powered assistance for discovering recipes, planning weekly meals, and organizing multi-dish special occasion meals.
 
 **Last Updated: January 26, 2026**
@@ -9,6 +10,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Recent Updates (Dec 2025 - Jan 2026)
 
 ### ✅ Completed This Week (Jan 20-26)
+
 1. **Smart Recipe Scaling ("Ask Chef to Adjust")**
    - AI-powered recipe rescaling (servings, time, technique)
    - "Chef's Rationale" explaining adjustments (pan size, cooking time)
@@ -30,6 +32,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
    - Skill-based and time-based filtering for first experience
 
 ### ✅ Completed Earlier in Jan 2026
+
 1. **Drag-and-Drop Meal Planning**
    - Interactive calendar with drag-and-drop support
    - Seamlessly move meals between days
@@ -43,6 +46,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
    - Automatically stores images in Supabase Storage
 
 ### ✅ Completed Last Month (Dec 2025)
+
 1. **Advanced Cuisine Profiles**
    - Detailed cuisine preference management
    - Granular control over favorite cuisines and dishes
@@ -107,8 +111,8 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
     - "Collections" feature for grouping meals (e.g., event planning)
     - Responsive "Meal Form" with auto-complete recipe search
 
-
 ## Core User Problems
+
 1. Difficulty organizing and storing personal recipes
 2. Time-consuming meal planning for weekly shopping
 3. Complex coordination needed for special occasion meals with multiple dishes
@@ -116,6 +120,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 5. Desire to access recipes and meal plans from anywhere
 
 ## Target Users
+
 - Home cooks who want better recipe organization
 - People who meal prep and plan weekly menus
 - Hosts who organize special occasion meals (holidays, dinner parties)
@@ -126,6 +131,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Implementation Status
 
 ### ✅ Completed Features
+
 - **Recipe Management** - Full CRUD operations with search and filtering
 - **AI Chat Interface** - Multi-chat support with conversation history
 - **User Authentication** - Email/password with admin approval workflow
@@ -152,9 +158,11 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - **Shopping Lists** - Persistent lists with Instacart integration
 
 ### 🚧 In Progress
+
 - Special occasion event planning (Phase 3)
 
 ### 📋 Planned
+
 - Recipe collections/folders
 - Recipe versioning and history
 - Nutrition tracking
@@ -167,9 +175,11 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Key Features
 
 ### Phase 1: Foundation (MVP) ✅ COMPLETE
+
 **Goal:** Core recipe management and AI chat interface
 
 #### 1.1 AI Chat Interface ✅ COMPLETE
+
 - ✅ Natural language chat interface for recipe ideas
 - ✅ Integration with AI API (OpenAI and Anthropic support)
 - ✅ Contextual suggestions based on user preferences, cuisine, dietary restrictions
@@ -181,6 +191,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - ✅ Auto-parsing of prep time, cook time, ingredients, and instructions
 
 #### 1.2 Recipe Management ✅ COMPLETE
+
 - ✅ Create custom recipes with:
   - ✅ Title and description
   - ✅ Ingredient list with quantities and units
@@ -201,6 +212,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - ✅ Recipe rating system (thumbs up/down with feedback)
 
 #### 1.3 Data Persistence ✅ COMPLETE
+
 - ✅ Supabase database for all data storage
 - ✅ User authentication (email/password)
 - ✅ Cloud sync for cross-device access
@@ -208,9 +220,11 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - ✅ Admin approval workflow for new users
 
 ### Phase 2: Meal Planning 🚧 PARTIALLY COMPLETE
+
 **Goal:** Weekly meal planning and shopping list generation
 
 #### 2.1 Weekly Meal Planner 🚧 PARTIALLY COMPLETE
+
 - ✅ Create meals with date, name, and notes
 - ✅ Link multiple recipes to meals
 - ✅ Recipe completion tracking per meal
@@ -225,6 +239,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - 📋 Clone/duplicate meal plans (planned)
 
 #### 2.2 Shopping List & Instacart ✅ BETA
+
 - ✅ Automatic shopping list from meal plan recipes
 - ✅ Combine ingredients from multiple recipes
 - ✅ Smart parsing of ingredient strings
@@ -234,9 +249,11 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - 📋 Check off items while shopping (planned)
 
 ### Phase 3: Special Occasion Planning 📋 PLANNED
+
 **Goal:** Coordinate multi-dish meals for events
 
 #### 3.1 Event Meal Manager 📋 PLANNED
+
 - 📋 Create special occasion events (name, date, guest count)
 - 📋 Add multiple recipes to single event
 - 📋 Timeline view showing:
@@ -247,6 +264,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - 📋 Serving size auto-scaling based on guest count
 
 #### 3.2 Timeline Optimization 📋 PLANNED
+
 - 📋 Calculate when to start each dish
 - 📋 Work backwards from serving time
 - 📋 Visual timeline with overlapping tasks
@@ -254,9 +272,11 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - 📋 Prep-ahead suggestions
 
 ### Phase 4: Enhanced Features 🚧 PARTIALLY COMPLETE
+
 **Goal:** Polish and advanced functionality
 
 #### 4.1 AI Chat Enhancements ✅ COMPLETE
+
 - ✅ Recipe modification suggestions
 - ✅ Ingredient substitutions
 - ✅ Dietary restriction adaptations (comprehensive allergy handling)
@@ -265,9 +285,10 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - ✅ Context-aware suggestions based on user preferences
 - ✅ Learning from recipe ratings
 - ✅ **Smart Scaling**: Intelligent recipe resizing (servings, equipment, time)
-- 📋 Scaling recipes up/down (planned) - **COMPLETED**
+- ✅ Scaling recipes up/down (planned) - **COMPLETED**
 
 #### 4.2 Social & Sharing 🚧 PARTIALLY COMPLETE
+
 - ✅ Share individual recipes (public/private toggle)
 - ✅ Community recipe browsing
 - ✅ Import recipes from URLs
@@ -277,6 +298,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - 📋 Recipe comments and ratings from community (planned)
 
 #### 4.3 Nutrition & Preferences ✅ COMPLETE
+
 - ✅ Dietary preference filters and settings
 - ✅ Recipe ratings and feedback
 - ✅ User preferences (cuisines, dishes, dietary style)
@@ -290,9 +312,11 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - 📋 Cooking history analytics (planned)
 
 ### Phase 5: Admin & Security ✅ COMPLETE
+
 **Goal:** User management and security controls
 
 #### 5.1 Admin Dashboard ✅ COMPLETE
+
 - ✅ Admin user role system
 - ✅ User approval workflow (PENDING, APPROVED, REJECTED states)
 - ✅ View all registered users
@@ -303,6 +327,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - ✅ Comprehensive Row Level Security (RLS) policies
 
 #### 5.2 Advanced Allergy Safety System ✅ COMPLETE
+
 - ✅ Comprehensive allergy handling in AI prompts
 - ✅ Acknowledge restrictions clearly in recipe suggestions
 - ✅ Avoid all restricted ingredients and hidden sources
@@ -318,12 +343,14 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Technical Architecture
 
 ### Frontend
+
 - React with TypeScript
 - Tailwind CSS for styling
 - Lucide React for icons
 - Responsive design (mobile + desktop)
 
 ### Backend & Database
+
 - **Supabase** for:
   - PostgreSQL database
   - Authentication (email/password)
@@ -332,6 +359,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
   - Cloud storage (recipe images)
 
 ### AI Integration ✅ IMPLEMENTED
+
 - ✅ Support for both OpenAI (GPT-4o-mini) and Anthropic (Claude 3.5 Sonnet)
 - ✅ API calls proxied through Supabase Edge Functions
 - ✅ Context-aware prompts with user preferences
@@ -340,6 +368,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - ✅ Structured recipe parsing and saving
 
 ### Supabase Edge Functions ✅ DEPLOYED
+
 - ✅ **ai-chat** - Main AI assistant with personalization
 - ✅ **auto-tag-recipe** - Automatic recipe categorization
 - ✅ **get-recipe-image** - AI Image Generation (DALL-E 3)
@@ -351,10 +380,12 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ### Data Models ✅ IMPLEMENTED
 
 #### Users (Supabase Auth) ✅
+
 - Managed by Supabase Auth
 - Email/password authentication
 
 #### User Profiles ✅ NEW
+
 ```
 - id (references auth.users)
 - email
@@ -366,6 +397,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### User Preferences ✅ NEW
+
 ```
 - id
 - user_id
@@ -384,6 +416,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### Recipes ✅
+
 ```
 - id
 - user_id (owner)
@@ -404,6 +437,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### Recipe Ratings ✅ NEW
+
 ```
 - id
 - user_id
@@ -414,6 +448,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### Chats ✅ NEW
+
 ```
 - id
 - user_id
@@ -423,6 +458,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### Chat Messages ✅ NEW
+
 ```
 - id
 - chat_id
@@ -432,6 +468,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### Meals ✅
+
 ```
 - id
 - user_id
@@ -444,6 +481,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### Meal Recipes ✅ NEW
+
 ```
 - id
 - meal_id
@@ -456,6 +494,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### Special Events 📋 PLANNED
+
 ```
 - id
 - user_id
@@ -470,6 +509,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ```
 
 #### Shopping Lists 📋 PLANNED
+
 ```
 - id
 - user_id
@@ -486,6 +526,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Build Phases
 
 ### Phase 1: MVP ✅ COMPLETE
+
 1. ✅ Set up Supabase database and authentication
 2. ✅ Create recipe CRUD interface
 3. ✅ Implement AI chat interface
@@ -495,6 +536,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 7. ✅ User preferences and settings
 
 **Success Criteria:** ✅ ALL MET
+
 - ✅ Users can create, edit, delete recipes
 - ✅ AI chat provides personalized recipe suggestions
 - ✅ Recipes saved and retrieved from Supabase
@@ -502,6 +544,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - ✅ Recipe parsing from AI responses
 
 ### Phase 2: Meal Planning 🚧 PARTIALLY COMPLETE
+
 1. ✅ Meal creation with date and notes
 2. ✅ Link recipes to meals
 3. ✅ Save and retrieve meals
@@ -510,6 +553,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 6. 📋 Generate shopping lists from meals (planned)
 
 **Success Criteria:**
+
 - ✅ Users can create meals with multiple recipes
 - ✅ Meals saved and retrievable
 - ✅ Users can visually plan meals across a weekly calendar
@@ -518,17 +562,20 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - 📋 Full calendar view (planned)
 
 ### Phase 3: Special Occasions 📋 PLANNED
+
 1. 📋 Event creation interface
 2. 📋 Multi-recipe coordination
 3. 📋 Timeline calculator
 4. 📋 Event-specific shopping list
 
 **Success Criteria:**
+
 - 📋 Users can plan multi-dish events
 - 📋 Timeline shows optimal prep schedule
 - 📋 Guest count scaling works
 
 ### Phase 4: Polish & Enhancement 🚧 IN PROGRESS
+
 1. ✅ Enhanced AI capabilities (personalization, allergies, ratings)
 2. ✅ Admin dashboard and user management
 3. ✅ Comprehensive allergy safety system
@@ -542,6 +589,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## User Experience Principles
 
 ### Design
+
 - Clean, modern interface with excellent readability
 - Recipe cards with appetizing visuals
 - Intuitive drag-and-drop interactions
@@ -549,6 +597,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - Professional color palette (avoid purple/violet)
 
 ### Usability
+
 - Quick access to frequently used features
 - Minimal clicks to accomplish tasks
 - Smart defaults and suggestions
@@ -556,6 +605,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 - Responsive on all devices
 
 ### Performance
+
 - Fast search and filtering
 - Optimistic UI updates
 - Progressive loading for large lists
@@ -576,28 +626,33 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Future Considerations
 
 ### Platform Expansion
+
 - Native mobile app (React Native/Flutter)
 - Progressive Web App (PWA) for offline access
 - Browser extensions for recipe capture
 
 ### Smart Kitchen Integration
+
 - Voice input for hands-free cooking
 - Smart appliance integration (instant pot, air fryer timers)
 - Kitchen display mode for tablets
 
 ### Shopping & Delivery
+
 - Grocery delivery service integration
 - Price comparison across stores
 - Digital coupon integration
 - Store loyalty program connections
 
 ### Social Features
+
 - Collaborative meal planning with household members
 - Recipe sharing with friends and family
 - Cooking groups and challenges
 - Recipe contests and featured creators
 
 ### Advanced AI Features
+
 - Image recognition for ingredient identification
 - Voice-to-recipe (describe what you want, get suggestions)
 - Meal plan optimization for nutrition goals
@@ -609,30 +664,35 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Success Metrics
 
 ### User Engagement
+
 - Weekly active users (WAU) and monthly active users (MAU)
 - User retention rate (30-day, 90-day)
 - Average session duration
 - Sessions per user per week
 
 ### Content Creation
+
 - Recipes created per user (average and median)
 - Meal plans created per week
 - Public recipes shared (adoption rate)
 - Recipe ratings submitted
 
 ### AI Interaction
+
 - AI chat sessions per user
 - Messages per chat session
 - Recipe adoption rate from AI suggestions
 - Recipe import success rate
 
 ### Feature Usage
+
 - Recipe search frequency and success rate
 - Community recipe browsing engagement
 - Recipe import usage
 - Settings customization rate (preferences filled out)
 
 ### Growth & Retention
+
 - New user registration rate
 - Admin approval turnaround time
 - User churn rate
@@ -643,6 +703,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Questions & Decisions
 
 ### ✅ Resolved
+
 1. **Which AI provider API will be used?**
    - ✅ Both OpenAI (GPT-4o-mini) and Anthropic (Claude 3.5 Sonnet) supported
    - System detects provider based on API key format
@@ -664,6 +725,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
    - Never suggests trace amounts
 
 ### 📋 Open Questions
+
 1. What's the target max recipes per user? (affects performance and pagination strategy)
 2. Should meal plans have separate breakfast/lunch/dinner slots or stay flexible?
 3. Should there be collaborative meal planning features for households?
@@ -680,6 +742,7 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
 ## Next Steps
 
 ### Immediate Priorities (Q1 2026)
+
 1. **Complete Meal Planning Features**
    - ✅ Implement calendar view for weekly meal planning
    - ✅ Add drag-and-drop interface for recipes
@@ -701,59 +764,62 @@ Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart I
    - 📋 Progressive Web App (PWA) capabilities
 
 ### Mid-Term Development (Q2 2026)
-4. **Recipe Organization Enhancements**
+
+1. **Recipe Organization Enhancements**
    - Recipe collections/folders for better organization
    - Favorite recipes bookmarking system
    - Advanced filtering (by rating, date added, last cooked)
    - Recipe search improvements
 
-5. **Special Occasion Planning (Phase 3)**
+2. **Special Occasion Planning (Phase 3)**
    - Event creation and management
    - Timeline optimization for multi-dish meals
    - Guest count scaling
    - Oven/stovetop coordination
    - Prep-ahead suggestions
 
-6. **Enhanced Sharing & Export**
+3. **Enhanced Sharing & Export**
    - PDF export with print-friendly formatting
    - Share meal plans with others
    - Recipe comments from community users
    - Recipe ratings on community recipes
 
 ### Long-Term Vision (Q3-Q4 2026)
-7. **Kitchen Management**
+
+1. **Kitchen Management**
    - Kitchen inventory tracking
    - Pantry management
    - Expiration date tracking
    - "What can I make?" based on inventory
    - Leftover tracking and suggestions
 
-8. **Batch Cooking & Meal Prep**
+2. **Batch Cooking & Meal Prep**
    - Batch cooking recipes and guides
    - Meal prep workflows
    - Container/portion planning
    - Reheating instructions
 
-9. **Recipe Intelligence**
+3. **Recipe Intelligence**
    - Recipe versioning and change history
    - Cooking notes and modifications log
    - "Last cooked" tracking
    - Seasonal ingredient suggestions
    - Cost estimation per recipe
 
-10. **Nutrition & Health**
+4. **Nutrition & Health**
     - Nutritional information calculation
     - Macro tracking
     - Dietary goal monitoring
     - Health-focused meal planning
 
-11. **Analytics & Insights**
+5. **Analytics & Insights**
     - Cooking history and patterns
     - Recipe popularity metrics
     - Personalized recommendations based on usage
     - Cost analysis and budgeting
 
 ### Ongoing
+
 - User testing and feedback collection
 - Performance optimization
 - Bug fixes and refinements
