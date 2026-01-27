@@ -183,9 +183,6 @@ export function RecipeList({
                   <span className="text-4xl">🍳</span>
                 </div>
               )}
-              <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-medium text-gray-700 shadow-sm">
-                {(recipe.prep_time_minutes || 0) + (recipe.cook_time_minutes || 0)} min
-              </div>
             </div>
             <div className="p-4">
               <div className="flex justify-between items-start mb-2">
@@ -214,7 +211,7 @@ export function RecipeList({
               <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{(recipe.prep_time_minutes || 0) + (recipe.cook_time_minutes || 0)}m</span>
+                  <span>{recipe.total_time}m</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
@@ -227,11 +224,34 @@ export function RecipeList({
               </p>
 
               <div className="flex flex-wrap gap-2">
-                {recipe.tags?.slice(0, 3).map((tag) => (
-                  <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
-                    {tag}
-                  </span>
-                ))}
+                {(() => {
+                  const specialTags = ['AI Generated', 'Imported'];
+                  const computedTags = [...(recipe.tags || [])];
+                  
+                  // Add 'Imported' tag if source_url exists and not already present
+                  if (recipe.source_url && !computedTags.includes('Imported')) {
+                    computedTags.unshift('Imported');
+                  }
+
+                  // Sort to put special tags first
+                  computedTags.sort((a, b) => {
+                    const aSpecial = specialTags.includes(a);
+                    const bSpecial = specialTags.includes(b);
+                    if (aSpecial && !bSpecial) return -1;
+                    if (!aSpecial && bSpecial) return 1;
+                    return 0;
+                  });
+
+                  return computedTags.slice(0, 3).map((tag) => (
+                    <span key={tag} className={`px-2 py-1 rounded-md text-xs ${
+                      tag === 'AI Generated' ? 'bg-indigo-100 text-indigo-700 font-medium' :
+                      tag === 'Imported' ? 'bg-emerald-100 text-emerald-700 font-medium' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {tag}
+                    </span>
+                  ));
+                })()}
                 {(recipe.tags?.length || 0) > 3 && (
                   <span className="px-2 py-1 bg-gray-50 text-gray-400 rounded-md text-xs">
                     +{recipe.tags!.length - 3}
