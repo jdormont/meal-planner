@@ -44,15 +44,7 @@ export function AuthForm({ mode: initialMode = 'signin', onSuccess }: AuthFormPr
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="flex items-center justify-center mb-6">
-        <div className="bg-terracotta-100 p-3 rounded-2xl">
-          {isSignUp ? (
-            <UserPlus className="w-8 h-8 text-terracotta-600" />
-          ) : (
-            <LogIn className="w-8 h-8 text-terracotta-600" />
-          )}
-        </div>
-      </div>
+
 
       <h2 className="text-3xl font-bold text-center mb-2 text-gray-900">
         {isSignUp ? 'Create your account' : 'Welcome back'}

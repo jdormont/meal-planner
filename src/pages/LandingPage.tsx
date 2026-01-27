@@ -81,7 +81,8 @@ export function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-visible px-6">
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-12 lg:pt-24 lg:pb-24 overflow-visible px-6">
           <div className="max-w-4xl mx-auto text-center z-10 relative mb-12">
              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100/50 border border-orange-200 text-orange-700 text-xs font-semibold uppercase tracking-wider mb-6 animate-fade-in-up">
                 <Sparkles size={12} />
@@ -131,9 +132,9 @@ export function LandingPage() {
       </section>
 
       {/* Bento Features Section */}
-      <section className="py-24 bg-white border-t border-stone-100">
+      <section className="py-16 bg-white border-t border-stone-100">
           <div className="max-w-7xl mx-auto px-6">
-              <div className="text-center mb-16">
+              <div className="text-center mb-12">
                   <h2 className="text-3xl lg:text-4xl font-serif text-gray-900 mb-4">Everything you need to master your kitchen.</h2>
               </div>
 
@@ -155,19 +156,14 @@ export function LandingPage() {
                       {/* Visual: Mock Chat Bubbles */}
                       <div className="mt-8 relative max-w-lg space-y-3">
                           <div className="bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm border border-stone-100 w-[80%] transform transition-transform group-hover:translate-x-1">
-                              <div className="flex gap-2">
-                                  <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0" />
-                                  <div className="space-y-1 w-full">
-                                    <div className="h-2 bg-gray-100 rounded w-3/4" />
-                                    <div className="h-2 bg-gray-100 rounded w-1/2" />
-                                  </div>
-                              </div>
+                              <p className="text-sm text-gray-600">
+                                "I have some kale and chickpeas. What can I make?"
+                              </p>
                           </div>
-                          <div className="bg-orange-500 text-white rounded-2xl rounded-tr-sm p-4 shadow-sm ml-auto w-[80%] transform transition-transform group-hover:-translate-x-1 delay-75">
-                              <div className="space-y-1">
-                                <div className="h-2 bg-white/20 rounded w-full" />
-                                <div className="h-2 bg-white/20 rounded w-2/3" />
-                              </div>
+                          <div className="bg-orange-500 text-white rounded-2xl rounded-tr-sm p-4 shadow-sm ml-auto w-[85%] transform transition-transform group-hover:-translate-x-1 delay-75">
+                              <p className="text-sm shadow-sm">
+                                "How about a <span className="font-bold underlineDecoration-white">Crispy Chickpea Caesar?</span> Ready in 15 mins!"
+                              </p>
                           </div>
                       </div>
                   </div>
@@ -188,26 +184,23 @@ export function LandingPage() {
                       </div>
                   </div>
 
-                  {/* Smart Scaling: md:col-span-2 md:row-span-2 bg-stone-900 text-white */}
-                  <div className="md:col-span-2 md:row-span-2 bg-stone-900 rounded-3xl p-8 relative overflow-hidden flex flex-col group">
-                       <div className="z-10 relative mb-4">
-                          <div className="w-12 h-12 bg-stone-800 rounded-2xl flex items-center justify-center text-white mb-6">
+                  {/* Smart Scaling: md:col-span-2 md:row-span-2 */}
+                  <div className="md:col-span-2 md:row-span-2 rounded-3xl relative overflow-hidden group">
+                       <img 
+                           src="/smart-scaling.png" 
+                           alt="Smart Scaling Interface" 
+                           className="absolute inset-0 w-full h-full object-cover object-left transition-transform duration-700 group-hover:scale-105"
+                       />
+                       <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent" />
+                       
+                       <div className="relative z-10 p-8">
+                          <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white mb-6">
                               <ChefHat size={24} />
                           </div>
-                          <h3 className="text-xl font-bold font-serif mb-2">Smart Scaling</h3>
-                          <p className="text-stone-400 text-sm">
+                          <h3 className="text-xl font-bold font-serif text-white mb-2">Smart Scaling</h3>
+                          <p className="text-white/90 text-sm">
                               Cooking for one or a crowd? Sous scales ingredients and times instantly.
                           </p>
-                       </div>
-                       
-                       <div className="absolute bottom-0 left-0 right-0 p-6 pt-0 transform transition-transform group-hover:scale-105 duration-500 origin-bottom">
-                           <div className="rounded-xl overflow-hidden shadow-2xl border border-stone-700/50">
-                               <img 
-                                   src="/smart-scaling.png" 
-                                   alt="Smart Scaling Interface" 
-                                   className="w-full h-auto object-cover"
-                               />
-                           </div>
                        </div>
                   </div>
 
@@ -242,7 +235,7 @@ export function LandingPage() {
       {showAuthModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowAuthModal(false)} />
-          <div className="relative bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl animate-fade-in-up">
+          <div className="relative bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto">
             <button 
               onClick={() => setShowAuthModal(false)}
               className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50"
