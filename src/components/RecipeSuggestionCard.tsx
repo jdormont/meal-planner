@@ -43,8 +43,18 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick }: RecipeSugg
     return (
         <div
             onClick={onClick}
-            className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm hover:shadow-md hover:border-orange-200 transition-all cursor-pointer flex flex-col gap-3 h-full group"
+            className="bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md hover:border-orange-200 transition-all cursor-pointer flex flex-col h-full group overflow-hidden"
         >
+            {suggestion.image_url && (
+                <div className="h-40 w-full overflow-hidden">
+                    <img 
+                        src={suggestion.image_url} 
+                        alt={suggestion.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                </div>
+            )}
+            <div className="p-4 flex flex-col gap-3 flex-1">
             <div className="flex justify-between items-start gap-3">
                 <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-orange-600 transition-colors">
                     {suggestion.title}
@@ -84,6 +94,7 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick }: RecipeSugg
             <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
                 {suggestion.description}
             </p>
+            </div>
         </div>
     );
 }

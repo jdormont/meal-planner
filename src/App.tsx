@@ -5,7 +5,7 @@ import { useAuth } from './contexts/AuthContext';
 import { useRecipes } from './hooks/useRecipes';
 import { useMeals } from './hooks/useMeals';
 import { useAnalytics } from './hooks/useAnalytics';
-import { Auth } from './components/Auth';
+import { LandingPage } from './pages/LandingPage';
 import { AccountStatus } from './components/AccountStatus';
 import { AdminDashboard } from './components/AdminDashboard';
 import { RecipeList } from './components/RecipeList';
@@ -24,7 +24,7 @@ import { RecipePhotoModal } from './components/RecipePhotoModal';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { Layout, View } from './components/Layout';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, BookOpen, Globe, Camera, Users, Calendar, ChevronDown, Sparkles } from 'lucide-react';
+import { Plus, BookOpen, Globe, Camera, Users, Calendar, Sparkles } from 'lucide-react';
 import { parseAIRecipe, parseIngredient } from './utils/recipeParser';
 import { RecipeSuggestion } from './components/RecipeSuggestionCard';
 import { ProfileNudgeModal } from './components/ProfileNudgeModal';
@@ -312,7 +312,7 @@ function App() {
   }
 
   if (!user) {
-    return <Auth />;
+    return <LandingPage />;
   }
 
   if (!userProfile) {
