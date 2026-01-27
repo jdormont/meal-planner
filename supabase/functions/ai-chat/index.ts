@@ -450,7 +450,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief, isAdmin, forceCuisine } = await req.json();
+    const { messages, apiKey: clientApiKey, ratingHistory, userPreferences, userId, weeklyBrief, isAdmin, forceCuisine, action, recipe, targetServings } = await req.json();
 
     const authHeader = req.headers.get("Authorization");
 
@@ -765,6 +765,72 @@ ${namesList}
    - If we have seen Pasta 2+ times, suggest Rice, Potatoes, or Bread.
 `;
       }
+    }
+
+
+    if (action === 'rescale_recipe') {
+      const rescaleSystemPrompt = `You are an expert chef with a deep understanding of food physics and culinary technique.
+
+The user wants to scale a recipe from ${recipe.servings} servings to ${targetServings} servings.
+
+YOUR GOAL:
+Rewrite the recipe to work perfectly for this new volume. Do NOT just multiply ingredients by a number.
+
+CRITICAL RESPONSIBILITIES:
+1. INGREDIENTS: Scale quantities mathematically, but round to useful kitchen measurements.
+2. PHYSICS CHECK:
+   - Adjust cooking times (larger volumes often take longer, but not linearly).
+   - Adjust pan sizes (e.g., "Use two baking sheets" instead of one).
+   - Adjust technique (e.g., "Sear in batches" to avoid overcrowding).
+3. SEASONING: Be careful with salt, spice, and leavening agents. They often scale non-linearly. Use your chef's judgment.
+4. RATIONALE: You MUST explain your key scaling decisions in the "scaling_rationale" field. Why did you change the time? Why a different pan?
+
+OUTPUT SCHEMA (JSON ONLY):
+{
+  "title": "string (Original Title - Scaled for X)",
+  "scaling_rationale": "string (Explain the 'Why' behind your changes)",
+  "description": "string (Brief summary)",
+  "ingredients": ["string (New quantities)"],
+  "instructions": ["string (Updated steps with new times/methods)"],
+  "total_time": number (New estimated time in minutes),
+  "servings": number (The target servings: ${targetServings}),
+  "notes": "string (Any extra chef tips)"
+}`;
+
+       const userMessage = `Here is the original recipe:
+Title: ${recipe.title}
+Original Servings: ${recipe.servings}
+Original Time: ${recipe.total_time}
+Ingredients: ${JSON.stringify(recipe.ingredients)}
+Instructions: ${JSON.stringify(recipe.instructions)}
+
+Please rescale this to ${targetServings} servings.`;
+
+       try {
+         let resultContext = '';
+         if (modelConfig.provider === 'openai') {
+           resultContext = await callOpenAI(apiKey, modelConfig.model_identifier, [{role: 'user', content: userMessage}], rescaleSystemPrompt);
+         } else if (modelConfig.provider === 'anthropic') {
+           resultContext = await callAnthropic(apiKey, modelConfig.model_identifier, [{role: 'user', content: userMessage}], rescaleSystemPrompt);
+         } else if (modelConfig.provider === 'google') {
+           resultContext = await callGemini(apiKey, modelConfig.model_identifier, [{role: 'user', content: userMessage}], rescaleSystemPrompt);
+         }
+
+        // Clean up markdown block if present
+        const jsonStr = resultContext.replace(/```json\n?|```/g, "").trim();
+        const data = JSON.parse(jsonStr);
+        
+        return new Response(JSON.stringify(data), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+
+       } catch (error) {
+         console.error("Error rescaling recipe:", error);
+         return new Response(
+           JSON.stringify({ error: "Failed to rescale recipe", details: error.message }),
+           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+         );
+       }
     }
 
     const systemPrompt = `You are a structured data engine. You must output a valid JSON object matching the following schema. Do not output Markdown formatting outside the JSON.

@@ -670,6 +670,7 @@ function App() {
             }}
             onCopy={handleCopyRecipe}
             onFirstAction={checkAndShowOnboarding}
+            onOpenRecipe={setSelectedRecipe}
           />
         )}
 

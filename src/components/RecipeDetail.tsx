@@ -3,6 +3,7 @@ import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
 import { useShoppingList } from '../contexts/ShoppingListContext';
 import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, ShoppingCart, AlertTriangle, Minus, Plus } from 'lucide-react';
 import { scaleIngredient } from '../utils/recipeScaler';
+import { parseIngredient } from '../utils/recipeParser';
 import { marked } from 'marked';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,9 +13,10 @@ type RecipeDetailProps = {
   onEdit: () => void;
   onCopy?: (recipe: Recipe) => void;
   onFirstAction?: () => void;
+  onOpenRecipe?: (recipe: Recipe) => void;
 };
 
-export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }: RecipeDetailProps) {
+export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, onOpenRecipe }: RecipeDetailProps) {
   const { user } = useAuth();
   const isOwner = user?.id === recipe.user_id;
   const { addItem } = useShoppingList();
@@ -29,6 +31,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
   const [addingToMeal, setAddingToMeal] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [currentServings, setCurrentServings] = useState(recipe.servings);
+  const [isRescaling, setIsRescaling] = useState(false);
   const totalTime = recipe.total_time;
 
   useEffect(() => {
@@ -50,6 +53,59 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
   const handleUpdateServings = (increment: number) => {
     const newServings = Math.max(1, currentServings + increment);
     setCurrentServings(newServings);
+  };
+
+  const handleAskChef = async () => {
+    if (!user) return;
+    setIsRescaling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          action: 'rescale_recipe',
+          recipe: recipe,
+          targetServings: currentServings,
+        }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      // Save new recipe
+      const newRecipeData = {
+        user_id: user.id,
+        title: data.title,
+        description: data.description,
+        ingredients: data.ingredients.map((ing: string) => parseIngredient(ing)),
+        instructions: data.instructions,
+        total_time: data.total_time,
+        servings: data.servings,
+        notes: `**Chef's Scaling Rationale:** ${data.scaling_rationale}\n\n${data.notes || ''}`,
+        tags: [...(recipe.tags || []), 'Scaled'],
+        image_url: recipe.image_url,
+        source_url: recipe.source_url,
+        recipe_type: recipe.recipe_type,
+        is_shared: false
+      };
+
+      const { data: savedRecipe, error: saveError } = await supabase
+        .from('recipes')
+        .insert(newRecipeData)
+        .select()
+        .single();
+
+      if (saveError) throw saveError;
+
+      alert('Recipe rescaled and saved to your cookbook!');
+      if (onOpenRecipe && savedRecipe) {
+        onOpenRecipe(savedRecipe);
+      }
+      
+    } catch (error) {
+      console.error('Error asking chef:', error);
+      alert('Chef is busy right now. Please try again later.');
+    } finally {
+      setIsRescaling(false);
+    }
   };
 
   const showPhysicsWarning = currentServings > recipe.servings * 2 || currentServings < recipe.servings * 0.5;
@@ -289,10 +345,17 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
                   Cooking times and pan sizes may need adjustment for this size.
                 </p>
                 <button 
-                  className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-900 underline"
-                  onClick={() => alert("This feature is coming soon! Our chefs are working on it.")}
+                  className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-900 underline flex items-center gap-1"
+                  onClick={handleAskChef}
+                  disabled={isRescaling}
                 >
-                  Ask Chef to Adjust?
+                  {isRescaling ? (
+                    <>
+                      <span className="animate-spin">⏳</span> Chef is thinking...
+                    </>
+                  ) : (
+                    "Ask Chef to Adjust?"
+                  )}
                 </button>
               </div>
               <button 
