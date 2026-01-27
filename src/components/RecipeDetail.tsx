@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
 import { useShoppingList } from '../contexts/ShoppingListContext';
-import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, ShoppingCart } from 'lucide-react';
+import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, ShoppingCart, AlertTriangle, Minus, Plus } from 'lucide-react';
+import { scaleIngredient } from '../utils/recipeScaler';
 import { marked } from 'marked';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -27,13 +28,37 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [addingToMeal, setAddingToMeal] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [currentServings, setCurrentServings] = useState(recipe.servings);
   const totalTime = recipe.total_time;
+
+  useEffect(() => {
+    setCurrentServings(recipe.servings);
+  }, [recipe.servings]);
+
+  const scaledIngredients = useMemo(() => {
+    return recipe.ingredients.map(ingredient =>
+      scaleIngredient(
+        ingredient.name,
+        ingredient.quantity,
+        ingredient.unit,
+        recipe.servings,
+        currentServings
+      )
+    );
+  }, [recipe.ingredients, recipe.servings, currentServings]);
+
+  const handleUpdateServings = (increment: number) => {
+    const newServings = Math.max(1, currentServings + increment);
+    setCurrentServings(newServings);
+  };
+
+  const showPhysicsWarning = currentServings > recipe.servings * 2 || currentServings < recipe.servings * 0.5;
 
   const handleAddToShoppingList = async () => {
     if (!user) return;
     setAddingToCart(true);
     try {
-      const promises = recipe.ingredients.map(ingredient => {
+      const promises = scaledIngredients.map(ingredient => {
         // Combined unit and name for better Instacart compatibility
         // e.g. unit="Sesame", name="seeds" -> "Sesame seeds"
         const combinedName = ingredient.unit 
@@ -235,11 +260,50 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
               <Users className="w-5 h-5 text-terracotta-600" />
               <div>
                 <div className="text-sm text-gray-500">{recipe.recipe_type === 'cocktail' ? 'Servings/Drinks' : 'Servings'}</div>
-                <div className="font-semibold">{recipe.servings}</div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleUpdateServings(-1)}
+                    className="p-1 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                    aria-label="Decrease servings"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="font-semibold min-w-[1.5rem] text-center">{currentServings}</span>
+                  <button 
+                    onClick={() => handleUpdateServings(1)}
+                    className="p-1 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                    aria-label="Increase servings"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
-
           </div>
+
+          {showPhysicsWarning && (
+            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-amber-800 font-medium">
+                  Cooking times and pan sizes may need adjustment for this size.
+                </p>
+                <button 
+                  className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-900 underline"
+                  onClick={() => alert("This feature is coming soon! Our chefs are working on it.")}
+                >
+                  Ask Chef to Adjust?
+                </button>
+              </div>
+              <button 
+                onClick={() => setCurrentServings(recipe.servings)} 
+                className="text-amber-400 hover:text-amber-600"
+                aria-label="Reset servings"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {recipe.recipe_type === 'cocktail' && recipe.cocktail_metadata && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -316,10 +380,10 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction }:
                     </span>
                   </h2>
                   <ul className="space-y-3">
-                    {recipe.ingredients.map((ingredient, idx) => (
+                    {scaledIngredients.map((ingredient, idx) => (
                       <li key={idx} className="flex items-start gap-3 p-3 rounded-lg hover:bg-terracotta-50 transition-colors group">
                         <div className="mt-1.5 w-2 h-2 rounded-full bg-terracotta-400 group-hover:bg-terracotta-600 transition-colors" />
-                        <span className="text-gray-700 font-medium text-lg leading-relaxed">
+                        <span className={`font-medium text-lg leading-relaxed ${ingredient.isScaled ? 'text-orange-600' : 'text-gray-700'}`}>
                           {ingredient.quantity} {ingredient.unit} {ingredient.name}
                         </span>
                       </li>
