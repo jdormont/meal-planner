@@ -69,6 +69,19 @@ Finally, the AI looks at the current conversation.
   - **Planner Mode:** Detected via the `weeklyBrief` flag. This triggers `weeklyBriefContext` (lines 644-655), which strictly instructs the AI to *return an empty suggestions array* and ask clarifying questions first.
   - **Cuisine Detection:** `detectCuisineFromMessages` (lines 224-329) analyzes the chat conversation to identify if a specific cuisine is being discussed, potentially guiding the recommendations.
 
+## 6. Smart Refinement & Scaling (The "Chef's Touch")
+
+Once a recipe is chosen, the AI can refine and adjust it using the `rescale_recipe` mode.
+
+- **Goal:** Provide expert-level adjustments when portions change, rather than simple multiplication.
+- **Logic:**
+    - **Physics Check:** The AI adjusts cooking times (e.g., larger roasts take longer) and equipment (e.g., "Use two baking sheets").
+    - **Seasoning Curve:** Salt and spices are scaled non-linearly to prevent over-seasoning.
+    - **Rationale:** The AI must explain *why* it made changes (e.g., "Reduced salt by 10% as it concentrates").
+- **Code Reference:**
+    - Triggered by `action: 'rescale_recipe'` in `supabase/functions/ai-chat/index.ts`.
+    - Uses a dedicated `rescaleSystemPrompt` focused on culinary physics.
+
 ---
 
 # Future Improvements: Phased Recommendations Plan

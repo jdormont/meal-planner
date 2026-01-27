@@ -21,6 +21,8 @@ A comprehensive recipe management and meal planning application with AI-powered 
 - **Recipe Generation** - AI creates complete recipes that are automatically saved
 - **Learning System** - Improves suggestions based on your ratings and cooking history
 - **Multi-Chat Support** - Maintain multiple conversation threads
+- **Smart Scaling** - AI-powered recipe resizing with "Chef's Rationale" adjustments
+- **Contextual Adaptation** - Automatically adjusts cooking techniques for scaled volumes
 
 ### Meal Planning
 - **Weekly Meal Planning** - Plan meals with dates, notes, and multiple recipes
@@ -112,6 +114,7 @@ A comprehensive recipe management and meal planning application with AI-powered 
    - `admin-get-users` - User management
    - `admin-update-user-status` - User approval
    - `admin-delete-user` - User deletion
+   - `instacart-integration` - Shopping list checkout (Beta)
 
    You'll need to set up your AI API key as an environment variable in Supabase Edge Functions:
    ```
@@ -153,9 +156,13 @@ A comprehensive recipe management and meal planning application with AI-powered 
 │   │   ├── RecipeList.tsx
 │   │   ├── RecipePhotoModal.tsx
 │   │   ├── RecipeSearch.tsx
-│   │   └── Settings.tsx
+│   │   ├── Settings.tsx
+│   │   ├── RecipeLane.tsx
+│   │   ├── OnboardingLaunchpad.tsx
+│   │   └── ShoppingListDrawer.tsx
 │   ├── contexts/            # React contexts
-│   │   └── AuthContext.tsx
+│   │   ├── AuthContext.tsx
+│   │   └── ShoppingListContext.tsx
 │   ├── lib/                 # Utilities and configuration
 │   │   └── supabase.ts
 │   ├── App.tsx              # Main application component
@@ -169,7 +176,8 @@ A comprehensive recipe management and meal planning application with AI-powered 
 │   │   ├── import-recipe/
 │   │   ├── admin-get-users/
 │   │   ├── admin-update-user-status/
-│   │   └── admin-delete-user/
+│   │   ├── admin-delete-user/
+│   │   └── instacart-integration/
 │   └── migrations/          # Database migrations
 └── package.json
 ```
@@ -186,6 +194,8 @@ A comprehensive recipe management and meal planning application with AI-powered 
 - **meal_recipes** - Junction table linking recipes to meals
 - **chats** - AI chat conversations
 - **chat_messages** - Individual messages in chats
+- **shopping_lists** - Persistent shopping lists
+- **shopping_list_items** - Items within shopping lists
 
 All tables have Row Level Security (RLS) enabled to ensure users can only access their own data.
 

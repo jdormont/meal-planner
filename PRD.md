@@ -3,12 +3,33 @@
 ## Executive Summary
 A comprehensive recipe management and meal planning application with AI-powered assistance for discovering recipes, planning weekly meals, and organizing multi-dish special occasion meals.
 
-**Last Updated: January 7, 2026
-Current Status: Phase 2 Complete + Phase 4 Enhancements - Full recipe management, AI chat, meal planning (with drag-and-drop), admin system, and AI image generation operational
+**Last Updated: January 26, 2026**
+Current Status: Phase 2 & 4 Active - Recipe Scaling, Onboarding, and Instacart Integration in focus.
 
 ## Recent Updates (Dec 2025 - Jan 2026)
 
-### ✅ Completed This Week (Jan 1-7)
+### ✅ Completed This Week (Jan 20-26)
+1. **Smart Recipe Scaling ("Ask Chef to Adjust")**
+   - AI-powered recipe rescaling (servings, time, technique)
+   - "Chef's Rationale" explaining adjustments (pan size, cooking time)
+   - Automatic versioning of scaled recipes
+
+2. **Recipe Card UI Polish**
+   - Corrected time display logic (using `total_time`)
+   - Prioritized attribution tags ("Imported", "AI Generated")
+   - Cleaned up duplicate information (removed overlay time)
+
+3. **Instacart Integration (Beta)**
+   - Turn recipes into persistent shopping lists
+   - Smart ingredient parsing and aggregation
+   - One-click checkout via Instacart Connect API
+
+4. **Onboarding Wizard (FTUE)**
+   - Interactive questionnaire for new users (Allergies, Skill, Time)
+   - "First Wow": Instant personalized recipe suggestions
+   - Skill-based and time-based filtering for first experience
+
+### ✅ Completed Earlier in Jan 2026
 1. **Drag-and-Drop Meal Planning**
    - Interactive calendar with drag-and-drop support
    - Seamlessly move meals between days
@@ -126,12 +147,14 @@ Current Status: Phase 2 Complete + Phase 4 Enhancements - Full recipe management
 - **Responsive UI** - Optimized meal creation flow for all devices
 - **Drag-and-Drop** - Drag-and-drop interface for organizing meals on the calendar
 - **AI Image Generation** - Custom food images generated via DALL-E 3
+- **Smart Scaling** - "Ask Chef to Adjust" for intelligent recipe resizing
+- **Onboarding Wizard** - Personalized first-time user experience
+- **Shopping Lists** - Persistent lists with Instacart integration
 
 ### 🚧 In Progress
-- Shopping list generation from meal plans
+- Special occasion event planning (Phase 3)
 
 ### 📋 Planned
-- Special occasion event planning with timeline optimization
 - Recipe collections/folders
 - Recipe versioning and history
 - Nutrition tracking
@@ -201,14 +224,14 @@ Current Status: Phase 2 Complete + Phase 4 Enhancements - Full recipe management
 - ✅ **New Feature: Collections** - Create independent lists of meals (e.g., "Camping Trip 2026")
 - 📋 Clone/duplicate meal plans (planned)
 
-#### 2.2 Shopping List Generator 📋 PLANNED
-- 📋 Automatic shopping list from meal plan recipes
-- 📋 Combine ingredients from multiple recipes
-- 📋 Smart quantity aggregation
-- 📋 Categorize by grocery store sections
-- 📋 Manual add/edit/remove items
-- 📋 Check off items while shopping
-- 📋 Export/print shopping list
+#### 2.2 Shopping List & Instacart ✅ BETA
+- ✅ Automatic shopping list from meal plan recipes
+- ✅ Combine ingredients from multiple recipes
+- ✅ Smart parsing of ingredient strings
+- ✅ **Instacart Integration**: One-click checkout via Instacart Connect
+- ✅ Persistent shopping lists saved to database
+- 📋 Categorize by grocery store sections (planned)
+- 📋 Check off items while shopping (planned)
 
 ### Phase 3: Special Occasion Planning 📋 PLANNED
 **Goal:** Coordinate multi-dish meals for events
@@ -241,7 +264,8 @@ Current Status: Phase 2 Complete + Phase 4 Enhancements - Full recipe management
 - ✅ "What can I make with these ingredients?"
 - ✅ Context-aware suggestions based on user preferences
 - ✅ Learning from recipe ratings
-- 📋 Scaling recipes up/down (planned)
+- ✅ **Smart Scaling**: Intelligent recipe resizing (servings, equipment, time)
+- 📋 Scaling recipes up/down (planned) - **COMPLETED**
 
 #### 4.2 Social & Sharing 🚧 PARTIALLY COMPLETE
 - ✅ Share individual recipes (public/private toggle)
