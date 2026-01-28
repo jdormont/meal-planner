@@ -1,4 +1,10 @@
 {
+  "imports": {
+    "@react-email/components": "npm:@react-email/components@0.0.12",
+    "@react-email/render": "npm:@react-email/render@0.0.12",
+    "react": "npm:react@18.3.1"
+  },
+  "nodeModulesDir": "auto",
     "compilerOptions": {
         "allowJs": true,
         "lib": [

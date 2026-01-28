@@ -1,7 +1,10 @@
+// deno-lint-ignore-file
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { Message, UserPreferences, ModelConfig, RatingHistoryItem } from "../_shared/types.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { render } from "npm:@react-email/render@0.0.12";
+import { WeeklyMenuEmail } from "../_shared/emails/WeeklyMenuEmail.tsx";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -258,8 +261,12 @@ Deno.serve(async (req) => {
     4. Vegetarian/Vegan dish (Grain bowl, Pasta, Salad) - Plant forward.
     5. Wildcard (Something fun: Tacos, Pizza, Stir Fry, Casserole) - Family favorite.
     
+    CUISINE MIX:
+    Ensure a mix of different cuisines (e.g., Italian, Mexican, Indian, Japanese, etc.)
+
     COOKING METHODS MIX:
-    Ensure a mix of: 1 Sheet Pan/One Pot (Easy), 1 Slow Cook/Simmer, 1 Quick Sauté/Grill.
+    1. Ensure a mix of: 1 Sheet Pan/One Pot (Easy), 1 Slow Cook/Simmer, 1 Quick Sauté/Grill.
+    2. Ensure a mix of different cooking times - skew toward 30-45 minutes.
 
     AVOID REPEATS:
     Do NOT suggest these recently featured global recipes: ${excludedNames.slice(0, 50).join(', ')}.
@@ -368,30 +375,14 @@ Deno.serve(async (req) => {
                 // Try fetching email from user_profiles or auth admin
                 const { data: userData } = await supabase.auth.admin.getUserById(userId);
                 if (userData?.user?.email) {
-                     const emailHtml = `
-                    <!DOCTYPE html>
-                    <html>
-                    <body style="font-family: system-ui, sans-serif; color: #333;">
-                        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                            <h1 style="color: #c2410c;">Community Menu Generated! 🚀</h1>
-                            <p>The global weekly menu for <strong>${dateStr}</strong> has been generated.</p>
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            ${recipesWithImages.map((r) => `
-                                <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
-                                    <div style="font-weight: bold;">${r.title}</div>
-                                    <div style="font-size: 12px; color: #666;">${r.time_estimate}</div>
-                                </div>
-                            `).join('')}
-                            </div>
-                            
-                            <p style="margin-top: 20px;">
-                                <a href="${Deno.env.get("SITE_URL") || 'http://localhost:5173'}/community" style="background: #c2410c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">View Live</a>
-                            </p>
-                        </div>
-                    </body>
-                    </html>
-                    `;
+                    // Map recipes to the email component's format
+                    const emailRecipes = recipesWithImages.map(r => ({
+                        title: r.title,
+                        time: r.time_estimate || "30 mins", // Fallback if missing
+                        image_url: r.image_url ?? undefined // Convert null to undefined
+                    }));
+
+                    const emailHtml = await render(WeeklyMenuEmail({ recipes: emailRecipes }));
 
                     await fetch('https://api.resend.com/emails', {
                         method: 'POST',
