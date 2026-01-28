@@ -368,13 +368,23 @@ Deno.serve(async (req) => {
     // 7. Send Test Email (to Admin/Invoker)
     // In production, this would trigger a bulk email job or be picked up by a separate cron.
     // For now, we confirm to the admin.
+    // 7. Send Test Email (to Admin/Invoker)
+    let emailStatus = "skipped";
+    let emailError = null;
+
     if (userId) {
+        console.log(`Attempting email for userId: ${userId}`);
         const resendApiKey = Deno.env.get("RESEND_API_KEY");
         if (resendApiKey) {
             try {
                 // Try fetching email from user_profiles or auth admin
-                const { data: userData } = await supabase.auth.admin.getUserById(userId);
+                const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+                
+                if (userError) console.error("Error fetching user for email:", userError);
+                
                 if (userData?.user?.email) {
+                    console.log(`Found user email: ${userData.user.email}`);
+                    
                     // Map recipes to the email component's format
                     const emailRecipes = recipesWithImages.map(r => ({
                         title: r.title,
@@ -382,26 +392,62 @@ Deno.serve(async (req) => {
                         image_url: r.image_url ?? undefined // Convert null to undefined
                     }));
 
-                    const emailHtml = await render(WeeklyMenuEmail({ recipes: emailRecipes }));
+                    console.log("Rendering email component...");
+                    try {
+                        const emailHtml = await render(WeeklyMenuEmail({ recipes: emailRecipes }));
+                        console.log("Email rendered successfully.");
 
-                    await fetch('https://api.resend.com/emails', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            from: 'Meal Planner Admin <josh@joshdormont.com>',
-                            to: userData.user.email,
-                            subject: `[Admin] Global Menu Generated: ${dateStr}`,
-                            html: emailHtml
-                        })
-                    });
+                        console.log("Sending email via Resend...");
+                        const emailRes = await fetch('https://api.resend.com/emails', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                from: 'Meal Planner Admin <josh@joshdormont.com>',
+                                to: userData.user.email,
+                                subject: `[Admin] Global Menu Generated: ${dateStr}`,
+                                html: emailHtml
+                            })
+                        });
+
+                        if (!emailRes.ok) {
+                            const errText = await emailRes.text();
+                            console.error("Resend API Error:", errText);
+                            emailStatus = "failed_api";
+                            emailError = errText;
+                        } else {
+                            const emailData = await emailRes.json();
+                            console.log("Email sent successfully:", emailData.id);
+                            emailStatus = "sent";
+                        }
+                    } catch (renderError) {
+                        console.error("Error rendering/sending email:", renderError);
+                        emailStatus = "failed_render";
+                        emailError = String(renderError);
+                    }
+                } else {
+                    console.warn("User has no email address.");
+                    emailStatus = "skipped_no_email";
                 }
             } catch (err) {
-                console.error("Email Error:", err);
+                console.error("Email Logic Error:", err);
+                emailStatus = "failed_logic";
+                emailError = String(err);
             }
+        } else {
+             console.warn("No RESEND_API_KEY found.");
+             emailStatus = "skipped_no_key";
         }
+    } else {
+        console.warn("No userId provided in request body.");
+        emailStatus = "skipped_no_userid";
     }
 
-    return new Response(JSON.stringify({ success: true, date: dateStr, count: recipesWithImages.length }), {
+    return new Response(JSON.stringify({ 
+        success: true, 
+        date: dateStr, 
+        count: recipesWithImages.length,
+        email: { status: emailStatus, error: emailError }
+    }), {
        headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
 
