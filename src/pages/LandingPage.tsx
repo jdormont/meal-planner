@@ -58,6 +58,16 @@ export function LandingPage() {
       setImportUrl(''); // Clear input on success
     } catch (err: any) {
       console.error("Import error:", err);
+      
+      // Rate Limit Handling
+      if (err.message && err.message.includes("Daily limit reached")) {
+         setAuthMode('signup');
+         setShowAuthModal(true);
+         // Optional: nicer UI than alert, but alert ensures they see why the modal opened
+         alert("You've accepted your daily limit of 3 free imports! Sign up to continue.");
+         return;
+      }
+
       // Attempt to extract context if available (e.g. from FunctionsHttpError)
       const context = err.context ? ` (Context: ${JSON.stringify(err.context)})` : '';
       alert((err.message || "Failed to import recipe.") + context);
