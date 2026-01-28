@@ -2,7 +2,9 @@
   "imports": {
     "@react-email/components": "npm:@react-email/components@0.0.12",
     "@react-email/render": "npm:@react-email/render@0.0.12",
-    "react": "npm:react@18.3.1"
+    "react": "npm:react@18.3.1",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
+    "zod": "https://deno.land/x/zod@v3.22.4/mod.ts"
   },
   "nodeModulesDir": "auto",
     "compilerOptions": {

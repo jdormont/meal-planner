@@ -77,18 +77,25 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
       return;
     }
 
+    // Detect platform
+    const isSocial = url.includes('instagram.com') || url.includes('tiktok.com');
+    const endpoint = isSocial ? 'import-social-recipe' : 'import-recipe';
+
     try {
       setStatus('importing');
       setError(null);
 
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-recipe`;
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`;
+      // For social import, we need to pass userId (or anon)
+      const body = isSocial ? { url, userId: 'app-user' } : { url };
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -97,21 +104,42 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
       }
 
       setStatus('creating');
-      const recipe = await response.json();
+      const data = await response.json();
 
-      // Parse string ingredients into structured objects
-      const parsedIngredients = recipe.ingredients.map((ing: string | object) => {
-        // If already an object, return as-is
-        if (typeof ing === 'object' && ing !== null) {
-          return ing;
-        }
-        // Otherwise parse the string
+      let recipeData;
+      
+      if (isSocial) {
+         // Social import returns { suggestions: [...] }
+         const suggestion = data.suggestions?.[0];
+         if (!suggestion) throw new Error("No recipe found in the post.");
+         
+         // Map to partial Recipe format expected by onImportComplete
+         recipeData = {
+            title: suggestion.title,
+            description: suggestion.description,
+            // Map ingredients (AI returns strings usually, preventing parse errors later)
+            ingredients: suggestion.full_details?.ingredients || [], 
+            instructions: suggestion.full_details?.instructions || [],
+            total_time: parseInt(suggestion.time_estimate) || 0,
+            servings: 4,
+            tags: ['Social Import'],
+            image_url: suggestion.image_url || '',
+            notes: suggestion.full_details?.nutrition_notes || ''
+         };
+      } else {
+         // Standard import returns the recipe object directly
+         recipeData = data;
+      }
+
+      // Parse ingredients if they are strings
+      const parsedIngredients = recipeData.ingredients.map((ing: string | object) => {
+        if (typeof ing === 'object' && ing !== null) return ing;
         return parseIngredient(String(ing));
       });
 
       // Update the recipe with parsed ingredients, source URL, and default fields
       const recipeWithParsedIngredients = {
-        ...recipe,
+        ...recipeData,
         ingredients: parsedIngredients,
         source_url: url,
         is_shared: false
@@ -123,16 +151,19 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
         onImportComplete(recipeWithParsedIngredients);
         onClose();
       }, 1000);
-    } catch (err) {
+    } catch (err: any) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to import recipe');
+      console.error("Import error:", err);
+      // Show context if available (from backend)
+      const context = err.context ? ` (Context: ${JSON.stringify(err.context)})` : '';
+      setError((err.message || 'Failed to import recipe') + context);
     }
   };
 
   const getStatusMessage = () => {
     switch (status) {
       case 'importing':
-        return 'Fetching recipe from website...';
+        return 'Fetching recipe data...';
       case 'creating':
         return 'Parsing recipe data...';
       case 'done':
@@ -172,6 +203,7 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition"
             disabled={status === 'importing' || status === 'creating'}
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>
@@ -192,7 +224,7 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
               disabled={status === 'importing' || status === 'creating'}
             />
             <p className="mt-2 text-sm text-gray-500">
-              Paste the URL of any recipe webpage to import it
+              Paste a URL from any website, Instagram, or TikTok
             </p>
           </div>
 

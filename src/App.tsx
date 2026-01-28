@@ -24,7 +24,7 @@ import { RecipePhotoModal } from './components/RecipePhotoModal';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { Layout, View } from './components/Layout';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
-import { Plus, BookOpen, Globe, Camera, Users, Calendar, Sparkles } from 'lucide-react';
+import { Plus, BookOpen, Globe, Camera, Users, Calendar, Sparkles, Share2 } from 'lucide-react';
 import { parseAIRecipe, parseIngredient } from './utils/recipeParser';
 import { RecipeSuggestion } from './components/RecipeSuggestionCard';
 import { ProfileNudgeModal } from './components/ProfileNudgeModal';
@@ -312,7 +312,11 @@ function App() {
   }
 
   if (!user) {
-    return <LandingPage />;
+    return (
+      <ShoppingListProvider>
+        <LandingPage />
+      </ShoppingListProvider>
+    );
   }
 
   if (!userProfile) {
@@ -507,6 +511,18 @@ function App() {
                           <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Scan Photo</span>
                           <div className="p-3 bg-warmtan-500 text-white rounded-full shadow-lg">
                             <Camera className="w-5 h-5" />
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowImportModal(true);
+                            setShowAddMenu(false);
+                          }}
+                          className="flex items-center gap-2 pr-2"
+                        >
+                          <span className="bg-white px-3 py-1.5 rounded-lg shadow font-medium text-sm text-gray-700">Import Social</span>
+                          <div className="p-3 bg-pink-500 text-white rounded-full shadow-lg">
+                            <Share2 className="w-5 h-5" />
                           </div>
                         </button>
                         <button

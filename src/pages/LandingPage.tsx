@@ -1,12 +1,70 @@
 import { useState, useEffect } from 'react';
 import { AuthForm } from '../components/AuthForm';
 import { RecipeSuggestionCard, RecipeSuggestion } from '../components/RecipeSuggestionCard';
-import { Sparkles, ArrowRight, MessageSquare, Download, Heart, X, ChefHat, Calendar } from 'lucide-react';
+import { Sparkles, ArrowRight, MessageSquare, Download, X, ChefHat, Calendar } from 'lucide-react';
+
+import { supabase, Recipe } from '../lib/supabase';
+import { parseIngredient } from '../utils/recipeParser';
+import { RecipeDetail } from '../components/RecipeDetail';
 
 export function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [scrolled, setScrolled] = useState(false);
+  
+  // Social Import State
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
+
+  const handleImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importUrl.trim()) return;
+
+    setImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('import-social-recipe', {
+        body: { url: importUrl, userId: 'anon-landing' }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      // AI returns { suggestions: [...] }
+      const suggestion = data.suggestions[0];
+      if (!suggestion) throw new Error("No recipe found.");
+
+      // Convert to Recipe type for viewing
+      const tempRecipe: Recipe = {
+        id: `temp-${Date.now()}`,
+        user_id: 'anon',
+        title: suggestion.title,
+        description: suggestion.description,
+        ingredients: suggestion.full_details?.ingredients.map((ing: string) => parseIngredient(ing)) || [],
+        instructions: suggestion.full_details?.instructions || [],
+        total_time: parseInt(suggestion.time_estimate) || 0,
+        servings: 4,
+        tags: ['Social Import'],
+        image_url: '', // We could use cover image from Apify if we passed it through
+        source_url: importUrl,
+        notes: suggestion.full_details?.nutrition_notes || '',
+        is_shared: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        recipe_type: 'food'
+      };
+
+      setViewingRecipe(tempRecipe);
+      setImportUrl(''); // Clear input on success
+    } catch (err: any) {
+      console.error("Import error:", err);
+      // Attempt to extract context if available (e.g. from FunctionsHttpError)
+      const context = err.context ? ` (Context: ${JSON.stringify(err.context)})` : '';
+      alert((err.message || "Failed to import recipe.") + context);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   // Handle scroll for sticky navbar styling
   useEffect(() => {
@@ -174,14 +232,32 @@ export function LandingPage() {
                           <Download size={24} />
                       </div>
                       <h3 className="text-xl font-bold font-serif text-gray-900 mb-2">Import Instantly</h3>
-                      <p className="text-gray-600 text-sm mb-8">
-                          Paste a URL or scan a page. We handle the rest.
+                      <p className="text-gray-600 text-sm mb-4">
+                          Paste a TikTok or Instagram link. We'll extract the recipe automatically.
                       </p>
-                      <div className="mt-auto flex justify-center">
-                          <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                              <ArrowRight className="text-orange-500" />
-                          </div>
-                      </div>
+                      
+                      <form onSubmit={handleImport} className="mt-auto relative z-20">
+                           <div className="relative">
+                               <input 
+                                  type="text" 
+                                  placeholder="Paste Link..." 
+                                  value={importUrl}
+                                  onChange={(e) => setImportUrl(e.target.value)}
+                                  className="w-full pl-4 pr-12 py-3 rounded-xl border border-orange-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none bg-white/80 backdrop-blur-sm text-sm"
+                               />
+                               <button 
+                                  type="submit"
+                                  disabled={importing || !importUrl.trim()}
+                                  className="absolute right-2 top-2 bottom-2 aspect-square bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                               >
+                                   {importing ? (
+                                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                   ) : (
+                                      <ArrowRight size={16} />
+                                   )}
+                               </button>
+                           </div>
+                      </form>
                   </div>
 
                   {/* Smart Scaling: md:col-span-2 md:row-span-2 */}
@@ -219,7 +295,7 @@ export function LandingPage() {
                        {/* Visual: Row of 7 small squares */}
                        <div className="flex-shrink-0 flex gap-2">
                           {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                              <div key={day} className={`w-10 h-14 rounded-lg flex flex-col items-center justify-center border transition-all duration-300 ${day === 'W' ? 'bg-orange-500 border-orange-500 text-white transform -translate-y-2 shadow-md' : 'bg-white border-gray-100 text-gray-400 group-hover:border-gray-200'}`}>
+                              <div key={`${day}-${i}`} className={`w-10 h-14 rounded-lg flex flex-col items-center justify-center border transition-all duration-300 ${day === 'W' ? 'bg-orange-500 border-orange-500 text-white transform -translate-y-2 shadow-md' : 'bg-white border-gray-100 text-gray-400 group-hover:border-gray-200'}`}>
                                   <span className="text-[10px] font-bold mb-1">{day}</span>
                                   <div className={`w-1 h-1 rounded-full ${day === 'W' ? 'bg-white' : 'bg-gray-200'}`}></div>
                               </div>
@@ -246,6 +322,25 @@ export function LandingPage() {
             <AuthForm mode={authMode} onSuccess={() => window.location.reload()} />
           </div>
         </div>
+      )}
+
+      {/* Recipe Detail Modal (Read Only / Pre-save) */}
+      {viewingRecipe && (
+        <RecipeDetail
+           recipe={viewingRecipe}
+           onClose={() => setViewingRecipe(null)}
+           onEdit={() => {
+              // Redirect to signup if they want to "Edit" (Save)
+              openAuth('signup');
+           }}
+           onCopy={() => {
+               // Redirect to signup if they want to "Copy" (Save)
+               openAuth('signup');
+           }}
+           // Hide specific user actions
+           onFirstAction={undefined}
+           onOpenRecipe={undefined} 
+        />
       )}
       
       {/* Footer */}
