@@ -1,4 +1,5 @@
 import { X, Trash2, ShoppingCart } from 'lucide-react';
+import { InstacartButton } from './InstacartButton';
 import { useShoppingList } from '../contexts/ShoppingListContext';
 import { useState } from 'react';
 
@@ -76,13 +77,12 @@ export function ShoppingListDrawer({ isOpen, onClose }: ShoppingListDrawerProps)
           </div>
 
           <div className="p-6 border-t bg-gray-50">
-            <button
+            <InstacartButton
+              text={isCreatingLink ? 'Building Cart...' : 'Shop with Instacart'}
               onClick={handleShopWithInstacart}
               disabled={items.filter(i => !i.is_checked).length === 0 || isCreatingLink}
-              className="w-full py-4 bg-[#00A400] hover:bg-[#008a00] text-white rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              {isCreatingLink ? 'Building Cart...' : 'Shop with Instacart'}
-            </button>
+              className="w-full"
+            />
             <p className="text-xs text-center text-gray-500 mt-2">
               Powered by Instacart Connect
             </p>

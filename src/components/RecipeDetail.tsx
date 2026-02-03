@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
 import { useShoppingList } from '../contexts/ShoppingListContext';
-import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, ShoppingCart, AlertTriangle, Minus, Plus } from 'lucide-react';
+import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, AlertTriangle, Minus, Plus } from 'lucide-react';
+import { InstacartButton } from './InstacartButton';
 import { scaleIngredient } from '../utils/recipeScaler';
 import { parseIngredient } from '../utils/recipeParser';
 import { marked } from 'marked';
@@ -542,7 +543,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
             </div>
           )}
 
-          <div className="flex gap-3 pt-6 border-t">
+          <div className="flex flex-wrap gap-3 pt-6 border-t">
             {isOwner ? (
               <button
                 onClick={onEdit}
@@ -561,14 +562,12 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
               </button>
             ) : null}
             
-            <button
+            <InstacartButton
+               text={addingToCart ? 'Adding...' : 'Get Recipe Ingredients'}
                onClick={handleAddToShoppingList}
                disabled={addingToCart}
-               className="flex-1 px-6 py-3 bg-sage-600 hover:bg-sage-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {addingToCart ? 'Adding...' : 'Add Ingredients'}
-            </button>
+               className="w-full sm:flex-1"
+            />
 
             <button
               onClick={() => setShowMealSelector(true)}
