@@ -100,6 +100,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
 
 // --- Image Generation Logic ---
 
+
 async function generateRecipeImage(title: string, description: string, supabaseClient: SupabaseClient): Promise<string | null> {
     try {
         const apiKey = Deno.env.get("OPENAI_API_KEY");
@@ -141,7 +142,12 @@ Avoid:
 
         if (!response.ok) {
             console.error(`DALL-E Error for ${title}:`, await response.text());
-            return null;
+            const errorText = await response.text();
+             // Manually throw for specific status codes if needed to bubble up to retry logic
+             if (response.status === 429 || response.status >= 500) {
+                 throw new Error(`API Error ${response.status}: ${errorText}`);
+             }
+             return null;
         }
 
         const data = await response.json();
@@ -178,10 +184,47 @@ Avoid:
         return urlData.publicUrl;
 
     } catch (err) {
-        console.error(`Image Gen Exception for ${title}:`, err);
-        return null;
+        throw err; // Re-throw to be caught by the retry wrapper
     }
 }
+
+async function generateImageWithRetry(title: string, description: string, supabaseClient: SupabaseClient, maxRetries = 3): Promise<string | null> {
+    let attempts = 0;
+    
+    while (attempts < maxRetries) {
+        attempts++;
+        try {
+            console.log(`Generating image for: "${title}" (Attempt ${attempts}/${maxRetries})`);
+            
+            const result = await generateRecipeImage(title, description, supabaseClient);
+            if (result) return result;
+            
+            // If result is null but no error thrown, it might be a logic failure (e.g. upload failed).
+            // We can decide to retry or abort. Let's retry.
+            console.warn(`Image generation returned null for "${title}". Retrying...`);
+        } catch (error) {
+            console.error(`Error generating image for "${title}" (Attempt ${attempts}):`, error);
+            
+            // Analyze error for rate limits (429) usually hidden in error text or status
+            const errorString = String(error);
+            if (errorString.includes("429") || errorString.includes("rate limit")) {
+                console.log("Hit rate limit. Waiting longer...");
+                await new Promise(resolve => setTimeout(resolve, 5000 * attempts)); // 5s, 10s, 15s
+                continue;
+            }
+        }
+        
+        // Standard backoff
+        if (attempts < maxRetries) {
+            const delay = 2000 * attempts; // 2s, 4s
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    
+    console.error(`Failed to generate image for "${title}" after ${maxRetries} attempts.`);
+    return null;
+}
+
 
 // --- Specific Weekly Planner Logic ---
 
@@ -323,17 +366,26 @@ Deno.serve(async (req) => {
     
     const parsed = RecipeResponseSchema.parse(result);
 
-    // 5. Generate Images (Parallel) & Add Community Tags
-    console.log("Starting image generation...");
-    const recipesWithImages = await Promise.all(parsed.suggestions.map(async (recipe) => {
-        const imageUrl = await generateRecipeImage(recipe.title, recipe.description, supabase);
-        return {
+    // 5. Generate Images (Sequential with Delays) & Add Community Tags
+    console.log("Starting image generation (sequentially to avoid rate limits)...");
+    
+    const recipesWithImages = [];
+    
+    for (const recipe of parsed.suggestions) {
+        // Add a small delay between requests to be nice to the API
+        if (recipesWithImages.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        const imageUrl = await generateImageWithRetry(recipe.title, recipe.description, supabase);
+        
+        recipesWithImages.push({
             ...recipe,
             image_url: imageUrl,
-            is_shared: true, // Community Tag
-            is_public: true  // Visibility Tag
-        };
-    }));
+            is_shared: true,
+            is_public: true
+        });
+    }
 
     // 6. Save to DB (Global Set -> user_id = NULL)
     const today = new Date();
