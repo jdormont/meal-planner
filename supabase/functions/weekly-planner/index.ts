@@ -249,24 +249,31 @@ Deno.serve(async (req) => {
     console.log(`Excluding ${excludedNames.length} recent global recipes.`);
     
     // 2. Construct System Prompt (Generic / Community Focused)
-    const prompt = `You are a professional chef creating the "Community Menu of the Week" for a popular meal planning app.
+    const prompt = `You are a professional executive chef designing a high-quality weekly menu for a premium cooking app.
     
-    YOUR GOAL: Generate exactly 5 unique, diverse dinner recipes that appeal to a wide audience.
+    YOUR GOAL: Generate exactly 5 vibrant, flavorful, and distinct dinner recipes that feel special but are achievable on a weeknight (under 45 mins).
     
-    CRITICAL VARIETY RULES (The "Archetypes"):
+    THE VIBE: 
+    - **Avoid "Generic"**: No plain baked chicken breasts, basic spaghetti with jarred sauce, or bland stir-frys.
+    - **Think "Modern Casual"**: Inspired by bold, fresh cooking (e.g., Bon Appétit, NYT Cooking, Ottolenghi).
+    - **High Impact, Low Effort**: Use power ingredients like miso, harissa, chili crisp, fresh herbs, toasted nuts, citrus, and feta to build big flavor fast.
+    
+    REQUIRED VARIETY (The "Archetypes"):
     You MUST include one of each:
-    1. Poultry dish (Chicken, Turkey, Duck) - Crowd pleaser.
-    2. Red Meat dish (Beef, Pork, Lamb) OR Rich Plant Protein - Comfort food.
-    3. Fish/Seafood dish (or light Plant Protein) - Lighter option.
-    4. Vegetarian/Vegan dish (Grain bowl, Pasta, Salad) - Plant forward.
-    5. Wildcard (Something fun: Tacos, Pizza, Stir Fry, Casserole) - Family favorite.
+    1. **The Modern Poultry**: Chicken or Turkey, but elevated. (e.g., "Miso Butter Roast Chicken" or "Chicken Katsu with Sesame Slaw").
+    2. **The Comfort Bowl**: Beef, Pork, or Rich Plant Protein. Deep savory flavors. (e.g., "Spicy Basil Pork Bowls" or "Coconut Beef Curry").
+    3. **The Light & Fresh**: Fish, Seafood, or Tofu. Bright acids and fresh textures. (e.g., "Salmon with Citrus Salsa" or "Crispy Tofu with Peanut Sauce").
+    4. **The Veg-Forward**: Vegetarian/Vegan Main. Must be substantial and craving-worthy. (e.g., "Roasted Cauliflower & Chickpea Tacos" or "Creamy Mushroom Polenta").
+    5. **The Wildcard**: Something fun, interactive, or texturally interesting (e.g., "Sheet Pan Gnocchi", "Pizza Night", or "Loaded Sweet Potatoes").
     
-    CUISINE MIX:
-    Ensure a mix of different cuisines (e.g., Italian, Mexican, Indian, Japanese, etc.)
-
-    COOKING METHODS MIX:
-    1. Ensure a mix of: 1 Sheet Pan/One Pot (Easy), 1 Slow Cook/Simmer, 1 Quick Sauté/Grill.
-    2. Ensure a mix of different cooking times - skew toward 30-45 minutes.
+    CUISINE & FLAVOR RULES:
+    - **Global Inspiration**: Ensure at least 3 unique cuisines are represented (e.g., Mediterranean, East Asian, Latin American, Middle Eastern).
+    - **Texture & Finish**: Every recipe MUST include a finishing element (e.g., "top with toasted sesame seeds", "drizzle with lime juice", "garnish with fresh cilantro").
+    
+    COOKING LOGIC:
+    - **Speed**: Keep active cooking time under 45 minutes.
+    - **Technique**: Use smart shortcuts (e.g., "high heat roasting" for veggies, "broiler finish" for browning).
+    - **Instruction Style**: Explain *how* to get the flavor (e.g., "Sear until deeply browned", "Toast spices until fragrant").
 
     AVOID REPEATS:
     Do NOT suggest these recently featured global recipes: ${excludedNames.slice(0, 50).join(', ')}.
