@@ -1,4 +1,29 @@
 
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+ 
+export const RecipeResponseSchema = z.object({
+    reply: z.string().optional(),
+    suggestions: z.array(z.object({
+        title: z.string(),
+        type: z.enum(["recipe", "cocktail"]),
+        description: z.string(),
+        time_estimate: z.string().optional(),
+        difficulty: z.string(),
+        reason_for_recommendation: z.string(),
+        cuisine: z.string().optional(),
+        tags: z.object({
+            protein: z.string(),
+            carb: z.string(),
+            method: z.string()
+        }).optional(),
+        full_details: z.optional(z.object({
+            ingredients: z.array(z.string()),
+            instructions: z.array(z.string()),
+            nutrition_notes: z.optional(z.string())
+        }))
+    }))
+});
+
 export interface Message {
     role: 'system' | 'user' | 'assistant' | 'function';
     content: string;

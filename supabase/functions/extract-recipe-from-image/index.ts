@@ -1,33 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { RecipeResponseSchema } from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
-
-interface RecipeData {
-  title: string;
-  description?: string;
-  ingredients: Array<{
-    name: string;
-    quantity: string;
-    unit: string;
-  }>;
-  instructions: string[];
-  prep_time_minutes: number;
-  cook_time_minutes: number;
-  servings: number;
-  tags: string[];
-  recipe_type: 'food' | 'cocktail';
-  cocktail_metadata?: {
-    spiritBase?: string;
-    glassType?: string;
-    garnish?: string;
-    method?: string;
-    ice?: string;
-  };
-}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -85,45 +63,43 @@ Your task:
 - For recipe cards/screenshots: extract all text including title, ingredients with measurements, instructions
 - For handwritten recipes: carefully read and transcribe all text
 
-Return a JSON object with this EXACT structure:
+Return a JSON object with this EXACT structure (wrapping the recipe in a 'suggestions' list):
 {
-  "title": "Recipe name",
-  "description": "Brief description of the dish",
-  "ingredients": [
-    {"quantity": "1", "unit": "cup", "name": "flour"},
-    {"quantity": "2", "unit": "tbsp", "name": "olive oil"}
-  ],
-  "instructions": [
-    "Step 1 description",
-    "Step 2 description"
-  ],
-  "prep_time_minutes": 15,
-  "cook_time_minutes": 30,
-  "servings": 4,
-  "tags": ["italian", "pasta", "vegetarian"],
-  "recipe_type": "food",
-  "confidence": "high"
-}
-
-For cocktails, set recipe_type to "cocktail" and add:
-{
-  "cocktail_metadata": {
-    "spiritBase": "vodka",
-    "glassType": "martini",
-    "garnish": "lemon twist",
-    "method": "shaken",
-    "ice": "cubed"
-  }
+  "suggestions": [
+    {
+      "title": "Recipe name",
+      "type": "recipe" (or "cocktail"),
+      "description": "Brief description of the dish",
+      "difficulty": "Easy" (or "Medium", "Hard"),
+      "reason_for_recommendation": "Extracted from image",
+      "time_estimate": "45 minutes",
+      "cuisine": "Italian",
+      "tags": {
+        "protein": "Chicken",
+        "carb": "Pasta",
+        "method": "Bake"
+      },
+      "full_details": {
+        "ingredients": [
+            "1 cup flour",
+            "2 tbsp olive oil"
+        ],
+        "instructions": [
+            "Mix flour and oil.",
+            "Bake at 350F for 20 mins."
+        ],
+        "nutrition_notes": "Contains gluten."
+      }
+    }
+  ]
 }
 
 CRITICAL RULES:
-1. Always provide realistic estimates for prep_time_minutes and cook_time_minutes
-2. Break down ingredients into quantity, unit, and name components
-3. Make instructions clear and actionable
-4. Infer missing information intelligently based on visual cues and common recipes
-5. Set confidence to "high" for clear text extraction, "medium" for partial inference, "low" for heavy inference
-6. For menu items without full details, infer a complete recipe based on the dish name and description
-7. Return ONLY valid JSON, no additional text or markdown`;
+1. ALWAYS return valid JSON matching the schema above.
+2. 'ingredients' must be an ARRAY OF STRINGS. Do not break them into objects. Example: "1 cup flour" is correct. {"amount": 1, "unit": "cup", "name": "flour"} is WRONG.
+3. 'instructions' must be an ARRAY OF STRINGS. Do not use objects or step numbers.
+4. Infer missing information intelligently based on visual cues.
+5. Return ONLY valid JSON, no additional text or markdown.`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -132,7 +108,7 @@ CRITICAL RULES:
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -154,6 +130,7 @@ CRITICAL RULES:
             ]
           }
         ],
+        response_format: { type: "json_object" },
         max_tokens: 2000,
         temperature: 0.3,
       }),
@@ -175,14 +152,24 @@ CRITICAL RULES:
       throw new Error("Failed to extract JSON from AI response");
     }
 
-    const recipe: RecipeData = JSON.parse(jsonMatch[0]);
+    const parsedContent = JSON.parse(jsonMatch[0]);
+    
+    // Validate against shared schema
+    const validationResult = RecipeResponseSchema.safeParse(parsedContent);
 
-    if (!recipe.title || !recipe.ingredients || recipe.ingredients.length === 0) {
-      throw new Error("Incomplete recipe data extracted from image");
+    if (!validationResult.success) {
+        console.error("Schema validation failed:", validationResult.error);
+        throw new Error("Extracted data does not match expected recipe schema");
+    }
+
+    const recipeData = validationResult.data;
+
+    if (!recipeData.suggestions || recipeData.suggestions.length === 0) {
+      throw new Error("No recipe found in the image");
     }
 
     return new Response(
-      JSON.stringify(recipe),
+      JSON.stringify(recipeData),
       {
         status: 200,
         headers: {

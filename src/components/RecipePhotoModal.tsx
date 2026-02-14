@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { X, Camera, Upload, Loader, CheckCircle, AlertCircle, RotateCcw, Image as ImageIcon } from 'lucide-react';
 import { Recipe } from '../lib/supabase';
+import { parseIngredient } from '../utils/recipeParser';
 
 type ImportStatus = 'idle' | 'processing' | 'done' | 'error';
 
@@ -127,11 +128,37 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
         throw new Error(errorData.error || 'Failed to extract recipe from image');
       }
 
-      const recipe = await response.json();
+      const data = await response.json();
+      
+      // Handle the new response format which returns { suggestions: [...] }
+      const suggestion = data.suggestions?.[0];
+      
+      if (!suggestion) {
+        throw new Error('No recipe found in the image');
+      }
+
+      const fullDetails = suggestion.full_details || {};
+      
+      // Parse ingredients strings into structured objects
+      const parsedIngredients = (fullDetails.ingredients || []).map((ing: string) => {
+        return parseIngredient(ing);
+      });
 
       const recipeWithDefaults = {
-        ...recipe,
-        notes: `Extracted from photo${recipe.confidence ? ` (confidence: ${recipe.confidence})` : ''}`,
+        title: suggestion.title,
+        description: suggestion.description,
+        ingredients: parsedIngredients,
+        instructions: fullDetails.instructions || [],
+        total_time: parseInt(suggestion.time_estimate) || 0,
+        servings: 4, // Default as it's not always in the AI response
+        tags: [
+             suggestion.cuisine, 
+             suggestion.tags?.protein, 
+             suggestion.tags?.carb, 
+             suggestion.tags?.method
+        ].filter(Boolean) as string[],
+        recipe_type: suggestion.type || 'food',
+        notes: `Extracted from photo. ${fullDetails.nutrition_notes || ''}`,
         is_shared: false,
       };
 
