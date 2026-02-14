@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Edit2, Trash2, Clock, Users, ArrowRight } from 'lucide-react';
 import { Recipe } from '../lib/supabase';
 import { RecipeLane } from './RecipeLane';
-import { FeaturedBanner } from './FeaturedBanner';
+import { FeaturedRecipeCarousel } from './FeaturedRecipeCarousel';
 import { useRecipeDashboard } from '../hooks/useRecipeDashboard';
 import { OnboardingLaunchpad } from './OnboardingLaunchpad';
 
@@ -76,10 +76,10 @@ export function RecipeList({
           </div>
         ) : (
           <>
-            {featured && (
-              <FeaturedBanner
-                recipe={featured}
-                onClick={() => onSelect(featured)}
+            {featured && featured.length > 0 && (
+              <FeaturedRecipeCarousel
+                recipes={featured || []}
+                onClick={onSelect}
               />
             )}
 

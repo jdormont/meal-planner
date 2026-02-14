@@ -6,7 +6,7 @@ export type DashboardData = {
     quickWins: Recipe[];
     favorites: Recipe[];
     recent: Recipe[];
-    featured: Recipe | null;
+    featured: Recipe[];
     loading: boolean;
     error: string | null;
     refresh: () => Promise<void>;
@@ -18,15 +18,91 @@ export function useRecipeDashboard(): DashboardData {
         quickWins: Recipe[];
         favorites: Recipe[];
         recent: Recipe[];
-        featured: Recipe | null;
+        featured: Recipe[];
     }>({
         quickWins: [],
         favorites: [],
         recent: [],
-        featured: null,
+        featured: [],
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const selectDailyFeatured = (
+        favorites: Recipe[], 
+        recent: Recipe[], 
+        older: Recipe[]
+    ): Recipe[] => {
+        const today = new Date().toISOString().split('T')[0];
+        const storageKey = `featured_recipes_${user?.id}_${today}`;
+        
+        // 1. Try to load from local storage
+        try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    console.log('Restored daily featured recipes from storage');
+                    return parsed;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to parse stored featured recipes', e);
+        }
+
+        // 2. Generate new selection
+        console.log('Generating new daily featured recipes');
+        const selection: Recipe[] = [];
+        const seenIds = new Set<string>();
+
+        const addUnique = (pool: Recipe[], count: number) => {
+            // Shuffle pool copy
+            const shuffled = [...pool].sort(() => 0.5 - Math.random());
+            let added = 0;
+            for (const recipe of shuffled) {
+                if (added >= count) break;
+                if (!seenIds.has(recipe.id)) {
+                    selection.push(recipe);
+                    seenIds.add(recipe.id);
+                    added++;
+                }
+            }
+        };
+
+        // Strategy:
+        // - 1-2 from Favorites (High rated)
+        // - 1-2 from Recent (Fresh)
+        // - 1-2 from Older (Rediscover)
+        
+        // We aim for 5 total.
+        
+        // 1. Rediscover (Older) - Prioritize these to ensure rotation
+        addUnique(older, 2);
+        
+        // 2. Favorites
+        addUnique(favorites, 2);
+        
+        // 3. Recent - fill the rest
+        addUnique(recent, 5 - selection.length);
+        
+        // 4. Fallback - if we still don't have 5, fill from any pool
+        if (selection.length < 5) {
+            const allPool = [...favorites, ...recent, ...older];
+            addUnique(allPool, 5 - selection.length);
+        }
+
+        // Shuffle the final selection so the types are mixed
+        const finalSelection = selection.sort(() => 0.5 - Math.random());
+
+        // 3. Save to local storage
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(finalSelection));
+        } catch (e) {
+            console.error('Failed to save featured recipes', e);
+        }
+
+        return finalSelection;
+    };
 
     const fetchDashboard = async () => {
         if (!user) return;
@@ -34,8 +110,12 @@ export function useRecipeDashboard(): DashboardData {
         setError(null);
 
         try {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
+
             // Parallel Fetch
-            const [quickWinsRes, favoritesRes, recentRes, ratingsRes] = await Promise.all([
+            const [quickWinsRes, favoritesRes, recentRes, olderRes] = await Promise.all([
                 // Quick Wins: time <= 30
                 supabase
                     .from('recipes')
@@ -45,16 +125,13 @@ export function useRecipeDashboard(): DashboardData {
                     .order('created_at', { ascending: false })
                     .limit(10),
 
-                // Favorites: need to join with ratings ideally, but for now we might fetch recipes and filter client side 
-                // OR fetch all ratings >= 4 and then fetch those recipes.
-                // Supabase doesn't easily support join filtering in one go without view or complex query.
-                // Let's try fetching high ratings first.
+                // Favorites: fetch ratings >= 4
                 supabase
                     .from('recipe_ratings')
-                    .select('recipe_id, rating')
+                    .select('recipe_id')
                     .eq('user_id', user.id)
                     .gte('rating', 4)
-                    .limit(20), // Get top 20 rated IDs
+                    .limit(20), 
 
                 // Recent
                 supabase
@@ -62,45 +139,50 @@ export function useRecipeDashboard(): DashboardData {
                     .select('*')
                     .eq('user_id', user.id)
                     .order('created_at', { ascending: false })
-                    .limit(10),
+                    .limit(15),
 
-                // Fetch all ratings for accurate display on cards if needed, 
-                // but for "favorites" lane we specifically need the high rated ones.
-                // We'll reuse the second query result for that.
-                Promise.resolve({ data: [], error: null }) // filler
+                // Older (Rediscover)
+                supabase
+                    .from('recipes')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .lt('created_at', thirtyDaysAgoStr)
+                    .limit(20) // Just get a sample of older ones
             ]);
 
             if (quickWinsRes.error) throw quickWinsRes.error;
             if (favoritesRes.error) throw favoritesRes.error;
             if (recentRes.error) throw recentRes.error;
+            if (olderRes.error) throw olderRes.error;
 
             // Process Favorites
             let favorites: Recipe[] = [];
             if (favoritesRes.data && favoritesRes.data.length > 0) {
                 const favIds = favoritesRes.data.map(r => r.recipe_id);
+                // remove duplicates
+                const uniqueFavIds = [...new Set(favIds)];
+                
                 const { data: favRecipes, error: favErr } = await supabase
                     .from('recipes')
                     .select('*')
-                    .in('id', favIds)
-                    .limit(10);
+                    .in('id', uniqueFavIds)
+                    .limit(20);
 
                 if (favErr) throw favErr;
                 favorites = favRecipes || [];
             }
 
-            // Featured Logic: Random from favorites, or recent if no favorites
-            let featured: Recipe | null = null;
-            const pool = favorites.length > 0 ? favorites : recentRes.data || [];
-            if (pool.length > 0) {
-                const randomIndex = Math.floor(Math.random() * pool.length);
-                featured = pool[randomIndex];
-            }
+            const recent = recentRes.data || [];
+            const older = olderRes.data || [];
+
+            // Select Daily Featured
+            const featured = selectDailyFeatured(favorites, recent, older);
 
             setData({
                 quickWins: quickWinsRes.data || [],
                 favorites: favorites,
-                recent: recentRes.data || [],
-                featured
+                recent: recent,
+                featured: featured
             });
 
         } catch (err) {
