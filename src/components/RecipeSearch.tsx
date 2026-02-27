@@ -12,6 +12,7 @@ type RecipeSearchProps = {
   selectedTimeFilter?: string;
   onTimeFilterChange?: (filter: string) => void;
   onRecipeTypeChange?: (type: 'food' | 'cocktail') => void;
+  onSearch?: () => void;
 };
 
 export function RecipeSearch({
@@ -23,7 +24,8 @@ export function RecipeSearch({
   recipeType = 'food',
   selectedTimeFilter,
   onTimeFilterChange,
-  onRecipeTypeChange
+  onRecipeTypeChange,
+  onSearch
 }: RecipeSearchProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -39,6 +41,13 @@ export function RecipeSearch({
               type="text"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (onSearch) onSearch();
+                  e.currentTarget.blur();
+                }
+              }}
               placeholder="Search recipes..."
               className="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-base"
             />

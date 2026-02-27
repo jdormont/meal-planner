@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, Recipe } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalytics } from './useAnalytics';
@@ -66,11 +66,13 @@ export function useRecipes() {
                 .order('created_at', { ascending: false })
                 .range(pageIndex * ITEMS_PER_PAGE, (pageIndex + 1) * ITEMS_PER_PAGE - 1);
 
-            // Apply Filters
+            // Apply Filters (Search term is applied client-side below for ingredients, but we must fetch at least matching titles/descriptions to be safe, however since pagination limits us to 12 items, if we don't query the DB with ILIKE it will only filter the FIRST 12 items.)
             if (searchTerm) {
-                // ILIKE on title OR description. 
-                // Note: Ingredients search omitted for server-side perf without FTS
-                query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+                // ILIKE on title OR description
+                // Note: supabase expects exactly this format: title.ilike.%term%,description.ilike.%term%
+                // But we must encode the searchTerm to avoid breaking the query parser on special characters
+                const safeTerm = encodeURIComponent(searchTerm);
+                query = query.or(`title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`);
             }
 
             if (selectedTags.length > 0) {
@@ -94,7 +96,7 @@ export function useRecipes() {
                 }
             }
 
-            const { data: recipesData, error: recipesError } = await query;
+            let { data: recipesData, error: recipesError } = await query;
 
             if (recipesError) throw recipesError;
 
@@ -115,6 +117,24 @@ export function useRecipes() {
                     ...recipe,
                     rating: ratingsMap.get(recipe.id) || null
                 }));
+            }
+
+            // Client-side fallback for ingredient filtering since jsonb ::text filtering in postgrest can crash.
+            // If the searchTerm wasn't matching the DB query above, we need to check if we can fetch all and filter locally,
+            // but for now, we filter the returned set. Note: if a recipe didn't match the DB query (title/desc), it won't be here.
+            // To fix this comprehensively, we'd need a backend function. Temporarily, we apply the local filter on what we got.
+            if (searchTerm) {
+                const termLower = searchTerm.toLowerCase();
+                recipesWithRatings = recipesWithRatings.filter(recipe => {
+                    const inTitle = recipe.title?.toLowerCase().includes(termLower);
+                    const inDesc = recipe.description?.toLowerCase().includes(termLower);
+                    // Check if any ingredient name includes the search term
+                    const inIngredients = recipe.ingredients?.some(ing => 
+                       ing.name?.toLowerCase().includes(termLower)
+                    );
+                    
+                    return inTitle || inDesc || inIngredients;
+                });
             }
 
             // Update State
@@ -154,14 +174,31 @@ export function useRecipes() {
         fetchRecipes(nextPage, false);
     }, [page, hasMore, loading, fetchRecipes]);
 
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const executeSearch = useCallback(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        setPage(0);
+        fetchRecipes(0, true);
+    }, [fetchRecipes]);
+
     // Effect: Trigger fetch when filters change
     // Debounce search term to avoid rapid firing
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        searchTimeoutRef.current = setTimeout(() => {
             setPage(0);
             fetchRecipes(0, true);
         }, 500);
-        return () => clearTimeout(timeoutId);
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
     }, [fetchRecipes]); // fetchRecipes dependency includes filters
 
     // Initial Load - loadTags
@@ -320,6 +357,7 @@ export function useRecipes() {
         getAllTags,
         toggleTag,
         loadMore,
-        hasMore
+        hasMore,
+        executeSearch
     };
 }

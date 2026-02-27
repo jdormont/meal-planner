@@ -54,7 +54,8 @@ function App() {
     getAllTags,
     toggleTag,
     loadMore,
-    hasMore
+    hasMore,
+    executeSearch
   } = useRecipes();
 
   const {
@@ -407,6 +408,7 @@ function App() {
                     recipeType={recipeType}
                     selectedTimeFilter={selectedTimeFilter}
                     onTimeFilterChange={setSelectedTimeFilter}
+                    onSearch={executeSearch}
                   />
                 )}
                 <CommunityRecipes
@@ -575,6 +577,7 @@ function App() {
                     recipeType={recipeType}
                     selectedTimeFilter={selectedTimeFilter}
                     onTimeFilterChange={setSelectedTimeFilter}
+                    onSearch={executeSearch}
                     onRecipeTypeChange={(type) => {
                       setRecipeType(type);
                       if (type === 'cocktail') {
@@ -589,6 +592,12 @@ function App() {
                 )}
                 <RecipeList
                   recipes={filteredRecipes}
+                  isSearching={searchTerm.trim().length > 0 || selectedTags.length > 0 || !!selectedTimeFilter}
+                  onClearSearch={() => {
+                    setSearchTerm('');
+                    setSelectedTags([]);
+                    setSelectedTimeFilter('');
+                  }}
                   onEdit={(recipe) => {
                     setEditingRecipe(recipe);
                     setShowForm(true);

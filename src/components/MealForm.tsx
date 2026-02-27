@@ -71,9 +71,17 @@ export function MealForm({ meal, recipes, selectedRecipeIds, onSave, onCancel, i
     );
   };
 
-  const filteredRecipes = uniqueRecipes.filter(recipe =>
-    recipe.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const searchLower = searchTerm.toLowerCase();
+
+  const filteredRecipes = uniqueRecipes.filter(recipe => {
+    const matchesTitle = recipe.title.toLowerCase().includes(searchLower);
+    const matchesDesc = recipe.description?.toLowerCase().includes(searchLower);
+    const matchesIngredients = recipe.ingredients?.some(ing => 
+      ing.name.toLowerCase().includes(searchLower)
+    );
+    
+    return matchesTitle || matchesDesc || matchesIngredients;
+  });
 
   const selectedRecipeObjects = uniqueRecipes.filter(r => selectedRecipes.includes(r.id));
 

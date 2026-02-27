@@ -18,6 +18,8 @@ type RecipeListProps = {
   hasMore?: boolean;
   totalRecipeCount?: number;
   onScanPhoto?: () => void;
+  isSearching?: boolean;
+  onClearSearch?: () => void;
 };
 
 export function RecipeList({
@@ -31,7 +33,9 @@ export function RecipeList({
   onLoadMore,
   hasMore,
   totalRecipeCount,
-  onScanPhoto
+  onScanPhoto,
+  isSearching,
+  onClearSearch
 }: RecipeListProps) {
   const [viewMode, setViewMode] = useState<'dashboard' | 'grid'>('dashboard');
   const {
@@ -42,7 +46,7 @@ export function RecipeList({
     loading: dashboardLoading
   } = useRecipeDashboard();
 
-  if (viewMode === 'dashboard') {
+  if (viewMode === 'dashboard' && !isSearching) {
     if (dashboardLoading) {
       return (
         <div className="flex items-center justify-center py-16">
@@ -147,6 +151,17 @@ export function RecipeList({
           >
             Generate with AI
           </button>
+          {isSearching && (
+            <button
+              onClick={() => {
+                if (onClearSearch) onClearSearch();
+                setViewMode('dashboard');
+              }}
+              className="px-4 py-2 bg-gray-100 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              Clear Search
+            </button>
+          )}
         </div>
       </div>
     );
@@ -155,13 +170,29 @@ export function RecipeList({
   return (
     <div className="pb-20">
       <div className="mb-6 flex justify-between items-center">
-        <h3 className="text-xl font-bold text-gray-900">All Recipes</h3>
-        <button
-          onClick={() => setViewMode('dashboard')}
-          className="text-terracotta-600 font-medium hover:underline"
-        >
-          Back to Dashboard
-        </button>
+        <h3 className="text-xl font-bold text-gray-900">
+          {isSearching ? 'Search Results' : 'All Recipes'}
+        </h3>
+        {(!isSearching && viewMode === 'grid') ? (
+          <button
+            onClick={() => setViewMode('dashboard')}
+            className="text-terracotta-600 font-medium hover:underline"
+          >
+            Back to Dashboard
+          </button>
+        ) : (
+          isSearching && (
+            <button
+              onClick={() => {
+                if (onClearSearch) onClearSearch();
+                setViewMode('dashboard');
+              }}
+              className="text-terracotta-600 font-medium hover:underline"
+            >
+              Back to Dashboard
+            </button>
+          )
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
