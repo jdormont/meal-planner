@@ -36,12 +36,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const apiKey = Deno.env.get("OPENAI_API_KEY");
+    const apiKey = Deno.env.get("GOOGLE_API_KEY");
 
     if (!apiKey) {
       return new Response(
         JSON.stringify({
-          error: "OpenAI API key not configured",
+          error: "Google API key not configured",
           imageUrl: null
         }),
         {
@@ -78,28 +78,27 @@ Avoid:
 
     const fullPrompt = `${basePrompt}\n\nDish to create: ${specificPrompt}`;
 
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
+    console.log(`Generating image for: ${title}`);
+    console.log("Using Google AI Studio model: nano-bannana (gemini-2.5-flash-image)");
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: fullPrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "standard",
-        style: "natural"
+        contents: [
+            { parts: [{ text: fullPrompt }] }
+        ]
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("OpenAI API Error:", errorText);
+      console.error("Google API Error:", errorText);
       return new Response(
         JSON.stringify({
-          error: "Failed to generate image with DALL-E",
+          error: "Failed to generate image with Google API",
           imageUrl: null
         }),
         {
@@ -114,11 +113,9 @@ Avoid:
 
     const data = await response.json();
 
-    const temporaryImageUrl = data.data && data.data.length > 0
-      ? data.data[0].url
-      : null;
+    const base64Image = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
-    if (!temporaryImageUrl) {
+    if (!base64Image) {
       return new Response(
         JSON.stringify({
           error: "No image generated",
@@ -134,15 +131,16 @@ Avoid:
       );
     }
 
-    // Download the image from DALL-E
-    console.log("Downloading image from DALL-E...");
-    const imageResponse = await fetch(temporaryImageUrl);
+    // Process base64 from Google API prediction
+    console.log("Processing image from Google API...");
+    const mimeType = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType || "image/png";
+    const imageResponse = await fetch(`data:${mimeType};base64,${base64Image}`);
 
     if (!imageResponse.ok) {
-      console.error("Failed to download image from DALL-E");
+      console.error("Failed to process image from base64 encoding");
       return new Response(
         JSON.stringify({
-          error: "Failed to download generated image",
+          error: "Failed to process generated image",
           imageUrl: null
         }),
         {

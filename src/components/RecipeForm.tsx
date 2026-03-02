@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Recipe, CocktailMetadata } from '../lib/supabase';
-import { X, Plus, Minus, Loader2, Trash2 } from 'lucide-react';
+import { X, Plus, Minus, Loader2, Trash2, Sparkles } from 'lucide-react';
 
 type RecipeFormProps = {
   recipe?: Recipe | null;
@@ -973,7 +973,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
               placeholder="https://example.com/image.jpg"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Leave blank to automatically generate an image with DALL-E when saving
+              Leave blank to automatically generate an image with AI when saving
             </p>
             {recipe && !recipe.id.startsWith('temp-') && (
               <button
@@ -982,8 +982,12 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                 disabled={isRegeneratingImage || !title.trim()}
                 className="mt-3 px-4 py-2 bg-sage-100 hover:bg-sage-200 text-sage-800 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium"
               >
-                {isRegeneratingImage && <Loader2 className="w-4 h-4 animate-spin" />}
-                {isRegeneratingImage ? 'Generating...' : 'Regenerate Image with DALL-E'}
+                {isRegeneratingImage ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-sage-600" />
+                )}
+                {isRegeneratingImage ? 'Generating...' : 'Regenerate Image'}
               </button>
             )}
           </div>

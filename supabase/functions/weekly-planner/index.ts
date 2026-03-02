@@ -103,7 +103,7 @@ async function callLLM(provider: string, apiKey: string, model: string, messages
 
 async function generateRecipeImage(title: string, description: string, supabaseClient: SupabaseClient): Promise<string | null> {
     try {
-        const apiKey = Deno.env.get("OPENAI_API_KEY");
+        const apiKey = Deno.env.get("GOOGLE_API_KEY");
         if (!apiKey) return null;
 
         const basePrompt = `Create a realistic, accurate image of the finished dish as it would appear when freshly cooked at home.
@@ -124,25 +124,22 @@ Avoid:
         const fullPrompt = `${basePrompt}\n\nDish to create: ${title}${description ? `: ${description}` : ''}`;
 
         console.log(`Generating image for: ${title}`);
-        const response = await fetch("https://api.openai.com/v1/images/generations", {
+        console.log("Using Google AI Studio model: nano-bannana (gemini-2.5-flash-image)");
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "dall-e-3",
-                prompt: fullPrompt,
-                n: 1,
-                size: "1024x1024",
-                quality: "standard",
-                style: "natural"
+                contents: [
+                    { parts: [{ text: fullPrompt }] }
+                ]
             }),
         });
 
         if (!response.ok) {
-            console.error(`DALL-E Error for ${title}:`, await response.text());
             const errorText = await response.text();
+            console.error(`Google API Error for ${title}:`, errorText);
              // Manually throw for specific status codes if needed to bubble up to retry logic
              if (response.status === 429 || response.status >= 500) {
                  throw new Error(`API Error ${response.status}: ${errorText}`);
@@ -151,12 +148,13 @@ Avoid:
         }
 
         const data = await response.json();
-        const temporaryImageUrl = data.data?.[0]?.url;
+        const base64Image = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
-        if (!temporaryImageUrl) return null;
+        if (!base64Image) return null;
 
-        // Download and Upload to Supabase
-        const imageResponse = await fetch(temporaryImageUrl);
+        // Process base64 from Google API prediction
+        const mimeType = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType || "image/png";
+        const imageResponse = await fetch(`data:${mimeType};base64,${base64Image}`);
         if (!imageResponse.ok) return null;
 
         const imageBlob = await imageResponse.blob();
