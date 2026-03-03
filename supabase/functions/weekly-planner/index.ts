@@ -148,17 +148,20 @@ Avoid:
         }
 
         const data = await response.json();
-        const base64Image = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        const imagePart = parts.find((p: any) => p.inlineData);
+        const base64Image = imagePart?.inlineData?.data;
 
         if (!base64Image) return null;
 
         // Process base64 from Google API prediction
-        const mimeType = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType || "image/png";
-        const imageResponse = await fetch(`data:${mimeType};base64,${base64Image}`);
-        if (!imageResponse.ok) return null;
-
-        const imageBlob = await imageResponse.blob();
-        const imageBuffer = await imageBlob.arrayBuffer();
+        const binaryString = atob(base64Image);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const imageBuffer = bytes.buffer;
 
         const timestamp = Date.now();
         const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);

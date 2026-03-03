@@ -113,7 +113,9 @@ Avoid:
 
     const data = await response.json();
 
-    const base64Image = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const imagePart = parts.find((p: any) => p.inlineData);
+    const base64Image = imagePart?.inlineData?.data;
 
     if (!base64Image) {
       return new Response(
@@ -133,18 +135,24 @@ Avoid:
 
     // Process base64 from Google API prediction
     console.log("Processing image from Google API...");
-    const mimeType = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType || "image/png";
-    const imageResponse = await fetch(`data:${mimeType};base64,${base64Image}`);
-
-    if (!imageResponse.ok) {
-      console.error("Failed to process image from base64 encoding");
+    
+    let imageBuffer;
+    try {
+      const binaryString = atob(base64Image);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+      }
+      imageBuffer = bytes.buffer;
+    } catch (e) {
+      console.error("Failed to decode base64 image", e);
       return new Response(
         JSON.stringify({
           error: "Failed to process generated image",
           imageUrl: null
         }),
         {
-          status: 200,
+          status: 400,
           headers: {
             ...corsHeaders,
             "Content-Type": "application/json",
@@ -152,9 +160,6 @@ Avoid:
         }
       );
     }
-
-    const imageBlob = await imageResponse.blob();
-    const imageBuffer = await imageBlob.arrayBuffer();
 
     // Create a unique filename
     const timestamp = Date.now();
