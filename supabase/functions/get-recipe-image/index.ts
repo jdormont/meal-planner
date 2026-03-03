@@ -120,7 +120,8 @@ Avoid:
     if (!base64Image) {
       return new Response(
         JSON.stringify({
-          error: "No image generated",
+          error: "No image generated from Google API",
+          googlePayload: data,
           imageUrl: null
         }),
         {
@@ -149,6 +150,7 @@ Avoid:
       return new Response(
         JSON.stringify({
           error: "Failed to process generated image",
+          googlePayload: data,
           imageUrl: null
         }),
         {
