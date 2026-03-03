@@ -12,6 +12,36 @@ export type DashboardData = {
     refresh: () => Promise<void>;
 };
 
+export const updateCachedFeaturedRecipe = (userId: string | undefined, recipeId: string, updates: Partial<Recipe>) => {
+    if (!userId) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const storageKey = `featured_recipes_${userId}_${today}`;
+    try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+                let updated = false;
+                const newFeatured = parsed.map(r => {
+                    if (r.id === recipeId) {
+                        updated = true;
+                        return { ...r, ...updates };
+                    }
+                    return r;
+                });
+                
+                if (updated) {
+                    localStorage.setItem(storageKey, JSON.stringify(newFeatured));
+                    window.dispatchEvent(new CustomEvent('dashboard-recipes-updated', { detail: { newFeatured } }));
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Failed to update cached featured recipe', e);
+    }
+};
+
 export function useRecipeDashboard(): DashboardData {
     const { user } = useAuth();
     const [data, setData] = useState<{
@@ -195,6 +225,17 @@ export function useRecipeDashboard(): DashboardData {
 
     useEffect(() => {
         fetchDashboard();
+
+        const handleUpdate = (e: CustomEvent) => {
+            if (e.detail?.newFeatured) {
+                setData(prev => ({ ...prev, featured: e.detail.newFeatured }));
+            }
+        };
+
+        window.addEventListener('dashboard-recipes-updated', handleUpdate as EventListener);
+        return () => {
+            window.removeEventListener('dashboard-recipes-updated', handleUpdate as EventListener);
+        };
     }, [user]);
 
     return {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, Recipe } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalytics } from './useAnalytics';
+import { updateCachedFeaturedRecipe } from './useRecipeDashboard';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -260,6 +261,10 @@ export function useRecipes() {
             }
 
             if (error) throw error;
+
+            if (editingId && !editingId.startsWith('temp-')) {
+                updateCachedFeaturedRecipe(user.id, editingId, recipeData);
+            }
 
             // Reload to reflect changes
             await loadRecipes();
