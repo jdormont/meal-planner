@@ -11,6 +11,7 @@ export const RecipeResponseSchema = z.object({
         difficulty: z.string(),
         reason_for_recommendation: z.string(),
         cuisine: z.string().optional(),
+        source: z.string().optional(),
         tags: z.object({
             protein: z.string(),
             carb: z.string(),

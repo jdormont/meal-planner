@@ -205,6 +205,49 @@ async function saveSuggestedRecipes(
   }
 }
 
+async function searchTavily(query: string) {
+  const apiKey = Deno.env.get("TAVILY_API_KEY");
+  if (!apiKey) {
+    console.error("TAVILY_API_KEY is not set.");
+    return null;
+  }
+
+  try {
+    const response = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query: query,
+        search_depth: "basic",
+        include_domains: [
+          "nytimes.com",
+          "seriouseats.com",
+          "recipetineats.com",
+          "thewoksoflife.com",
+          "177milkstreet.com",
+          "pinchofyum.com"
+        ],
+        max_results: 10
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("Tavily search failed:", response.status, text);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.results; // Array of { title, url, content, score, raw_content }
+  } catch (error) {
+    console.error("Error calling Tavily API:", error);
+    return null;
+  }
+}
+
 async function detectCuisineFromMessages(
   messages: Message[],
   userPreferences: UserPreferences,
@@ -650,6 +693,66 @@ Deno.serve(async (req: Request) => {
       allMatches: ''
     };
 
+    // --- Intent Routing ---
+    let intentScenario = "inspiration"; // default
+    let searchQuery = "";
+    
+    // Default to inspiration for PLANNER_MODE_ACTIVATED or if not explicitly weekly brief / rescale action
+    if (!action && !recipe) {
+      const routingSystemPrompt = `You are an AI assistant that analyzes a user's cooking request to determine the required action.
+Analyze the conversation and classify the intent into ONE of the following scenarios:
+1. "weekly_planning": The user wants to plan a week of meals or asked for a meal plan.
+2. "qa": The user has a general cooking question or needs clarification on a technique/ingredient.
+3. "specific_request": The user asked for a specific dish, ingredient, or cuisine (e.g., "mac and cheese", "chicken and rice", "Thai food").
+4. "inspiration": The user has a broad request for ideas (e.g., "what should I cook?", "planner mode activated", "I need dinner ideas").
+
+If the scenario is "specific_request" or "inspiration", you MUST also provide a highly relevant "search_query" optimized for a search engine to find recipes matching the user's intent. The query should be concise (2-5 words) and exclude generic terms like 'recipe'. For other scenarios, leave search_query empty.
+
+OUTPUT SCHEMA (JSON ONLY):
+{
+  "scenario": "weekly_planning" | "qa" | "specific_request" | "inspiration",
+  "search_query": "string (only for specific_request or inspiration, otherwise empty string)"
+}`;
+
+      try {
+        let routingResult = '';
+        console.log("Routing Intent...");
+        if (modelConfig.provider === 'openai') {
+          routingResult = await callOpenAI(apiKey, modelConfig.model_identifier, messages, routingSystemPrompt);
+        } else if (modelConfig.provider === 'anthropic') {
+          routingResult = await callAnthropic(apiKey, modelConfig.model_identifier, messages, routingSystemPrompt);
+        } else if (modelConfig.provider === 'google') {
+          routingResult = await callGemini(apiKey, modelConfig.model_identifier, messages, routingSystemPrompt);
+        }
+
+        const routingJsonStr = routingResult.replace(/```json\n?|```/g, "").trim();
+        const routingData = JSON.parse(routingJsonStr);
+        console.log("Routing result:", routingData);
+        intentScenario = routingData.scenario;
+        searchQuery = routingData.search_query;
+      } catch (routingError: any) {
+         console.error("Intent routing failed, proceeding with default behavior:", routingError);
+      }
+    } else if (action === 'rescale_recipe' || recipe) {
+       intentScenario = "generate_full_recipe";
+    }
+
+    let tavilyContext = '';
+    if ((intentScenario === "specific_request" || intentScenario === "inspiration") && searchQuery && !weeklyBrief && action !== 'rescale_recipe') {
+      console.log(`Searching Tavily for: ${searchQuery}`);
+      const tavilyResults = await searchTavily(searchQuery);
+      if (tavilyResults && tavilyResults.length > 0) {
+        tavilyContext = "\n\n**INSPIRATION FROM THE WEB:**\n";
+        tavilyContext += "Here are some popular recipes from top culinary websites that match the user's intent to use as inspiration:\n";
+        tavilyResults.forEach((r: any, idx: number) => {
+           tavilyContext += `[${idx+1}] Title: ${r.title}\nSource: ${r.url}\nDescription: ${r.content}\n\n`;
+        });
+        tavilyContext += "\n**CRITICAL INSTRUCTION - TAVILY INSPIRATION:**\n";
+        tavilyContext += "When generating the 3-5 preview 'suggestions', you MUST draw primary inspiration and structure from these web results. Base your recommendations heavily on these specific dishes, but adapt them to fit the exact userPreferences (allergies, skill level, time). Output them in the exact JSON schema requested. You MUST populate the 'source' field in the JSON with the name or domain of the inspiring website. NOTE: The 'Pantry Hero' rule is relaxed here; prioritize the authentic flavor profiles from these web sources over forcing pantry ingredients.\n";
+      }
+    }
+    // --- End Intent Routing ---
+
     // Logic: 
     // 1. If forceCuisine is provided (from clicking "View Recipe"), use THAT cuisine profile strict mode.
     // 2. If NO forceCuisine, we check for detection BUT we might NOT inject the strict profile if we want diversity.
@@ -843,6 +946,7 @@ Please rescale this to ${targetServings} servings.`;
           "difficulty": "string",
           "reason_for_recommendation": "string (Why this fits the user's request)",
           "cuisine": "string (Optional: If the recipe belongs to a specific cuisine, e.g. 'Mexican', 'Thai', 'Italian')",
+          "source": "string (Optional: If the recipe was inspired by a specific website or domain, include it here e.g. 'nytimes.com' or 'Serious Eats')",
           "tags": {
             "protein": "string (Primary protein, e.g. 'chicken', 'beef', 'tofu', 'beans', 'none')",
             "carb": "string (Primary carb base, e.g. 'pasta', 'rice', 'potato', 'bread', 'none')",
@@ -897,6 +1001,8 @@ Please rescale this to ${targetServings} servings.`;
     ${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}
 
     ${recentRecipesContext}
+    
+    ${tavilyContext}
     `;
 
     let message;
