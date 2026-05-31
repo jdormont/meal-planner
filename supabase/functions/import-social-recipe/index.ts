@@ -1,5 +1,6 @@
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "../_shared/cors.ts";
 
 // --- Types & Schemas ---
 
@@ -25,12 +26,6 @@ const RecipeResponseSchema = z.object({
     }))
   }))
 });
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
 
 // --- Helpers ---
 

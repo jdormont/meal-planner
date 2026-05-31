@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, User, Loader2, Trash2, Plus, ArrowLeft, MessageSquare, Bug } from 'lucide-react';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalytics } from '../hooks/useAnalytics';
@@ -534,8 +535,8 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
                         className="prose prose-sm max-w-none leading-relaxed"
                         dangerouslySetInnerHTML={{
                           __html: message.role === 'assistant'
-                            ? marked(message.content.replace('FULL_RECIPE', '').trim()) as string
-                            : message.content
+                            ? DOMPurify.sanitize(marked(message.content.replace('FULL_RECIPE', '').trim()) as string)
+                            : DOMPurify.sanitize(message.content)
                         }}
                       />
                     </div>

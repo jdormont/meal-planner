@@ -6,6 +6,7 @@ import { InstacartButton } from './InstacartButton';
 import { scaleIngredient } from '../utils/recipeScaler';
 import { parseIngredient } from '../utils/recipeParser';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { useAuth } from '../contexts/AuthContext';
 
 type RecipeDetailProps = {
@@ -135,7 +136,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
   };
 
   const renderMarkdown = (text: string) => {
-    return { __html: marked(text, { breaks: true, gfm: true }) as string };
+    return { __html: DOMPurify.sanitize(marked(text, { breaks: true, gfm: true }) as string) };
   };
 
 

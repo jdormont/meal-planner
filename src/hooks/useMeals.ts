@@ -17,28 +17,17 @@ export function useMeals() {
             setLoading(true);
             const { data: mealsData, error: mealsError } = await supabase
                 .from('meals')
-                .select('*')
+                .select('*, meal_recipes:meal_recipes(*, recipe:recipes(*))')
                 .eq('is_archived', false)
-                .order('date', { ascending: true });
+                .order('date', { ascending: true })
+                .order('sort_order', { referencedTable: 'meal_recipes', ascending: true });
 
             if (mealsError) throw mealsError;
 
-            const mealsWithRecipes: MealWithRecipes[] = await Promise.all(
-                (mealsData || []).map(async (meal) => {
-                    const { data: mealRecipes, error: mrError } = await supabase
-                        .from('meal_recipes')
-                        .select('*, recipe:recipes(*)')
-                        .eq('meal_id', meal.id)
-                        .order('sort_order', { ascending: true });
-
-                    if (mrError) throw mrError;
-
-                    return {
-                        ...meal,
-                        recipes: mealRecipes || [],
-                    };
-                })
-            );
+            const mealsWithRecipes: MealWithRecipes[] = (mealsData || []).map((meal) => {
+                const { meal_recipes, ...mealFields } = meal as typeof meal & { meal_recipes: MealWithRecipes['recipes'] };
+                return { ...mealFields, recipes: meal_recipes || [] };
+            });
 
             setMeals(mealsWithRecipes);
         } catch (err) {
