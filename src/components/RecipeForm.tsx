@@ -122,6 +122,13 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       );
 
       const data = await response.json();
+      console.log("[fetchRecipeImage] Edge function response HTTP status:", response.status);
+      console.log("[fetchRecipeImage] Edge function response data:", data);
+      
+      if (!response.ok) {
+        console.error("[fetchRecipeImage] Failed with status:", response.status, data);
+        return null;
+      }
       return data.imageUrl || null;
     } catch (error) {
       console.error('Error fetching recipe image:', error);
@@ -132,10 +139,13 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
   const regenerateImage = async () => {
     if (!title.trim()) return;
 
+    console.log("[regenerateImage] Starting regeneration for:", title);
     setIsRegeneratingImage(true);
     const fetchedImageUrl = await fetchRecipeImage(title);
+    console.log("[regenerateImage] fetchRecipeImage returned:", fetchedImageUrl);
     if (fetchedImageUrl) {
       setImageUrl(fetchedImageUrl);
+      console.log("[regenerateImage] Set imageUrl state to:", fetchedImageUrl);
     }
     setIsRegeneratingImage(false);
   };
@@ -299,15 +309,20 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
     e.preventDefault();
 
     let finalImageUrl = imageUrl;
+    console.log("[handleSubmit] Current imageUrl state:", finalImageUrl);
 
     if (!finalImageUrl) {
+      console.log("[handleSubmit] No image present, fetching new one...");
       setIsFetchingImage(true);
       const fetchedImageUrl = await fetchRecipeImage(title);
+      console.log("[handleSubmit] fetchedImageUrl returned:", fetchedImageUrl);
       if (fetchedImageUrl) {
         finalImageUrl = fetchedImageUrl;
       }
       setIsFetchingImage(false);
     }
+
+    console.log("[handleSubmit] Calling onSave with finalImageUrl:", finalImageUrl);
 
     const cocktailMetadataToSave = recipeType === 'cocktail' && (
       cocktailMetadata.spiritBase ||
