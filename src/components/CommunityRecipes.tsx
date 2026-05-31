@@ -68,7 +68,7 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, onEdit, currentUse
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
                   <span>
-                    {recipe.prep_time_minutes + recipe.cook_time_minutes} min
+                    {recipe.total_time} min
                   </span>
                 </div>
                 <div className="flex items-center gap-1">

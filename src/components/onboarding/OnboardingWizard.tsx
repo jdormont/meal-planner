@@ -73,7 +73,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const saveStepData = async (newAllergies?: string[], newTime?: string, newSkill?: string) => {
     if (!user) return;
     
-    const updates: any = {};
+    const updates: Record<string, unknown> = {};
     if (newAllergies !== undefined) updates.food_restrictions = newAllergies;
     if (newTime !== undefined) updates.time_preference = convertUiTimeToDb(newTime);
     if (newSkill !== undefined) updates.skill_level = newSkill;

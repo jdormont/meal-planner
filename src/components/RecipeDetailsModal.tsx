@@ -1,8 +1,9 @@
 import { X, Clock, Users, ChefHat, CalendarPlus, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState } from 'react';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type RecipeDetailsModalProps = {
-    recipe: any; // Using dynamic type for now as weekly set structure matches Recipe but is JSON
+    recipe: any; // Weekly set structure matches Recipe but comes from JSON
     onClose: () => void;
     onAddToWeek: (recipe: any) => void;
     onFeedback: (recipe: any, rating: 'thumbs_up' | 'thumbs_down') => void;

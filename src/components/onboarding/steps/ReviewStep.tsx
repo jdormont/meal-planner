@@ -13,7 +13,7 @@ export type ReviewStepProps = {
 export function ReviewStep({ allergies, time, skill, onBack, onComplete, isGenerating }: ReviewStepProps) {
   
   const getSummary = () => {
-    let summary = [];
+    const summary = [];
     if (allergies.length > 0) {
         summary.push(`Avoiding ${allergies.length} items (Safe!)`);
     } else {

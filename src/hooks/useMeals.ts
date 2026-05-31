@@ -163,7 +163,7 @@ export function useMeals() {
         const previousMeals = [...meals];
         setMeals(currentMeals => currentMeals.map(meal =>
             meal.id === mealId
-                ? { ...meal, date: newDate, meal_type: newType as any }
+                ? { ...meal, date: newDate, meal_type: newType as Meal['meal_type'] }
                 : meal
         ));
 

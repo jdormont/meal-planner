@@ -7,7 +7,7 @@ type FeaturedBannerProps = {
 };
 
 export function FeaturedBanner({ recipe, onClick }: FeaturedBannerProps) {
-    const totalTime = (recipe.prep_time_minutes || 0) + (recipe.cook_time_minutes || 0);
+    const totalTime = recipe.total_time || 0;
 
     return (
         <div

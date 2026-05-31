@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Loader2, Chrome, UserPlus, LogIn } from 'lucide-react';
+import { Loader2, Chrome } from 'lucide-react';
 
 type AuthMode = 'signin' | 'signup';
 

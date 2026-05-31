@@ -40,6 +40,7 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       // 1. Get active list
+      // eslint-disable-next-line prefer-const
       let { data: list, error } = await supabase
         .from('shopping_lists')
         .select('*')
@@ -226,6 +227,7 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
       console.log("Instacart response:", data);
       return data.products_link_url;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error interacting with Instacart:', err);
       
@@ -238,7 +240,7 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
            try {
              const errorBody = await err.context.json();
              if (errorBody.error) errorMessage += ` ${errorBody.error}`;
-           } catch (e) { /* ignore */ }
+           } catch { /* ignore */ }
         } else if (err.message) {
            errorMessage += ` ${err.message}`;
         }

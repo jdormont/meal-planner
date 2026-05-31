@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X, Sparkles, Globe, Camera, UserCircle, ChefHat } from 'lucide-react';
 
 type ProfileNudgeModalProps = {

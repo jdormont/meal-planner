@@ -56,6 +56,7 @@ export function LandingPage() {
 
       setViewingRecipe(tempRecipe);
       setImportUrl(''); // Clear input on success
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Import error:", err);
       
