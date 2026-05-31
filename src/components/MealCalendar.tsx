@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Coffee, Sun, Moon, X } from 'lucide-react';
-import { startOfWeek, endOfWeek, eachDayOfInterval, format, addWeeks, subWeeks, isSameDay, isToday as isDateToday, startOfDay } from 'date-fns';
+import React, { useMemo, useState } from 'react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Coffee, Sun, Moon, X, ShoppingCart, Copy } from 'lucide-react';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, addWeeks, subWeeks, isSameDay, isToday as isDateToday } from 'date-fns';
 import { MealWithRecipes, Recipe } from '../lib/supabase';
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { DraggableMeal } from './DraggableMeal';
 import { DroppableSlot } from './DroppableSlot';
+import { useShoppingList } from '../contexts/ShoppingListContext';
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner';
 
@@ -15,6 +16,7 @@ type MealCalendarProps = {
   onMealClick?: (meal: MealWithRecipes) => void;
   onRecipeClick?: (recipe: Recipe) => void;
   onRemoveRecipe?: (mealId: string, recipeId: string) => void;
+  onCopyPreviousWeek?: (toWeekStart: Date) => Promise<{ copied: number; skipped: number }>;
 };
 
 const MEAL_TYPES: { type: MealType; label: string; icon: React.ReactNode }[] = [
@@ -23,10 +25,15 @@ const MEAL_TYPES: { type: MealType; label: string; icon: React.ReactNode }[] = [
   { type: 'dinner', label: 'Dinner', icon: <Moon className="w-4 h-4" /> },
 ];
 
-export function MealCalendar({ meals, onMoveMeal, onAddMeal, onMealClick, onRecipeClick, onRemoveRecipe }: MealCalendarProps) {
+export function MealCalendar({ meals, onMoveMeal, onAddMeal, onMealClick, onRecipeClick, onRemoveRecipe, onCopyPreviousWeek }: MealCalendarProps) {
   const [currentWeekStart, setCurrentWeekStart] = React.useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 0 })
   );
+  const [isAddingToList, setIsAddingToList] = useState(false);
+  const [listFeedback, setListFeedback] = useState('');
+  const [isCopying, setIsCopying] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState('');
+  const { addItemsFromMeals, currentList } = useShoppingList();
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -68,15 +75,90 @@ export function MealCalendar({ meals, onMoveMeal, onAddMeal, onMealClick, onReci
 
   const isCurrentWeek = isSameDay(currentWeekStart, startOfWeek(new Date(), { weekStartsOn: 0 }));
 
+  const showFeedback = (setter: (v: string) => void, msg: string) => {
+    setter(msg);
+    setTimeout(() => setter(''), 3000);
+  };
+
+  const handleAddWeekToShoppingList = async () => {
+    const weekDateStrings = weekDays.map(d => format(d, 'yyyy-MM-dd'));
+    const weekMeals = meals.filter(m => weekDateStrings.includes(m.date));
+    if (weekMeals.length === 0) {
+      showFeedback(setListFeedback, 'No meals planned this week.');
+      return;
+    }
+    if (!currentList) {
+      showFeedback(setListFeedback, 'Shopping list not ready, try again.');
+      return;
+    }
+    setIsAddingToList(true);
+    try {
+      const count = await addItemsFromMeals(weekMeals);
+      showFeedback(setListFeedback, count > 0 ? `${count} ingredients added to shopping list` : 'No ingredients found.');
+    } finally {
+      setIsAddingToList(false);
+    }
+  };
+
+  const handleCopyPreviousWeek = async () => {
+    if (!onCopyPreviousWeek) return;
+    const previousWeekStart = subWeeks(currentWeekStart, 1);
+    const prevDates = Array.from({ length: 7 }, (_, i) =>
+      format(new Date(previousWeekStart.getTime() + i * 86400000), 'yyyy-MM-dd')
+    );
+    const prevMeals = meals.filter(m => prevDates.includes(m.date) && !m.is_event);
+    if (prevMeals.length === 0) {
+      showFeedback(setCopyFeedback, 'No meals in the previous week to copy.');
+      return;
+    }
+    const currentWeekDates = weekDays.map(d => format(d, 'yyyy-MM-dd'));
+    const currentWeekHasMeals = meals.some(m => currentWeekDates.includes(m.date) && !m.is_event);
+    if (currentWeekHasMeals) {
+      const ok = window.confirm('This week already has meals. Copy and merge with existing meals?');
+      if (!ok) return;
+    }
+    setIsCopying(true);
+    try {
+      const { copied, skipped } = await onCopyPreviousWeek(currentWeekStart);
+      showFeedback(setCopyFeedback, copied > 0
+        ? `Copied ${copied} meal${copied > 1 ? 's' : ''} to this week${skipped > 0 ? ` (${skipped} skipped, slot already filled)` : ''}`
+        : 'Nothing to copy — all slots already filled.'
+      );
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <CalendarIcon className="w-6 h-6 text-terracotta-600" />
             <h2 className="text-2xl font-bold text-gray-900">Weekly Meal Plan</h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {onCopyPreviousWeek && (
+              <button
+                onClick={handleCopyPreviousWeek}
+                disabled={isCopying}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-sage-700 hover:bg-sage-100 rounded-lg transition disabled:opacity-50"
+                title="Copy previous week's meals to this week"
+              >
+                <Copy className="w-4 h-4" />
+                <span className="hidden sm:inline">{isCopying ? 'Copying…' : 'Copy Prev Week'}</span>
+              </button>
+            )}
+            <button
+              onClick={handleAddWeekToShoppingList}
+              disabled={isAddingToList}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-sage-700 hover:bg-sage-100 rounded-lg transition disabled:opacity-50"
+              title="Add this week's ingredients to shopping list"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span className="hidden sm:inline">{isAddingToList ? 'Adding…' : 'Add to List'}</span>
+            </button>
+            <div className="w-px h-6 bg-gray-200" />
             <button
               onClick={goToPreviousWeek}
               className="p-2 hover:bg-sage-100 rounded-lg transition"
@@ -104,8 +186,18 @@ export function MealCalendar({ meals, onMoveMeal, onAddMeal, onMealClick, onReci
           </div>
         </div>
 
-        <div className="text-sm text-gray-600 text-center md:text-left">
-          {format(currentWeekStart, 'MMMM d')} - {format(weekDays[6], 'MMMM d, yyyy')}
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="text-sm text-gray-600">
+            {format(currentWeekStart, 'MMMM d')} - {format(weekDays[6], 'MMMM d, yyyy')}
+          </div>
+          <div className="flex gap-4">
+            {listFeedback && (
+              <span className="text-sm text-sage-700 font-medium animate-pulse">{listFeedback}</span>
+            )}
+            {copyFeedback && (
+              <span className="text-sm text-terracotta-700 font-medium animate-pulse">{copyFeedback}</span>
+            )}
+          </div>
         </div>
 
         <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-sage-200 overflow-hidden">
