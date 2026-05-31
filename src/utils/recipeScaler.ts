@@ -47,9 +47,22 @@ const toFraction = (amount: number): string => {
   return `${h1}/${k1}`;
 };
 
+const UNICODE_FRACTIONS_MAP: Record<string, string> = {
+  '½': '1/2', '⅓': '1/3', '⅔': '2/3', '¼': '1/4', '¾': '3/4',
+  '⅕': '1/5', '⅖': '2/5', '⅗': '3/5', '⅘': '4/5',
+  '⅙': '1/6', '⅚': '5/6', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8'
+};
+
 export const parseQuantity = (quantity: string): number => {
   if (!quantity) return 0;
-  
+
+  // Normalize Unicode fraction glyphs before any numeric parsing
+  let normalized = quantity;
+  for (const [glyph, ascii] of Object.entries(UNICODE_FRACTIONS_MAP)) {
+    normalized = normalized.replaceAll(glyph, ascii);
+  }
+  quantity = normalized;
+
   // Handle ranges like "1-2" -> take average 1.5
   if (quantity.includes('-')) {
     const parts = quantity.split('-').map(parseQuantity);

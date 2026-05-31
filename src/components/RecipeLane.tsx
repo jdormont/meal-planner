@@ -1,5 +1,6 @@
 import { Recipe } from '../lib/supabase';
 import { Clock, Users } from 'lucide-react';
+import { formatTime } from '../utils/time';
 
 type RecipeLaneProps = {
     title: string;
@@ -25,6 +26,7 @@ export function RecipeLane({ title, recipes, onRecipeClick }: RecipeLaneProps) {
                                 <img
                                     src={recipe.image_url}
                                     alt={recipe.title}
+                                    loading="lazy"
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
                             ) : (
@@ -39,7 +41,7 @@ export function RecipeLane({ title, recipes, onRecipeClick }: RecipeLaneProps) {
                             <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                                 <div className="flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
-                                    <span>{recipe.total_time}m</span>
+                                    <span>{formatTime(recipe.total_time)}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Users className="w-3 h-3" />

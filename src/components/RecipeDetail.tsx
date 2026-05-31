@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
 import { useShoppingList } from '../contexts/ShoppingListContext';
 import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, AlertTriangle, Minus, Plus } from 'lucide-react';
+import { formatTime } from '../utils/time';
 import { InstacartButton } from './InstacartButton';
 import { scaleIngredient } from '../utils/recipeScaler';
 import { parseIngredient } from '../utils/recipeParser';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useAuth } from '../contexts/AuthContext';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 type RecipeDetailProps = {
   recipe: Recipe;
@@ -22,6 +24,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
   const { user } = useAuth();
   const isOwner = user?.id === recipe.user_id;
   const { addItem } = useShoppingList();
+  useEscapeKey(onClose);
   const [currentRating, setCurrentRating] = useState<RecipeRating | null>(null);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [pendingRating, setPendingRating] = useState<'thumbs_up' | 'thumbs_down' | null>(null);
@@ -311,7 +314,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
               <Clock className="w-5 h-5 text-terracotta-600" />
               <div>
                 <div className="text-sm text-gray-500">Total Time</div>
-                <div className="font-semibold">{totalTime} minutes</div>
+                <div className="font-semibold">{formatTime(totalTime)}</div>
               </div>
             </div>
             <div className="flex items-center gap-2 text-gray-700">

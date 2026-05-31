@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Globe, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { Recipe } from '../lib/supabase';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 type ImportStatus = 'idle' | 'importing' | 'creating' | 'done' | 'error';
 
@@ -10,6 +11,7 @@ type RecipeImportModalProps = {
 };
 
 export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportModalProps) {
+  useEscapeKey(onClose);
   const [url, setUrl] = useState('');
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [error, setError] = useState<string | null>(null);

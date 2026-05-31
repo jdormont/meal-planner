@@ -69,11 +69,10 @@ export function useRecipes() {
 
             // Apply Filters (Search term is applied client-side below for ingredients, but we must fetch at least matching titles/descriptions to be safe, however since pagination limits us to 12 items, if we don't query the DB with ILIKE it will only filter the FIRST 12 items.)
             if (searchTerm) {
-                // ILIKE on title OR description
-                // Note: supabase expects exactly this format: title.ilike.%term%,description.ilike.%term%
-                // But we must encode the searchTerm to avoid breaking the query parser on special characters
-                const safeTerm = encodeURIComponent(searchTerm);
-                query = query.or(`title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`);
+                // Supabase JS handles URL encoding internally — do not call encodeURIComponent
+                // here or multi-word terms like "chicken soup" will be mangled into
+                // "chicken%20soup" and match nothing.
+                query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
             }
 
             if (selectedTags.length > 0) {
