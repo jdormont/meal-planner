@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Recipe, CocktailMetadata } from '../lib/supabase';
 import { X, Plus, Minus, Loader2, Trash2, Sparkles } from 'lucide-react';
+import { IngredientInput } from './IngredientInput';
+import { CocktailMetadataFields } from './CocktailMetadataFields';
 
 type RecipeFormProps = {
   recipe?: Recipe | null;
@@ -61,20 +63,6 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       }
     }
   }, [recipe]);
-
-  const addIngredient = () => {
-    setIngredients([...ingredients, { name: '', quantity: '', unit: '' }]);
-  };
-
-  const removeIngredient = (index: number) => {
-    setIngredients(ingredients.filter((_, i) => i !== index));
-  };
-
-  const updateIngredient = (index: number, field: string, value: string) => {
-    const updated = [...ingredients];
-    updated[index] = { ...updated[index], [field]: value };
-    setIngredients(updated);
-  };
 
   const addInstruction = () => {
     setInstructions([...instructions, '']);
@@ -464,147 +452,17 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
           </div>
 
           {recipeType === 'cocktail' && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Cocktail Details</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
-                    Base Spirit
-                  </label>
-                  <select
-                    value={cocktailMetadata.spiritBase}
-                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, spiritBase: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
-                  >
-                    <option value="">Select...</option>
-                    <option value="vodka">Vodka</option>
-                    <option value="gin">Gin</option>
-                    <option value="rum">Rum</option>
-                    <option value="tequila">Tequila</option>
-                    <option value="whiskey">Whiskey</option>
-                    <option value="bourbon">Bourbon</option>
-                    <option value="brandy">Brandy</option>
-                    <option value="mezcal">Mezcal</option>
-                    <option value="non-alcoholic">Non-Alcoholic</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
-                    Glass Type
-                  </label>
-                  <select
-                    value={cocktailMetadata.glassType}
-                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, glassType: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
-                  >
-                    <option value="">Select...</option>
-                    <option value="rocks">Rocks/Old Fashioned</option>
-                    <option value="highball">Highball</option>
-                    <option value="martini">Martini</option>
-                    <option value="coupe">Coupe</option>
-                    <option value="collins">Collins</option>
-                    <option value="hurricane">Hurricane</option>
-                    <option value="champagne">Champagne Flute</option>
-                    <option value="shot">Shot Glass</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
-                    Method
-                  </label>
-                  <select
-                    value={cocktailMetadata.method}
-                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, method: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
-                  >
-                    <option value="">Select...</option>
-                    <option value="shaken">Shaken</option>
-                    <option value="stirred">Stirred</option>
-                    <option value="built">Built</option>
-                    <option value="blended">Blended</option>
-                    <option value="muddled">Muddled</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
-                    Ice
-                  </label>
-                  <select
-                    value={cocktailMetadata.ice}
-                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, ice: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
-                  >
-                    <option value="">Select...</option>
-                    <option value="cubed">Cubed</option>
-                    <option value="crushed">Crushed</option>
-                    <option value="neat">Neat (No Ice)</option>
-                    <option value="rocks">On the Rocks</option>
-                    <option value="large-cube">Large Cube</option>
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
-                    Garnish
-                  </label>
-                  <input
-                    type="text"
-                    value={cocktailMetadata.garnish}
-                    onChange={(e) => setCocktailMetadata({ ...cocktailMetadata, garnish: e.target.value })}
-                    placeholder="e.g., lemon twist, cherry, mint sprig"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none text-sm"
-                  />
-                </div>
-              </div>
-            </div>
+            <CocktailMetadataFields
+              metadata={cocktailMetadata}
+              onChange={setCocktailMetadata}
+            />
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ingredients
-            </label>
-            <div className="space-y-2">
-              {ingredients.map((ingredient, index) => (
-                <div key={index} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={ingredient.quantity}
-                    onChange={(e) => updateIngredient(index, 'quantity', e.target.value)}
-                    placeholder={recipeType === 'cocktail' ? '2' : '1'}
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
-                  />
-                  <input
-                    type="text"
-                    value={ingredient.unit}
-                    onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
-                    placeholder={recipeType === 'cocktail' ? 'oz' : 'cup'}
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
-                  />
-                  <input
-                    type="text"
-                    value={ingredient.name}
-                    onChange={(e) => updateIngredient(index, 'name', e.target.value)}
-                    placeholder={recipeType === 'cocktail' ? 'bourbon' : 'flour'}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-terracotta-500 focus:border-transparent outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeIngredient(index)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                  >
-                    <Minus className="w-5 h-5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={addIngredient}
-              className="mt-2 px-4 py-2 text-terracotta-600 hover:bg-terracotta-50 rounded-xl transition flex items-center gap-2 text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              Add Ingredient
-            </button>
-          </div>
+          <IngredientInput
+            ingredients={ingredients}
+            recipeType={recipeType}
+            onChange={setIngredients}
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'wouter';
 import { BookOpen, Users, Calendar, ChefHat, Sparkles, Plus, User, Shield, Settings as SettingsIcon, LogOut, ShoppingCart } from 'lucide-react';
 import { UserProfile } from '../lib/supabase';
 import { useShoppingList } from '../contexts/ShoppingListContext';
@@ -7,8 +8,8 @@ export type View = 'recipes' | 'community' | 'meals' | 'chat' | 'settings' | 'ad
 
 type LayoutProps = {
     children: React.ReactNode;
-    currentView: View;
-    onViewChange: (view: View) => void;
+    currentView?: View;
+    onViewChange?: (view: View) => void;
     userProfile: UserProfile | null;
     signOut: () => Promise<void>;
     onNewRecipe: () => void;
@@ -18,8 +19,6 @@ type LayoutProps = {
 
 export function Layout({
     children,
-    currentView,
-    onViewChange,
     userProfile,
     signOut,
     onNewRecipe,
@@ -28,6 +27,21 @@ export function Layout({
 }: LayoutProps) {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const { items } = useShoppingList();
+    const [location, setLocation] = useLocation();
+
+    // Map location to View type for styling compatibility
+    let activeView: View = 'recipes';
+    if (location.startsWith('/community')) {
+        activeView = 'community';
+    } else if (location.startsWith('/planner')) {
+        activeView = 'meals';
+    } else if (location.startsWith('/chat')) {
+        activeView = 'chat';
+    } else if (location.startsWith('/settings')) {
+        activeView = 'settings';
+    } else if (location.startsWith('/admin')) {
+        activeView = 'admin';
+    }
 
     return (
         <div className="min-h-screen bg-cream-200 texture-linen">
@@ -36,7 +50,7 @@ export function Layout({
                     <div className="flex items-center justify-between gap-2">
                         <div
                             className="flex items-center gap-2 sm:gap-3 min-w-0 cursor-pointer"
-                            onClick={() => onViewChange('recipes')}
+                            onClick={() => setLocation('/recipes')}
                         >
                             <img src="/gemini_generated_image_9fuv9w9fuv9w9fuv-remove-background.com.png" alt="Sous" className="h-8 sm:h-10 flex-shrink-0" />
                             <div className="min-w-0">
@@ -47,8 +61,8 @@ export function Layout({
 
                         <nav className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                             <button
-                                onClick={() => onViewChange('recipes')}
-                                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${currentView === 'recipes'
+                                onClick={() => setLocation('/recipes')}
+                                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${activeView === 'recipes'
                                     ? 'bg-terracotta-500 text-white shadow-sm'
                                     : 'text-gray-700 hover:bg-sage-100'
                                     }`}
@@ -59,8 +73,8 @@ export function Layout({
                             </button>
 
                             <button
-                                onClick={() => onViewChange('community')}
-                                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${currentView === 'community'
+                                onClick={() => setLocation('/community')}
+                                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${activeView === 'community'
                                     ? 'bg-terracotta-500 text-white shadow-sm'
                                     : 'text-gray-700 hover:bg-sage-100'
                                     }`}
@@ -71,8 +85,8 @@ export function Layout({
                             </button>
 
                             <button
-                                onClick={() => onViewChange('meals')}
-                                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${currentView === 'meals'
+                                onClick={() => setLocation('/planner')}
+                                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${activeView === 'meals'
                                     ? 'bg-terracotta-500 text-white shadow-sm'
                                     : 'text-gray-700 hover:bg-sage-100'
                                     }`}
@@ -83,8 +97,8 @@ export function Layout({
                             </button>
 
                             <button
-                                onClick={() => onViewChange('chat')}
-                                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${currentView === 'chat'
+                                onClick={() => setLocation('/chat')}
+                                className={`px-2 sm:px-3 py-2 min-h-[44px] rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium touch-manipulation ${activeView === 'chat'
                                     ? 'bg-terracotta-500 text-white shadow-sm'
                                     : 'text-gray-700 hover:bg-sage-100'
                                     }`}
@@ -99,20 +113,20 @@ export function Layout({
 
                             <div className="hidden sm:block h-6 w-px bg-gray-300 mx-1"></div>
 
-                            {currentView !== 'community' && (
+                            {activeView !== 'community' && (
                                 <button
                                     onClick={() => {
-                                        if (currentView === 'meals') {
+                                        if (activeView === 'meals') {
                                             onNewMeal();
                                         } else {
                                             onNewRecipe();
                                         }
                                     }}
                                     className="px-2 sm:px-3 py-2 min-h-[44px] bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-xl transition flex items-center gap-1 sm:gap-2 font-medium shadow-sm touch-manipulation"
-                                    title={currentView === 'meals' ? 'New Meal' : 'New Recipe'}
+                                    title={activeView === 'meals' ? 'New Meal' : 'New Recipe'}
                                 >
                                     <Plus className="w-5 h-5" />
-                                    <span className="hidden lg:inline">{currentView === 'meals' ? 'New' : 'New'}</span>
+                                    <span className="hidden lg:inline">{activeView === 'meals' ? 'New' : 'New'}</span>
                                 </button>
                             )}
                             
@@ -148,7 +162,7 @@ export function Layout({
                                             {userProfile?.is_admin && (
                                                 <button
                                                     onClick={() => {
-                                                        onViewChange('admin');
+                                                        setLocation('/admin');
                                                         setShowUserMenu(false);
                                                     }}
                                                     className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
@@ -159,7 +173,7 @@ export function Layout({
                                             )}
                                             <button
                                                 onClick={() => {
-                                                    onViewChange('settings');
+                                                    setLocation('/settings');
                                                     setShowUserMenu(false);
                                                 }}
                                                 className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"

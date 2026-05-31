@@ -1,149 +1,109 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Recipe } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalytics } from './useAnalytics';
 import { updateCachedFeaturedRecipe } from './useRecipeDashboard';
 import { recipeService } from '../services/recipeService';
 
-
 export function useRecipes() {
     const { user } = useAuth();
     const { track } = useAnalytics();
-
-    const [recipes, setRecipes] = useState<Recipe[]>([]);
-    const [communityRecipes, setCommunityRecipes] = useState<Recipe[]>([]);
-
-    // We treat 'recipes' as the source of truth for the UI now (it's already filtered/paginated)
-    // To maintain compatibility with App.tsx which expects filteredRecipes
-    const filteredRecipes = recipes;
-    const filteredCommunityRecipes = communityRecipes; // Community recipes not yet paginated in this refactor, or we can leave as is
-
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [hasMore, setHasMore] = useState(true);
-    const [page, setPage] = useState(0);
+    const queryClient = useQueryClient();
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedTimeFilter, setSelectedTimeFilter] = useState<string>('');
     const [recipeType, setRecipeType] = useState<'food' | 'cocktail'>('food');
 
-    // Available Tags (fetched separately to support filtering across all recipes)
-    const [allUserTags, setAllUserTags] = useState<string[]>([]);
+    // Debounce search term to avoid rapid network requests
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
-    const loadTags = useCallback(async () => {
-        if (!user) return;
-        try {
-            const tags = await recipeService.getUserTags(user.id, recipeType);
-            setAllUserTags(tags);
-        } catch (err) {
-            console.error('Error loading tags:', err);
-        }
-    }, [user, recipeType]);
-
-    // Main Fetch Function
-    const fetchRecipes = useCallback(async (pageIndex: number, isNewFilter: boolean = false) => {
-        if (!user) return;
-
-        try {
-            const { recipes: recipesList, hasMore: moreAvailable } = await recipeService.getRecipes({
+    // User's Recipes Infinite Query
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isLoading,
+        isFetchingNextPage,
+        error: queryError,
+    } = useInfiniteQuery({
+        queryKey: ['recipes', user?.id, { recipeType, searchTerm: debouncedSearchTerm, selectedTags, selectedTimeFilter }],
+        queryFn: async ({ pageParam = 0 }) => {
+            if (!user) return { recipes: [], hasMore: false };
+            return recipeService.getRecipes({
                 userId: user.id,
-                page: pageIndex,
+                page: pageParam,
                 recipeType,
-                searchTerm,
+                searchTerm: debouncedSearchTerm,
                 selectedTags,
                 selectedTimeFilter
             });
+        },
+        getNextPageParam: (lastPage, allPages) => {
+            return lastPage.hasMore ? allPages.length : undefined;
+        },
+        initialPageParam: 0,
+        enabled: !!user,
+    });
 
-            // Update State
-            if (isNewFilter) {
-                setRecipes(recipesList);
-            } else {
-                setRecipes(prev => [...prev, ...recipesList]);
-            }
+    const recipes = data ? data.pages.flatMap(page => page.recipes) : [];
+    const loading = isLoading || isFetchingNextPage;
+    const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load recipes') : null;
+    const hasMore = !!hasNextPage;
 
-            setHasMore(moreAvailable);
+    // Community Recipes Query
+    const { data: communityRecipes = [] } = useQuery({
+        queryKey: ['community-recipes'],
+        queryFn: () => recipeService.getCommunityRecipes(24),
+        enabled: !!user
+    });
 
-        } catch (err) {
-            console.error('Error loading recipes:', err);
-            setError(err instanceof Error ? err.message : 'Failed to load recipes');
-        } finally {
-            setLoading(false);
-        }
-    }, [user, recipeType, searchTerm, selectedTags, selectedTimeFilter]);
+    // Available Tags Query
+    const { data: allUserTags = [] } = useQuery({
+        queryKey: ['user-tags', user?.id, recipeType],
+        queryFn: () => {
+            if (!user) return [];
+            return recipeService.getUserTags(user.id, recipeType);
+        },
+        enabled: !!user
+    });
 
-    // Public load function for refreshing
+    // Refetch handlers (compatibility with legacy codebase)
     const loadRecipes = useCallback(async () => {
-        setPage(0);
-        await fetchRecipes(0, true);
-        await loadTags();
-    }, [fetchRecipes, loadTags]);
+        await queryClient.invalidateQueries({ queryKey: ['recipes', user?.id] });
+        await queryClient.invalidateQueries({ queryKey: ['user-tags', user?.id] });
+    }, [queryClient, user?.id]);
+
+    const loadCommunityRecipes = useCallback(async () => {
+        await queryClient.invalidateQueries({ queryKey: ['community-recipes'] });
+    }, [queryClient]);
 
     const loadMore = useCallback(() => {
-        if (!hasMore || loading) return;
-        const nextPage = page + 1;
-        setPage(nextPage);
-        fetchRecipes(nextPage, false);
-    }, [page, hasMore, loading, fetchRecipes]);
-
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+        if (hasNextPage && !loading) {
+            fetchNextPage();
+        }
+    }, [hasNextPage, loading, fetchNextPage]);
 
     const executeSearch = useCallback(() => {
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-        }
-        setPage(0);
-        fetchRecipes(0, true);
-    }, [fetchRecipes]);
+        setDebouncedSearchTerm(searchTerm);
+    }, [searchTerm]);
 
-    // Effect: Trigger fetch when filters change
-    // Debounce search term to avoid rapid firing
-    useEffect(() => {
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-        }
-        searchTimeoutRef.current = setTimeout(() => {
-            setPage(0);
-            fetchRecipes(0, true);
-        }, 500);
-        return () => {
-            if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
-            }
-        };
-    }, [fetchRecipes]); // fetchRecipes dependency includes filters
-
-    // Initial Load - loadTags
-    useEffect(() => {
-        loadTags();
-    }, [loadTags]);
-
-    // Community Recipes - Keeping existing logic largely same but maybe separating to avoid confusion
-    // Ideally we should paginate this too, but for now focusing on User recipes as per task
-    const loadCommunityRecipes = useCallback(async () => {
-        try {
-            const data = await recipeService.getCommunityRecipes(24);
-            setCommunityRecipes(data);
-        } catch (err) {
-            console.error('Error loading community recipes:', err);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (user) {
-            loadCommunityRecipes();
-        }
-    }, [user, loadCommunityRecipes]);
-
-
-    const saveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>, editingId?: string) => {
-        if (!user) return;
-
-        try {
-            await recipeService.saveRecipe(user.id, recipeData, editingId);
-
-            // Track creation
+    // Mutations
+    const saveRecipeMutation = useMutation({
+        mutationFn: async ({ recipeData, editingId }: { recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>; editingId?: string }) => {
+            if (!user) throw new Error('Not authenticated');
+            return recipeService.saveRecipe(user.id, recipeData, editingId);
+        },
+        onSuccess: (_, variables) => {
+            const { recipeData, editingId } = variables;
             if (!editingId || editingId.startsWith('temp-')) {
                 const creationSource = recipeData.source_url ? 'import' : (recipeData.tags?.includes('AI Generated') ? 'ai' : 'manual');
                 track('recipe_created', {
@@ -156,42 +116,62 @@ export function useRecipes() {
             }
 
             if (editingId && !editingId.startsWith('temp-')) {
-                updateCachedFeaturedRecipe(user.id, editingId, recipeData);
+                updateCachedFeaturedRecipe(user?.id, editingId, recipeData);
             }
 
-            // Reload to reflect changes
-            await loadRecipes();
-            await loadTags();
+            // Invalidate cached data to trigger refetch
+            queryClient.invalidateQueries({ queryKey: ['recipes', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['user-tags', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard-data', user?.id] });
+        }
+    });
+
+    const saveRecipe = async (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>, editingId?: string) => {
+        try {
+            await saveRecipeMutation.mutateAsync({ recipeData, editingId });
             return true;
         } catch (err) {
             console.error('Error saving recipe:', err);
-            setError(err instanceof Error ? err.message : 'Failed to save recipe');
             return false;
         }
     };
+
+    const deleteRecipeMutation = useMutation({
+        mutationFn: (id: string) => recipeService.deleteRecipe(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['recipes', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['user-tags', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard-data', user?.id] });
+        }
+    });
 
     const deleteRecipe = async (id: string) => {
         try {
-            await recipeService.deleteRecipe(id);
-            await loadRecipes();
-            await loadTags();
+            await deleteRecipeMutation.mutateAsync(id);
             return true;
         } catch (err) {
             console.error('Error deleting recipe:', err);
-            setError(err instanceof Error ? err.message : 'Failed to delete recipe');
             return false;
         }
     };
 
+    const copyRecipeMutation = useMutation({
+        mutationFn: (recipe: Recipe) => {
+            if (!user) throw new Error('Not authenticated');
+            return recipeService.copyRecipe(user.id, recipe);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['recipes', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['user-tags', user?.id] });
+        }
+    });
+
     const copyRecipe = async (recipe: Recipe) => {
-        if (!user) return;
         try {
-            await recipeService.copyRecipe(user.id, recipe);
-            await loadRecipes();
+            await copyRecipeMutation.mutateAsync(recipe);
             return true;
         } catch (err) {
             console.error('Error copying recipe:', err);
-            setError(err instanceof Error ? err.message : 'Failed to copy recipe');
             return false;
         }
     };
@@ -203,9 +183,6 @@ export function useRecipes() {
     };
 
     const getAllTags = (showCommunity: boolean) => {
-        // If showCommunity, we should ideally fetch community tags too, 
-        // but for now we'll return user tags which are fetched.
-        // Or we can scan communityRecipes (which are loaded in memory).
         if (showCommunity) {
             const tagSet = new Set<string>();
             communityRecipes.forEach(r => r.tags.forEach(t => tagSet.add(t)));
@@ -217,8 +194,8 @@ export function useRecipes() {
     return {
         recipes,
         communityRecipes,
-        filteredRecipes,
-        filteredCommunityRecipes,
+        filteredRecipes: recipes,
+        filteredCommunityRecipes: communityRecipes,
         loading,
         error,
         searchTerm,
