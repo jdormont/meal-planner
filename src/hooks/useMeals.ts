@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { addDays, format, parseISO } from 'date-fns';
-import { supabase, Meal, MealWithRecipes } from '../lib/supabase';
+import { Meal, MealWithRecipes } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalytics } from './useAnalytics';
+import { mealService } from '../services/mealService';
 
 export function useMeals() {
     const { user } = useAuth();
@@ -16,21 +16,8 @@ export function useMeals() {
 
         try {
             setLoading(true);
-            const { data: mealsData, error: mealsError } = await supabase
-                .from('meals')
-                .select('*, meal_recipes:meal_recipes(*, recipe:recipes(*))')
-                .eq('is_archived', false)
-                .order('date', { ascending: true })
-                .order('sort_order', { referencedTable: 'meal_recipes', ascending: true });
-
-            if (mealsError) throw mealsError;
-
-            const mealsWithRecipes: MealWithRecipes[] = (mealsData || []).map((meal) => {
-                const { meal_recipes, ...mealFields } = meal as typeof meal & { meal_recipes: MealWithRecipes['recipes'] };
-                return { ...mealFields, recipes: meal_recipes || [] };
-            });
-
-            setMeals(mealsWithRecipes);
+            const data = await mealService.getMeals(user.id);
+            setMeals(data);
         } catch (err) {
             console.error('Error loading meals:', err);
             setError(err instanceof Error ? err.message : 'Failed to load meals');
@@ -45,52 +32,16 @@ export function useMeals() {
         editingMealId?: string
     ) => {
         if (!user) return;
-
         try {
-            let mealId: string;
+            await mealService.saveMeal(user.id, mealData, recipeIds, editingMealId);
 
-            if (editingMealId) {
-                const { error } = await supabase
-                    .from('meals')
-                    .update({ ...mealData, updated_at: new Date().toISOString() })
-                    .eq('id', editingMealId);
-
-                if (error) throw error;
-                mealId = editingMealId;
-
-                await supabase.from('meal_recipes').delete().eq('meal_id', mealId);
-            } else {
-                const { data, error } = await supabase
-                    .from('meals')
-                    .insert([{ ...mealData, user_id: user.id }])
-                    .select()
-                    .single();
-
-                if (error) throw error;
-                mealId = data.id;
-
+            if (!editingMealId) {
                 track('meal_scheduled', {
                     date: mealData.date,
                     meal_type: mealData.meal_type,
                     count: recipeIds.length,
                     is_new: true
                 });
-            }
-
-            if (recipeIds.length > 0) {
-                const mealRecipes = recipeIds.map((recipeId, index) => ({
-                    meal_id: mealId,
-                    recipe_id: recipeId,
-                    user_id: user.id,
-                    sort_order: index,
-                    is_completed: false,
-                }));
-
-                const { error: mrError } = await supabase
-                    .from('meal_recipes')
-                    .insert(mealRecipes);
-
-                if (mrError) throw mrError;
             }
 
             await loadMeals();
@@ -104,9 +55,7 @@ export function useMeals() {
 
     const deleteMeal = async (id: string) => {
         try {
-            const { error } = await supabase.from('meals').delete().eq('id', id);
-
-            if (error) throw error;
+            await mealService.deleteMeal(id);
             await loadMeals();
             return true;
         } catch (err) {
@@ -118,12 +67,7 @@ export function useMeals() {
 
     const toggleRecipeCompletion = async (mealRecipeId: string, isCompleted: boolean) => {
         try {
-            const { error } = await supabase
-                .from('meal_recipes')
-                .update({ is_completed: isCompleted, updated_at: new Date().toISOString() })
-                .eq('id', mealRecipeId);
-
-            if (error) throw error;
+            await mealService.toggleRecipeCompletion(mealRecipeId, isCompleted);
             await loadMeals();
             return true;
         } catch (err) {
@@ -136,19 +80,12 @@ export function useMeals() {
         const meal = meals.find(m => m.id === mealId);
         if (!meal) return false;
 
-        // If it's the last recipe, delete the whole meal
-        if (meal.recipes.length <= 1) {
-            return deleteMeal(mealId);
-        }
-
         try {
-            const { error } = await supabase
-                .from('meal_recipes')
-                .delete()
-                .eq('meal_id', mealId)
-                .eq('recipe_id', recipeId);
-
-            if (error) throw error;
+            const mealDeleted = await mealService.removeRecipeFromMeal(mealId, recipeId, meal.recipes.length);
+            if (mealDeleted) {
+                await loadMeals();
+                return true;
+            }
             await loadMeals();
             return true;
         } catch (err) {
@@ -168,16 +105,7 @@ export function useMeals() {
         ));
 
         try {
-            const { error } = await supabase
-                .from('meals')
-                .update({
-                    date: newDate,
-                    meal_type: newType,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', mealId);
-
-            if (error) throw error;
+            await mealService.moveMeal(mealId, newDate, newType);
 
             track('meal_scheduled', {
                 date: newDate,
@@ -214,16 +142,18 @@ export function useMeals() {
             const meal = previousMeals.find(m => m.id === mealId);
             if (!meal) return false;
 
-            await Promise.all(
-                orderedRecipeIds.map((recipeId, index) => {
-                    const mr = meal.recipes.find(r => r.recipe_id === recipeId);
-                    if (!mr) return Promise.resolve();
-                    return supabase
-                        .from('meal_recipes')
-                        .update({ sort_order: index, updated_at: new Date().toISOString() })
-                        .eq('id', mr.id);
-                })
-            );
+            const dbMealRecipes = meal.recipes.map(r => ({
+                id: r.id,
+                meal_id: r.meal_id,
+                recipe_id: r.recipe_id,
+                user_id: r.user_id,
+                sort_order: r.sort_order,
+                is_completed: r.is_completed,
+                created_at: r.created_at,
+                updated_at: r.updated_at
+            }));
+
+            await mealService.reorderMealRecipes(mealId, orderedRecipeIds, dbMealRecipes);
 
             return true;
         } catch (err) {
@@ -239,89 +169,7 @@ export function useMeals() {
     ): Promise<{ copied: number; skipped: number }> => {
         if (!user) return { copied: 0, skipped: 0 };
 
-        // Build the 7 source dates
-        const sourceDates = Array.from({ length: 7 }, (_, i) =>
-            format(addDays(fromWeekStart, i), 'yyyy-MM-dd')
-        );
-
-        const sourceMeals = meals.filter(m => sourceDates.includes(m.date) && !m.is_event);
-
-        if (sourceMeals.length === 0) return { copied: 0, skipped: 0 };
-
-        // Build target date set to detect conflicts
-        const targetDates = Array.from({ length: 7 }, (_, i) =>
-            format(addDays(toWeekStart, i), 'yyyy-MM-dd')
-        );
-        const existingSlots = new Set(
-            meals
-                .filter(m => targetDates.includes(m.date) && !m.is_event)
-                .map(m => `${m.date}::${m.meal_type}`)
-        );
-
-        let copied = 0;
-        let skipped = 0;
-
-        for (const source of sourceMeals) {
-            const targetDate = format(
-                addDays(parseISO(source.date), 7),
-                'yyyy-MM-dd'
-            );
-            const slot = `${targetDate}::${source.meal_type}`;
-
-            if (existingSlots.has(slot)) {
-                skipped++;
-                continue;
-            }
-
-            try {
-                const { data: newMeal, error: mealError } = await supabase
-                    .from('meals')
-                    .insert({
-                        user_id: user.id,
-                        name: source.name,
-                        date: targetDate,
-                        meal_type: source.meal_type,
-                        is_event: false,
-                        description: source.description,
-                        notes: source.notes,
-                        is_archived: false,
-                    })
-                    .select()
-                    .single();
-
-                if (mealError || !newMeal) {
-                    skipped++;
-                    continue;
-                }
-
-                if (source.recipes.length > 0) {
-                    const mealRecipes = source.recipes.map((mr, index) => ({
-                        meal_id: newMeal.id,
-                        recipe_id: mr.recipe_id,
-                        user_id: user.id,
-                        sort_order: index,
-                        is_completed: false,
-                    }));
-
-                    const { error: mrError } = await supabase
-                        .from('meal_recipes')
-                        .insert(mealRecipes);
-
-                    if (mrError) {
-                        // Cleanup orphaned meal if recipes failed
-                        await supabase.from('meals').delete().eq('id', newMeal.id);
-                        skipped++;
-                        continue;
-                    }
-                }
-
-                copied++;
-                existingSlots.add(slot);
-            } catch (err) {
-                console.error('Error copying meal:', err);
-                skipped++;
-            }
-        }
+        const { copied, skipped } = await mealService.copyWeekMeals(user.id, fromWeekStart, toWeekStart, meals);
 
         if (copied > 0) {
             track('week_copied', { copied, skipped });

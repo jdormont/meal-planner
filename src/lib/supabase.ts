@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+import { Database } from '../types/database.types';
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -7,10 +9,34 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-// The client is untyped here intentionally — src/types/database.types.ts holds the
-// auto-generated DB schema. Wire createClient<Database> once the service layer (P1)
-// introduces mappers to handle nullable → non-nullable coercions.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+
+export type DbRecipe = Database['public']['Tables']['recipes']['Row'];
+export type DbRecipeInsert = Database['public']['Tables']['recipes']['Insert'];
+export type DbRecipeUpdate = Database['public']['Tables']['recipes']['Update'];
+
+export type DbMeal = Database['public']['Tables']['meals']['Row'];
+export type DbMealInsert = Database['public']['Tables']['meals']['Insert'];
+export type DbMealUpdate = Database['public']['Tables']['meals']['Update'];
+
+export type DbMealRecipe = Database['public']['Tables']['meal_recipes']['Row'];
+export type DbMealRecipeInsert = Database['public']['Tables']['meal_recipes']['Insert'];
+export type DbMealRecipeUpdate = Database['public']['Tables']['meal_recipes']['Update'];
+
+export type DbRecipeRating = Database['public']['Tables']['recipe_ratings']['Row'];
+export type DbRecipeRatingInsert = Database['public']['Tables']['recipe_ratings']['Insert'];
+export type DbRecipeRatingUpdate = Database['public']['Tables']['recipe_ratings']['Update'];
+
+export type DbUserProfile = Database['public']['Tables']['user_profiles']['Row'];
+export type DbUserProfileInsert = Database['public']['Tables']['user_profiles']['Insert'];
+export type DbUserProfileUpdate = Database['public']['Tables']['user_profiles']['Update'];
+
+export type DbUserPreferences = Database['public']['Tables']['user_preferences']['Row'];
+export type DbUserPreferencesInsert = Database['public']['Tables']['user_preferences']['Insert'];
+export type DbUserPreferencesUpdate = Database['public']['Tables']['user_preferences']['Update'];
+
+export type DbShoppingList = Database['public']['Tables']['shopping_lists']['Row'];
+export type DbShoppingListItem = Database['public']['Tables']['shopping_list_items']['Row'];
 
 export type CocktailMetadata = {
   spiritBase?: string;
@@ -133,6 +159,19 @@ export type UserProfile = {
   meal_count?: number;
 };
 
+export type UserPreferences = {
+  favorite_cuisines: string[];
+  favorite_dishes: string[];
+  food_restrictions: string[];
+  time_preference: string;
+  skill_level: string;
+  household_size: number;
+  spice_preference: string;
+  cooking_equipment: string[];
+  dietary_style: string;
+  additional_notes: string;
+};
+
 export type LLMModel = {
   id: string;
   model_name: string;
@@ -143,4 +182,10 @@ export type LLMModel = {
   display_order: number;
   created_at: string;
   updated_at: string;
+};
+
+export type WeeklyMealSet = {
+  id: string;
+  recipes: any[];
+  week_start_date: string;
 };

@@ -211,7 +211,7 @@ export function AdminDashboard() {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setModels(data || []);
+      setModels((data || []) as LLMModel[]);
     } catch (error) {
       console.error('Error loading models:', error);
     }

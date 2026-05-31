@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase, Recipe } from '../lib/supabase';
+import { Recipe } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { recipeService } from '../services/recipeService';
 
 export type DashboardData = {
     quickWins: Recipe[];
@@ -145,73 +146,19 @@ export function useRecipeDashboard(): DashboardData {
             const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
             // Parallel Fetch
-            const [quickWinsRes, favoritesRes, recentRes, olderRes] = await Promise.all([
-                // Quick Wins: time <= 30
-                supabase
-                    .from('recipes')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .lte('total_time', 30)
-                    .order('created_at', { ascending: false })
-                    .limit(10),
-
-                // Favorites: fetch ratings >= 4
-                supabase
-                    .from('recipe_ratings')
-                    .select('recipe_id')
-                    .eq('user_id', user.id)
-                    .gte('rating', 4)
-                    .limit(20), 
-
-                // Recent
-                supabase
-                    .from('recipes')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false })
-                    .limit(15),
-
-                // Older (Rediscover)
-                supabase
-                    .from('recipes')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .lt('created_at', thirtyDaysAgoStr)
-                    .limit(20) // Just get a sample of older ones
-            ]);
-
-            if (quickWinsRes.error) throw quickWinsRes.error;
-            if (favoritesRes.error) throw favoritesRes.error;
-            if (recentRes.error) throw recentRes.error;
-            if (olderRes.error) throw olderRes.error;
-
-            // Process Favorites
-            let favorites: Recipe[] = [];
-            if (favoritesRes.data && favoritesRes.data.length > 0) {
-                const favIds = favoritesRes.data.map(r => r.recipe_id);
-                // remove duplicates
-                const uniqueFavIds = [...new Set(favIds)];
-                
-                const { data: favRecipes, error: favErr } = await supabase
-                    .from('recipes')
-                    .select('*')
-                    .in('id', uniqueFavIds)
-                    .limit(20);
-
-                if (favErr) throw favErr;
-                favorites = favRecipes || [];
-            }
-
-            const recent = recentRes.data || [];
-            const older = olderRes.data || [];
+            const dashboardData = await recipeService.getDashboardData(user.id, thirtyDaysAgoStr);
 
             // Select Daily Featured
-            const featured = selectDailyFeatured(favorites, recent, older);
+            const featured = selectDailyFeatured(
+                dashboardData.favorites,
+                dashboardData.recent,
+                dashboardData.older
+            );
 
             setData({
-                quickWins: quickWinsRes.data || [],
-                favorites: favorites,
-                recent: recent,
+                quickWins: dashboardData.quickWins,
+                favorites: dashboardData.favorites,
+                recent: dashboardData.recent,
                 featured: featured
             });
 

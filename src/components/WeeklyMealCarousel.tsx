@@ -1,15 +1,10 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Check, CalendarPlus, Loader2, ChevronLeft, ChevronRight, Clock, ChefHat } from 'lucide-react';
 import { RecipeDetailsModal } from './RecipeDetailsModal';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-type WeeklyMealSet = {
-    id: string;
-    recipes: any[]; // The JSON structure from weekly-planner
-    week_start_date: string;
-};
+import { recipeService } from '../services/recipeService';
+import { mealService } from '../services/mealService';
+import { WeeklyMealSet } from '../lib/supabase';
 
 type WeeklyMealCarouselProps = {
     onMealAdded?: () => void;
@@ -34,15 +29,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
     async function fetchWeeklySet() {
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('weekly_meal_sets')
-                .select('*')
-                .is('user_id', null) // GLOBAL SET
-                .order('week_start_date', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-            if (error) throw error;
+            const data = await mealService.getLatestWeeklyMealSet();
             setWeeklySet(data);
         } catch (err) {
             console.error('Error fetching weekly meals:', err);
@@ -55,10 +42,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
         if (!user || generating) return;
         setGenerating(true);
         try {
-            const { error } = await supabase.functions.invoke('weekly-planner', {
-                body: { userId: user.id } // Still pass ID for admin auth logging if needed
-            });
-            if (error) throw error;
+            await mealService.generateWeeklyMealSet(user.id);
             await fetchWeeklySet();
             setCurrentIndex(0);
         } catch (err) {
@@ -78,52 +62,40 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
 
         try {
             // 1. Create the Recipe in the user's library (promoted from suggestion)
-            // We use upsert on title+user_id to avoid dupes if they add it twice, 
-            // or just insert. Recipes usually allow multiple of same name, but for cleanliness...
-            // Let's just insert.
-            
-            // Parse time estimate (e.g. "45 mins" -> 45)
             const timeInt = parseInt(recipe.time_estimate) || 30;
 
-            const { data: stringRecipe, error: recipeError } = await supabase.from('recipes').insert({
-                user_id: user.id,
+            const recipeData = {
                 title: recipe.title,
-                description: recipe.description,
-                image_url: recipe.image_url,
-                total_time: timeInt, // Unified time column
-                ingredients: recipe.ingredients, 
-                instructions: recipe.instructions, 
-                tags: ['Weekly Drop', recipe.tags?.protein, recipe.tags?.method, recipe.difficulty].filter(Boolean), // Move difficulty to tags
+                description: recipe.description || '',
+                image_url: recipe.image_url || undefined,
+                total_time: timeInt,
+                ingredients: recipe.ingredients || [],
+                instructions: recipe.instructions || [],
+                tags: ['Weekly Drop', recipe.tags?.protein, recipe.tags?.method, recipe.difficulty].filter(Boolean),
                 source_url: 'Weekly Meal Planner',
-                notes: `Difficulty: ${recipe.difficulty}` // Also backup in notes
-            }).select().single();
+                notes: `Difficulty: ${recipe.difficulty}`,
+                recipe_type: 'food' as const,
+                is_shared: false,
+                servings: 4
+            };
 
-            if (recipeError) throw recipeError;
-            if (!stringRecipe) throw new Error("Failed to create recipe record");
+            const stringRecipe = await recipeService.saveRecipe(user.id, recipeData);
 
-            // 2. Create the Meal (Calendar Event)
-            // Default to today/next available slot or just today for now.
+            // 2. Create the Meal (Calendar Event) and link it
             const dateStr = new Date().toISOString().split('T')[0];
-            
-            const { data: meal, error: mealError } = await supabase.from('meals').insert({
-                user_id: user.id,
-                name: recipe.title, // Fallback name
-                date: dateStr,
-                meal_type: 'dinner', // Default to dinner
-                description: 'Added from Weekly Planner'
-            }).select().single();
-
-            if (mealError) throw mealError;
-
-            // 3. Link Recipe to Meal
-            const { error: linkError } = await supabase.from('meal_recipes').insert({
-                meal_id: meal.id,
-                recipe_id: stringRecipe.id,
-                user_id: user.id, // Mandatory for RLS
-                sort_order: 0
-            });
-
-            if (linkError) throw linkError;
+            await mealService.saveMeal(
+                user.id,
+                {
+                    name: recipe.title,
+                    date: dateStr,
+                    meal_type: 'dinner',
+                    description: 'Added from Weekly Planner',
+                    is_event: false,
+                    notes: '',
+                    is_archived: false
+                },
+                [stringRecipe.id]
+            );
 
             // Trigger main app refresh so it shows on calendar immediately
             if (onMealAdded) onMealAdded();
@@ -133,14 +105,9 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
                 setAddedToWeek(prev => ({ ...prev, [recipeTitle]: false })); 
             }, 3000);
 
-            // Optional: Notify global state refresh if using context
-            // invalidateQueries(['meals']) if using react-query
-
         } catch (err) {
             console.error("Error adding to week:", err);
             alert("Failed to add meal. " + (err instanceof Error ? err.message : ''));
-        } finally {
-            // nothing to reset
         }
     }
 
@@ -150,21 +117,10 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
         setFeedback(prev => ({ ...prev, [recipeTitle]: rating }));
 
         try {
-            // Optimistic ID assumption, or use title
             const targetId = recipeTitle; 
-
-            const { error } = await supabase.from('meal_feedback').insert({
-                user_id: user.id,
-                target_id: targetId,
-                target_type: 'suggestion',
-                rating: rating,
-                details: { recipe_json: recipe }
-            });
-
-            if (error) throw error;
+            await mealService.submitFeedback(user.id, targetId, rating, recipe);
         } catch (err) {
             console.error("Feedback error:", err);
-            // Revert optimistic update if needed, or just silent fail
         }
     }
 

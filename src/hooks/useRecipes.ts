@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase, Recipe } from '../lib/supabase';
+import { Recipe } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalytics } from './useAnalytics';
 import { updateCachedFeaturedRecipe } from './useRecipeDashboard';
+import { recipeService } from '../services/recipeService';
 
-const ITEMS_PER_PAGE = 12;
 
 export function useRecipes() {
     const { user } = useAuth();
@@ -35,19 +35,8 @@ export function useRecipes() {
     const loadTags = useCallback(async () => {
         if (!user) return;
         try {
-            const { data, error } = await supabase
-                .from('recipes')
-                .select('tags')
-                .eq('user_id', user.id)
-                .eq('recipe_type', recipeType);
-
-            if (error) throw error;
-
-            const tagSet = new Set<string>();
-            data?.forEach(row => {
-                row.tags?.forEach((tag: string) => tagSet.add(tag));
-            });
-            setAllUserTags(Array.from(tagSet).sort());
+            const tags = await recipeService.getUserTags(user.id, recipeType);
+            setAllUserTags(tags);
         } catch (err) {
             console.error('Error loading tags:', err);
         }
@@ -58,101 +47,23 @@ export function useRecipes() {
         if (!user) return;
 
         try {
-            // Start building the query
-            let query = supabase
-                .from('recipes')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('recipe_type', recipeType)
-                .order('created_at', { ascending: false })
-                .range(pageIndex * ITEMS_PER_PAGE, (pageIndex + 1) * ITEMS_PER_PAGE - 1);
-
-            // Apply Filters (Search term is applied client-side below for ingredients, but we must fetch at least matching titles/descriptions to be safe, however since pagination limits us to 12 items, if we don't query the DB with ILIKE it will only filter the FIRST 12 items.)
-            if (searchTerm) {
-                // ILIKE on title OR description
-                // Note: supabase expects exactly this format: title.ilike.%term%,description.ilike.%term%
-                // But we must encode the searchTerm to avoid breaking the query parser on special characters
-                const safeTerm = encodeURIComponent(searchTerm);
-                query = query.or(`title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`);
-            }
-
-            if (selectedTags.length > 0) {
-                query = query.contains('tags', selectedTags);
-            }
-
-            if (selectedTimeFilter) {
-                switch (selectedTimeFilter) {
-                    case 'quick':
-                        query = query.lte('total_time', 30);
-                        break;
-                    case 'medium':
-                        query = query.gt('total_time', 30).lte('total_time', 45);
-                        break;
-                    case 'hour':
-                        query = query.gt('total_time', 45).lte('total_time', 90);
-                        break;
-                    case 'project':
-                        query = query.gt('total_time', 90);
-                        break;
-                }
-            }
-
-            const { data: recipesData, error: recipesError } = await query;
-
-            if (recipesError) throw recipesError;
-
-            // Fetch Ratings
-            // We only need ratings for the fetched recipes
-            const visibleRecipeIds = recipesData?.map(r => r.id) || [];
-            let recipesWithRatings = recipesData || [];
-
-            if (visibleRecipeIds.length > 0) {
-                const { data: ratingsData } = await supabase
-                    .from('recipe_ratings')
-                    .select('recipe_id, rating')
-                    .eq('user_id', user.id)
-                    .in('recipe_id', visibleRecipeIds);
-
-                const ratingsMap = new Map((ratingsData || []).map(r => [r.recipe_id, r.rating]));
-                recipesWithRatings = recipesWithRatings.map(recipe => ({
-                    ...recipe,
-                    rating: ratingsMap.get(recipe.id) || null
-                }));
-            }
-
-            // Client-side fallback for ingredient filtering since jsonb ::text filtering in postgrest can crash.
-            // If the searchTerm wasn't matching the DB query above, we need to check if we can fetch all and filter locally,
-            // but for now, we filter the returned set. Note: if a recipe didn't match the DB query (title/desc), it won't be here.
-            // To fix this comprehensively, we'd need a backend function. Temporarily, we apply the local filter on what we got.
-            if (searchTerm) {
-                const termLower = searchTerm.toLowerCase();
-                recipesWithRatings = recipesWithRatings.filter(recipe => {
-                    const inTitle = recipe.title?.toLowerCase().includes(termLower);
-                    const inDesc = recipe.description?.toLowerCase().includes(termLower);
-                    // Check if any ingredient name includes the search term
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const inIngredients = recipe.ingredients?.some((ing: any) =>
-                       ing.name?.toLowerCase().includes(termLower)
-                    );
-                    
-                    return inTitle || inDesc || inIngredients;
-                });
-            }
+            const { recipes: recipesList, hasMore: moreAvailable } = await recipeService.getRecipes({
+                userId: user.id,
+                page: pageIndex,
+                recipeType,
+                searchTerm,
+                selectedTags,
+                selectedTimeFilter
+            });
 
             // Update State
             if (isNewFilter) {
-                setRecipes(recipesWithRatings);
+                setRecipes(recipesList);
             } else {
-                setRecipes(prev => [...prev, ...recipesWithRatings]);
+                setRecipes(prev => [...prev, ...recipesList]);
             }
 
-            // Check if we reached the end
-            // If we got fewer items than requested, we are done
-            if ((recipesData?.length || 0) < ITEMS_PER_PAGE) {
-                setHasMore(false);
-            } else {
-                setHasMore(true);
-            }
+            setHasMore(moreAvailable);
 
         } catch (err) {
             console.error('Error loading recipes:', err);
@@ -212,15 +123,8 @@ export function useRecipes() {
     // Ideally we should paginate this too, but for now focusing on User recipes as per task
     const loadCommunityRecipes = useCallback(async () => {
         try {
-            const { data, error } = await supabase
-                .from('recipes')
-                .select('*')
-                .eq('is_shared', true)
-                .order('created_at', { ascending: false })
-                .limit(24); // Limit community recipes too for safety
-
-            if (error) throw error;
-            setCommunityRecipes(data || []);
+            const data = await recipeService.getCommunityRecipes(24);
+            setCommunityRecipes(data);
         } catch (err) {
             console.error('Error loading community recipes:', err);
         }
@@ -237,20 +141,10 @@ export function useRecipes() {
         if (!user) return;
 
         try {
-            let error;
-            if (editingId && !editingId.startsWith('temp-')) {
-                const result = await supabase
-                    .from('recipes')
-                    .update(recipeData)
-                    .eq('id', editingId);
-                error = result.error;
-            } else {
-                const result = await supabase
-                    .from('recipes')
-                    .insert([{ ...recipeData, user_id: user.id, recipe_type: recipeData.recipe_type || recipeType }]);
-                error = result.error;
+            await recipeService.saveRecipe(user.id, recipeData, editingId);
 
-                // Track creation
+            // Track creation
+            if (!editingId || editingId.startsWith('temp-')) {
                 const creationSource = recipeData.source_url ? 'import' : (recipeData.tags?.includes('AI Generated') ? 'ai' : 'manual');
                 track('recipe_created', {
                     type: creationSource,
@@ -260,8 +154,6 @@ export function useRecipes() {
                     tags_count: recipeData.tags?.length || 0
                 });
             }
-
-            if (error) throw error;
 
             if (editingId && !editingId.startsWith('temp-')) {
                 updateCachedFeaturedRecipe(user.id, editingId, recipeData);
@@ -280,8 +172,7 @@ export function useRecipes() {
 
     const deleteRecipe = async (id: string) => {
         try {
-            const { error } = await supabase.from('recipes').delete().eq('id', id);
-            if (error) throw error;
+            await recipeService.deleteRecipe(id);
             await loadRecipes();
             await loadTags();
             return true;
@@ -295,24 +186,7 @@ export function useRecipes() {
     const copyRecipe = async (recipe: Recipe) => {
         if (!user) return;
         try {
-            const { error } = await supabase.from('recipes').insert([{
-                user_id: user.id,
-                title: `${recipe.title} (Copy)`,
-                description: recipe.description,
-                ingredients: recipe.ingredients,
-                instructions: recipe.instructions,
-                total_time: recipe.total_time,
-                servings: recipe.servings,
-                tags: recipe.tags,
-                image_url: recipe.image_url,
-                source_url: recipe.source_url,
-                notes: recipe.notes,
-                is_shared: false,
-                recipe_type: recipe.recipe_type,
-                cocktail_metadata: recipe.cocktail_metadata
-            }]);
-
-            if (error) throw error;
+            await recipeService.copyRecipe(user.id, recipe);
             await loadRecipes();
             return true;
         } catch (err) {

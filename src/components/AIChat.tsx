@@ -109,10 +109,10 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
       const formattedMessages = chatMessages.map(msg => ({
         ...msg,
         role: msg.role as 'user' | 'assistant',
-        suggestions: msg.suggestions || [],
-        cuisineMetadata: msg.cuisine_metadata || undefined
+        suggestions: (msg.suggestions as unknown as RecipeSuggestion[]) || [],
+        cuisineMetadata: (msg.cuisine_metadata as any) || undefined
       }));
-      setMessages(formattedMessages as Message[]);
+      setMessages(formattedMessages as unknown as Message[]);
       setCurrentChatId(chatId);
       setShowChatList(false);
       setShowQuickPrompts(false);

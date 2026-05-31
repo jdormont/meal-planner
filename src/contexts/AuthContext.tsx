@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, AuthError } from '@supabase/supabase-js';
 import { supabase, UserProfile } from '../lib/supabase';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { profileService } from '../services/profileService';
 
 type AuthContextType = {
   user: User | null;
@@ -22,17 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { identify } = useAnalytics();
 
   const loadUserProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (error) {
+    try {
+      const data = await profileService.getUserProfile(userId);
+      setUserProfile(data);
+    } catch (error) {
       console.error('Error loading user profile:', error);
     }
-
-    setUserProfile(data);
   };
 
   useEffect(() => {
