@@ -2,7 +2,7 @@ import posthog from 'posthog-js';
 import { useCallback } from 'react';
 
 export const useAnalytics = () => {
-    const track = useCallback((eventName: string, properties?: Record<string, any>) => {
+    const track = useCallback((eventName: string, properties?: Record<string, unknown>) => {
         if (import.meta.env.VITE_POSTHOG_KEY) {
             posthog.capture(eventName, properties);
         } else {
@@ -10,7 +10,7 @@ export const useAnalytics = () => {
         }
     }, []);
 
-    const identify = useCallback((userId: string, traits?: Record<string, any>) => {
+    const identify = useCallback((userId: string, traits?: Record<string, unknown>) => {
         if (import.meta.env.VITE_POSTHOG_KEY) {
             posthog.identify(userId, traits);
         } else {
@@ -18,7 +18,7 @@ export const useAnalytics = () => {
         }
     }, []);
 
-    const pageView = useCallback((url: string, properties?: Record<string, any>) => {
+    const pageView = useCallback((url: string, properties?: Record<string, unknown>) => {
         if (import.meta.env.VITE_POSTHOG_KEY) {
             posthog.capture('$pageview', {
                 $current_url: url,

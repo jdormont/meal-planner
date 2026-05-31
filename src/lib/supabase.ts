@@ -97,6 +97,7 @@ export type ShoppingListItem = {
       brand_filters?: string[];
       health_filters?: string[];
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     line_item_measurements?: any[];
   };
   created_at: string;

@@ -11,6 +11,7 @@ type Message = {
   role: 'user' | 'assistant';
   content: string; // The textual reply
   suggestions?: RecipeSuggestion[]; // The structured suggestions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawPayload?: any;
   cuisineMetadata?: {
     applied: boolean;

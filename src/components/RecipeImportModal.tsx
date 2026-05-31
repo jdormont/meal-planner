@@ -151,6 +151,7 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
         onImportComplete(recipeWithParsedIngredients);
         onClose();
       }, 1000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setStatus('error');
       console.error("Import error:", err);

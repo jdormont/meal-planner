@@ -97,7 +97,7 @@ export function useRecipes() {
                 }
             }
 
-            let { data: recipesData, error: recipesError } = await query;
+            const { data: recipesData, error: recipesError } = await query;
 
             if (recipesError) throw recipesError;
 
@@ -130,7 +130,8 @@ export function useRecipes() {
                     const inTitle = recipe.title?.toLowerCase().includes(termLower);
                     const inDesc = recipe.description?.toLowerCase().includes(termLower);
                     // Check if any ingredient name includes the search term
-                    const inIngredients = recipe.ingredients?.some((ing: any) => 
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const inIngredients = recipe.ingredients?.some((ing: any) =>
                        ing.name?.toLowerCase().includes(termLower)
                     );
                     

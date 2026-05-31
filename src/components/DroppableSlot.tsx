@@ -7,7 +7,7 @@ type DroppableSlotProps = {
     active?: boolean;
 };
 
-export function DroppableSlot({ id, children, active }: DroppableSlotProps) {
+export function DroppableSlot({ id, children }: DroppableSlotProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: id,
     });

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Check, CalendarPlus, Loader2, ChevronLeft, ChevronRight, Clock, ChefHat } from 'lucide-react';
 import { RecipeDetailsModal } from './RecipeDetailsModal';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type WeeklyMealSet = {
     id: string;
     recipes: any[]; // The JSON structure from weekly-planner
@@ -19,7 +20,6 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
     const [weeklySet, setWeeklySet] = useState<WeeklyMealSet | null>(null);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
-    const [addingToWeek, setAddingToWeek] = useState<Record<string, boolean>>({});
     const [addedToWeek, setAddedToWeek] = useState<Record<string, boolean>>({});
     const [feedback, setFeedback] = useState<Record<string, 'thumbs_up' | 'thumbs_down' | null>>({});
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -75,7 +75,6 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
             return;
         }
         const recipeTitle = recipe.title;
-        setAddingToWeek(prev => ({ ...prev, [recipeTitle]: true }));
 
         try {
             // 1. Create the Recipe in the user's library (promoted from suggestion)
@@ -141,7 +140,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
             console.error("Error adding to week:", err);
             alert("Failed to add meal. " + (err instanceof Error ? err.message : ''));
         } finally {
-            setAddingToWeek(prev => ({ ...prev, [recipeTitle]: false }));
+            // nothing to reset
         }
     }
 
