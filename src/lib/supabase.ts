@@ -7,6 +7,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+// The client is untyped here intentionally — src/types/database.types.ts holds the
+// auto-generated DB schema. Wire createClient<Database> once the service layer (P1)
+// introduces mappers to handle nullable → non-nullable coercions.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export type CocktailMetadata = {
