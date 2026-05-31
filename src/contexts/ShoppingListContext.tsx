@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { supabase, ShoppingList, ShoppingListItem, MealWithRecipes } from '../lib/supabase';
+import { ShoppingList, ShoppingListItem, MealWithRecipes } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { shoppingListService } from '../services/shoppingListService';
+import { supabase } from '../lib/supabase';
 
 type ShoppingListContextType = {
   currentList: ShoppingList | null;
@@ -39,48 +41,9 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      // 1. Get active list
-      // eslint-disable-next-line prefer-const
-      let { data: list, error } = await supabase
-        .from('shopping_lists')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      // 2. If no list, create one
-      if (!list) {
-        const { data: newList, error: createError } = await supabase
-          .from('shopping_lists')
-          .insert({
-            user_id: user.id,
-            title: 'My Shopping List',
-            status: 'active'
-          })
-          .select()
-          .single();
-        
-        if (createError) throw createError;
-        list = newList;
-      }
-
+      const { list, items: listItems } = await shoppingListService.getOrCreateActiveList(user.id);
       setCurrentList(list);
-
-      // 3. fetch items
-      if (list) {
-        const { data: listItems, error: itemsError } = await supabase
-          .from('shopping_list_items')
-          .select('*')
-          .eq('list_id', list.id)
-          .order('created_at', { ascending: true });
-
-        if (itemsError) throw itemsError;
-        setItems(listItems || []);
-      }
-
+      setItems(listItems);
     } catch (err) {
       console.error('Error fetching shopping list:', err);
     } finally {
@@ -96,17 +59,7 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
     if (!currentList) return;
 
     try {
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .insert({
-          list_id: currentList.id,
-          name,
-          quantity,
-          unit,
-          recipe_id: recipeId
-        });
-
-      if (error) throw error;
+      await shoppingListService.addListItem(currentList.id, { name, quantity, unit, recipeId });
       await refreshList();
     } catch (err) {
       console.error('Error adding item:', err);
@@ -150,30 +103,21 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
 
     if (aggregated.size === 0) return 0;
 
-    await Promise.all(
-      Array.from(aggregated.entries()).map(([name, { quantity, unit, recipeId }]) =>
-        supabase.from('shopping_list_items').insert({
-          list_id: currentList.id,
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          quantity,
-          unit,
-          recipe_id: recipeId,
-        })
-      )
-    );
+    const payload = Array.from(aggregated.entries()).map(([name, { quantity, unit, recipeId }]) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      quantity,
+      unit,
+      recipeId
+    }));
 
+    await shoppingListService.addListItems(currentList.id, payload);
     await refreshList();
     return aggregated.size;
   };
 
   const removeItem = async (itemId: string) => {
     try {
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .delete()
-        .eq('id', itemId);
-
-      if (error) throw error;
+      await shoppingListService.removeListItem(itemId);
       setItems(prev => prev.filter(i => i.id !== itemId));
     } catch (err) {
       console.error('Error removing item:', err);
@@ -186,17 +130,10 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
       // Optimistic update
       setItems(prev => prev.map(i => i.id === itemId ? { ...i, is_checked: isChecked } : i));
 
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .update({ is_checked: isChecked })
-        .eq('id', itemId);
-
-      if (error) {
-        // Revert on error
-        await refreshList();
-        throw error;
-      }
+      await shoppingListService.toggleListItem(itemId, isChecked);
     } catch (err) {
+      // Revert on error
+      await refreshList();
       console.error('Error toggling item:', err);
       throw err;
     }

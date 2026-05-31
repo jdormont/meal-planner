@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
 import { useShoppingList } from '../contexts/ShoppingListContext';
+import { recipeService } from '../services/recipeService';
+import { mealService } from '../services/mealService';
 import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, AlertTriangle, Minus, Plus } from 'lucide-react';
 import { InstacartButton } from './InstacartButton';
 import { scaleIngredient } from '../utils/recipeScaler';
@@ -88,14 +90,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
         recipe_type: recipe.recipe_type,
         is_shared: false
       };
-
-      const { data: savedRecipe, error: saveError } = await supabase
-        .from('recipes')
-        .insert(newRecipeData)
-        .select()
-        .single();
-
-      if (saveError) throw saveError;
+      const savedRecipe = await recipeService.saveRecipe(user.id, newRecipeData);
 
       alert('Recipe rescaled and saved to your cookbook!');
       if (onOpenRecipe && savedRecipe) {
@@ -142,27 +137,22 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
 
   const loadCurrentRating = useCallback(async () => {
     if (!user) return;
-
-    const { data } = await supabase
-      .from('recipe_ratings')
-      .select('*')
-      .eq('recipe_id', recipe.id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    setCurrentRating(data);
+    try {
+      const ratingData = await recipeService.getRecipeRating(recipe.id, user.id);
+      setCurrentRating(ratingData);
+    } catch (error) {
+      console.error('Error loading recipe rating:', error);
+    }
   }, [user, recipe.id]);
 
   const loadAvailableMeals = useCallback(async () => {
     if (!user) return;
-
-    const { data } = await supabase
-      .from('meals')
-      .select('*')
-      .eq('is_archived', false)
-      .order('date', { ascending: true });
-
-    setAvailableMeals(data || []);
+    try {
+      const data = await mealService.getMeals(user.id);
+      setAvailableMeals(data);
+    } catch (error) {
+      console.error('Error loading available meals:', error);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -177,41 +167,18 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
 
     setAddingToMeal(true);
     try {
-      const { data: existingMealRecipes } = await supabase
-        .from('meal_recipes')
-        .select('sort_order')
-        .eq('meal_id', selectedMealId)
-        .order('sort_order', { ascending: false })
-        .limit(1);
-
-      const nextSortOrder = existingMealRecipes && existingMealRecipes.length > 0
-        ? existingMealRecipes[0].sort_order + 1
-        : 0;
-
-      const { error } = await supabase
-        .from('meal_recipes')
-        .insert({
-          meal_id: selectedMealId,
-          recipe_id: recipe.id,
-          user_id: user.id,
-          sort_order: nextSortOrder,
-          is_completed: false,
-        });
-
-      if (error) {
-        if (error.code === '23505') {
-          alert('This recipe is already in the selected meal.');
-        } else {
-          throw error;
-        }
-      } else {
-        setShowMealSelector(false);
-        setSelectedMealId(null);
-        alert('Recipe added to meal successfully!');
-      }
+      await mealService.addRecipeToMeal(user.id, selectedMealId, recipe.id);
+      setShowMealSelector(false);
+      setSelectedMealId(null);
+      alert('Recipe added to meal successfully!');
     } catch (error) {
       console.error('Error adding recipe to meal:', error);
-      alert('Failed to add recipe to meal. Please try again.');
+      const err = error as { code?: string } | null;
+      if (err?.code === '23505') {
+        alert('This recipe is already in the selected meal.');
+      } else {
+        alert('Failed to add recipe to meal. Please try again.');
+      }
     } finally {
       setAddingToMeal(false);
     }
@@ -229,25 +196,13 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
     setLoading(true);
     const isFirstRating = !currentRating;
     try {
-      if (currentRating) {
-        await supabase
-          .from('recipe_ratings')
-          .update({
-            rating: pendingRating,
-            feedback: feedback.trim(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', currentRating.id);
-      } else {
-        await supabase
-          .from('recipe_ratings')
-          .insert({
-            recipe_id: recipe.id,
-            user_id: user.id,
-            rating: pendingRating,
-            feedback: feedback.trim(),
-          });
-      }
+      await recipeService.saveRecipeRating(
+        user.id,
+        recipe.id,
+        pendingRating,
+        feedback,
+        currentRating?.id
+      );
 
       await loadCurrentRating();
       setShowFeedbackDialog(false);

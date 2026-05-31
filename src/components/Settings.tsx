@@ -1,20 +1,10 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Save, Loader2 } from 'lucide-react';
+import { profileService } from '../services/profileService';
+import { UserPreferences } from '../lib/supabase';
 
-interface UserPreferences {
-  favorite_cuisines: string[];
-  favorite_dishes: string[];
-  food_restrictions: string[];
-  time_preference: string;
-  skill_level: string;
-  household_size: number;
-  spice_preference: string;
-  cooking_equipment: string[];
-  dietary_style: string;
-  additional_notes: string;
-}
+
 
 const cuisineOptions = [
   'American', 'Italian', 'Mexican', 'Chinese', 'Japanese', 'Thai', 'Indian',
@@ -56,28 +46,11 @@ export default function Settings() {
   }, [user]);
 
   const loadPreferences = async () => {
+    if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (error) throw error;
-
+      const data = await profileService.getUserPreferences(user.id);
       if (data) {
-        setPreferences({
-          favorite_cuisines: data.favorite_cuisines || [],
-          favorite_dishes: data.favorite_dishes || [],
-          food_restrictions: data.food_restrictions || [],
-          time_preference: data.time_preference || 'moderate',
-          skill_level: data.skill_level || 'intermediate',
-          household_size: data.household_size || 2,
-          spice_preference: data.spice_preference || 'medium',
-          cooking_equipment: data.cooking_equipment || [],
-          dietary_style: data.dietary_style || 'omnivore',
-          additional_notes: data.additional_notes || '',
-        });
+        setPreferences(data);
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
@@ -87,39 +60,12 @@ export default function Settings() {
   };
 
   const savePreferences = async () => {
+    if (!user) return;
     setSaving(true);
     setMessage('');
 
     try {
-      const { data: existing } = await supabase
-        .from('user_preferences')
-        .select('id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from('user_preferences')
-          .update({
-            ...preferences,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('user_id', user?.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('user_preferences')
-          .insert([
-            {
-              user_id: user?.id,
-              ...preferences,
-            },
-          ]);
-
-        if (error) throw error;
-      }
-
+      await profileService.saveUserPreferences(user.id, preferences);
       setMessage('Preferences saved successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
