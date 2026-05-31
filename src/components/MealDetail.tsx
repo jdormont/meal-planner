@@ -1,6 +1,10 @@
 import { useState } from 'react';
-import { MealWithRecipes, Recipe } from '../lib/supabase';
-import { X, Calendar, CheckCircle2, Circle, Clock, Users, Eye, Edit2, Trash2 } from 'lucide-react';
+import { MealWithRecipes, MealRecipe, Recipe } from '../lib/supabase';
+import { X, Calendar, CheckCircle2, Circle, Clock, Users, Eye, Edit2, Trash2, ShoppingCart, GripVertical } from 'lucide-react';
+import { useShoppingList } from '../contexts/ShoppingListContext';
+import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type MealDetailProps = {
   meal: MealWithRecipes;
@@ -9,7 +13,106 @@ type MealDetailProps = {
   onViewRecipe: (recipe: Recipe) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onReorderRecipes?: (mealId: string, orderedRecipeIds: string[]) => Promise<boolean>;
 };
+
+type SortableMealRecipe = MealRecipe & { recipe: Recipe };
+
+function SortableRecipeRow({
+  mealRecipe,
+  onToggleCompletion,
+  onViewRecipe,
+}: {
+  mealRecipe: SortableMealRecipe;
+  onToggleCompletion: () => void;
+  onViewRecipe: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: mealRecipe.recipe_id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const recipe = mealRecipe.recipe;
+  const totalTime = recipe.total_time;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`border-2 rounded-xl p-6 transition-all group ${
+        mealRecipe.is_completed ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200 hover:border-orange-300'
+      }`}
+    >
+      <div className="flex items-start gap-6">
+        <div
+          {...attributes}
+          {...listeners}
+          className="flex-shrink-0 mt-1 cursor-grab active:cursor-grabbing opacity-30 group-hover:opacity-60 transition-opacity touch-none"
+          title="Drag to reorder"
+        >
+          <GripVertical className="w-5 h-5 text-gray-400 mt-2" />
+        </div>
+
+        <button
+          onClick={onToggleCompletion}
+          className="flex-shrink-0 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded-lg"
+        >
+          {mealRecipe.is_completed ? (
+            <CheckCircle2 className="w-10 h-10 text-green-600" />
+          ) : (
+            <Circle className="w-10 h-10 text-gray-400 hover:text-orange-500 transition" />
+          )}
+        </button>
+
+        <div className="flex-1 min-w-0">
+          <h3 className={`text-2xl font-bold mb-3 ${mealRecipe.is_completed ? 'text-green-900 line-through' : 'text-gray-900'}`}>
+            {recipe.title}
+          </h3>
+
+          <div className="flex flex-wrap gap-4 mb-4">
+            {totalTime > 0 && (
+              <div className="flex items-center gap-2 text-gray-700">
+                <Clock className="w-5 h-5 text-terracotta-600" />
+                <span className="font-medium">{totalTime} min</span>
+              </div>
+            )}
+            {recipe.servings > 0 && (
+              <div className="flex items-center gap-2 text-gray-700">
+                <Users className="w-5 h-5 text-terracotta-600" />
+                <span className="font-medium">{recipe.servings} servings</span>
+              </div>
+            )}
+          </div>
+
+          {recipe.description && (
+            <p className="text-gray-600 mb-4 line-clamp-2">{recipe.description}</p>
+          )}
+
+          <button
+            onClick={onViewRecipe}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium text-lg"
+          >
+            <Eye className="w-5 h-5" />
+            View Full Recipe
+          </button>
+        </div>
+
+        {recipe.image_url && (
+          <img
+            src={recipe.image_url}
+            alt={recipe.title}
+            className="w-32 h-32 object-cover rounded-lg flex-shrink-0 hidden sm:block"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function MealDetail({
   meal,
@@ -17,9 +120,43 @@ export function MealDetail({
   onToggleRecipeCompletion,
   onViewRecipe,
   onEdit,
-  onDelete
+  onDelete,
+  onReorderRecipes,
 }: MealDetailProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [localOrder, setLocalOrder] = useState<string[] | null>(null);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+  );
+
+  const handleRecipeDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const currentOrder = localOrder ?? sortedRecipes.map(mr => mr.recipe_id);
+    const oldIndex = currentOrder.indexOf(active.id as string);
+    const newIndex = currentOrder.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(currentOrder, oldIndex, newIndex);
+    setLocalOrder(reordered);
+    onReorderRecipes?.(meal.id, reordered);
+  };
+  const [isAddingToList, setIsAddingToList] = useState(false);
+  const [listFeedback, setListFeedback] = useState('');
+  const { addItemsFromMeals } = useShoppingList();
+
+  const handleAddToShoppingList = async () => {
+    setIsAddingToList(true);
+    try {
+      const count = await addItemsFromMeals([meal]);
+      const msg = count > 0 ? `${count} ingredients added` : 'No ingredients found.';
+      setListFeedback(msg);
+      setTimeout(() => setListFeedback(''), 3000);
+    } finally {
+      setIsAddingToList(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -31,7 +168,12 @@ export function MealDetail({
     });
   };
 
-  const sortedRecipes = [...meal.recipes].sort((a, b) => a.sort_order - b.sort_order);
+  const baseSorted = [...meal.recipes].sort((a, b) => a.sort_order - b.sort_order);
+  const sortedRecipes = localOrder
+    ? localOrder
+        .map(rid => baseSorted.find(mr => mr.recipe_id === rid))
+        .filter((mr): mr is SortableMealRecipe => mr !== undefined)
+    : baseSorted;
   const completedCount = sortedRecipes.filter(mr => mr.is_completed).length;
   const totalCount = sortedRecipes.length;
   const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -88,79 +230,20 @@ export function MealDetail({
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {sortedRecipes.map((mealRecipe) => {
-                const recipe = mealRecipe.recipe;
-                const totalTime = recipe.prep_time_minutes + recipe.cook_time_minutes;
-
-                return (
-                  <div
-                    key={mealRecipe.id}
-                    className={`border-2 rounded-xl p-6 transition-all ${
-                      mealRecipe.is_completed
-                        ? 'bg-green-50 border-green-300'
-                        : 'bg-white border-gray-200 hover:border-orange-300'
-                    }`}
-                  >
-                    <div className="flex items-start gap-6">
-                      <button
-                        onClick={() => onToggleRecipeCompletion(mealRecipe.id, !mealRecipe.is_completed)}
-                        className="flex-shrink-0 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded-lg"
-                      >
-                        {mealRecipe.is_completed ? (
-                          <CheckCircle2 className="w-10 h-10 text-green-600" />
-                        ) : (
-                          <Circle className="w-10 h-10 text-gray-400 hover:text-orange-500 transition" />
-                        )}
-                      </button>
-
-                      <div className="flex-1 min-w-0">
-                        <h3 className={`text-2xl font-bold mb-3 ${
-                          mealRecipe.is_completed ? 'text-green-900 line-through' : 'text-gray-900'
-                        }`}>
-                          {recipe.title}
-                        </h3>
-
-                        <div className="flex flex-wrap gap-4 mb-4">
-                          {totalTime > 0 && (
-                            <div className="flex items-center gap-2 text-gray-700">
-                              <Clock className="w-5 h-5 text-terracotta-600" />
-                              <span className="font-medium">{totalTime} min</span>
-                            </div>
-                          )}
-                          {recipe.servings > 0 && (
-                            <div className="flex items-center gap-2 text-gray-700">
-                              <Users className="w-5 h-5 text-terracotta-600" />
-                              <span className="font-medium">{recipe.servings} servings</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {recipe.description && (
-                          <p className="text-gray-600 mb-4 line-clamp-2">{recipe.description}</p>
-                        )}
-
-                        <button
-                          onClick={() => onViewRecipe(recipe)}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium text-lg"
-                        >
-                          <Eye className="w-5 h-5" />
-                          View Full Recipe
-                        </button>
-                      </div>
-
-                      {recipe.image_url && (
-                        <img
-                          src={recipe.image_url}
-                          alt={recipe.title}
-                          className="w-32 h-32 object-cover rounded-lg flex-shrink-0 hidden sm:block"
-                        />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRecipeDragEnd}>
+              <SortableContext items={sortedRecipes.map(mr => mr.recipe_id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-4">
+                  {sortedRecipes.map((mealRecipe) => (
+                    <SortableRecipeRow
+                      key={mealRecipe.id}
+                      mealRecipe={mealRecipe}
+                      onToggleCompletion={() => onToggleRecipeCompletion(mealRecipe.id, !mealRecipe.is_completed)}
+                      onViewRecipe={() => onViewRecipe(mealRecipe.recipe)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
 
           {meal.notes && (
@@ -172,6 +255,9 @@ export function MealDetail({
         </div>
 
         <div className="border-t bg-gray-50 p-6">
+          {listFeedback && (
+            <p className="text-sm text-sage-700 font-medium text-center mb-3 animate-pulse">{listFeedback}</p>
+          )}
           <div className="flex gap-3">
             <button
               onClick={onEdit}
@@ -181,11 +267,20 @@ export function MealDetail({
               Edit Meal
             </button>
             <button
+              onClick={handleAddToShoppingList}
+              disabled={isAddingToList || totalCount === 0}
+              className="px-4 py-3 border border-sage-300 text-sage-700 rounded-xl hover:bg-sage-100 transition font-medium flex items-center gap-2 disabled:opacity-50"
+              title="Add meal ingredients to shopping list"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              <span className="hidden sm:inline">{isAddingToList ? 'Adding…' : 'Add to List'}</span>
+            </button>
+            <button
               onClick={() => setConfirmDelete(true)}
               className="px-6 py-3 border border-red-300 text-red-700 rounded-xl hover:bg-red-50 transition font-medium flex items-center gap-2"
             >
               <Trash2 className="w-5 h-5" />
-              Delete
+              <span className="hidden sm:inline">Delete</span>
             </button>
             <button
               onClick={onClose}

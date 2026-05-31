@@ -25,6 +25,7 @@ import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { Layout, View } from './components/Layout';
 import { supabase, Recipe, Meal, MealWithRecipes } from './lib/supabase';
 import { Plus, BookOpen, Globe, Camera, Users, Calendar, Sparkles, Share2 } from 'lucide-react';
+import { subWeeks } from 'date-fns';
 import { parseAIRecipe, parseIngredient } from './utils/recipeParser';
 import { RecipeSuggestion } from './components/RecipeSuggestionCard';
 import { ProfileNudgeModal } from './components/ProfileNudgeModal';
@@ -66,7 +67,9 @@ function App() {
     moveMeal,
     removeRecipeFromMeal,
     toggleRecipeCompletion,
-    loadMeals
+    loadMeals,
+    reorderMealRecipes,
+    copyWeekMeals,
   } = useMeals();
 
   // Combined loading state
@@ -461,6 +464,9 @@ function App() {
                 onMealClick={setSelectedMeal}
                 onRecipeClick={setSelectedRecipe}
                 onRemoveRecipe={removeRecipeFromMeal}
+                onCopyPreviousWeek={async (toWeekStart) =>
+                  copyWeekMeals(subWeeks(toWeekStart, 1), toWeekStart)
+                }
               />
             ) : (
               <MealList
@@ -681,6 +687,12 @@ function App() {
               setDefaultMealDate(selectedMeal.date);
             }}
             onDelete={() => selectedMeal && handleDeleteMeal(selectedMeal.id)}
+            onReorderRecipes={async (mealId, orderedIds) => {
+              const ok = await reorderMealRecipes(mealId, orderedIds);
+              const updated = meals.find(m => m.id === mealId);
+              if (ok && updated) setSelectedMeal(updated);
+              return ok;
+            }}
           />
         )}
 

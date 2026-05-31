@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { supabase, ShoppingList, ShoppingListItem } from '../lib/supabase';
+import { supabase, ShoppingList, ShoppingListItem, MealWithRecipes } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
 type ShoppingListContextType = {
@@ -8,6 +8,7 @@ type ShoppingListContextType = {
   isLoading: boolean;
   refreshList: () => Promise<void>;
   addItem: (name: string, quantity: number, unit: string, recipeId?: string) => Promise<void>;
+  addItemsFromMeals: (meals: MealWithRecipes[]) => Promise<number>;
   removeItem: (itemId: string) => Promise<void>;
   toggleItem: (itemId: string, isChecked: boolean) => Promise<void>;
   createInstacartLink: () => Promise<string | null>;
@@ -112,6 +113,58 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addItemsFromMeals = async (meals: MealWithRecipes[]): Promise<number> => {
+    if (!currentList) return 0;
+
+    // Aggregate all ingredients from all recipes, deduplicating by lowercased name
+    const aggregated = new Map<string, { quantity: number; unit: string; recipeId: string }>();
+
+    for (const meal of meals) {
+      for (const mealRecipe of meal.recipes) {
+        const recipe = mealRecipe.recipe;
+        for (const ingredient of recipe.ingredients) {
+          const key = ingredient.name.toLowerCase().trim();
+          const parsed = parseFloat(ingredient.quantity);
+          const qty = isNaN(parsed) ? 1 : parsed;
+          const existing = aggregated.get(key);
+          if (existing && existing.unit === ingredient.unit) {
+            existing.quantity += qty;
+          } else if (existing) {
+            // Different units — keep separate entry with disambiguated key
+            aggregated.set(`${key} (${ingredient.unit})`, {
+              quantity: qty,
+              unit: ingredient.unit,
+              recipeId: recipe.id,
+            });
+          } else {
+            aggregated.set(key, {
+              quantity: qty,
+              unit: ingredient.unit,
+              recipeId: recipe.id,
+            });
+          }
+        }
+      }
+    }
+
+    if (aggregated.size === 0) return 0;
+
+    await Promise.all(
+      Array.from(aggregated.entries()).map(([name, { quantity, unit, recipeId }]) =>
+        supabase.from('shopping_list_items').insert({
+          list_id: currentList.id,
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          quantity,
+          unit,
+          recipe_id: recipeId,
+        })
+      )
+    );
+
+    await refreshList();
+    return aggregated.size;
+  };
+
   const removeItem = async (itemId: string) => {
     try {
       const { error } = await supabase
@@ -202,6 +255,7 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
     isLoading,
     refreshList,
     addItem,
+    addItemsFromMeals,
     removeItem,
     toggleItem,
     createInstacartLink
