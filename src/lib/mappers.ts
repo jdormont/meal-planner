@@ -14,48 +14,54 @@ import {
 } from './supabase';
 
 // Helper to parse ingredients JSON array
-const parseIngredients = (ingredientsJson: any): Recipe['ingredients'] => {
+const parseIngredients = (ingredientsJson: unknown): Recipe['ingredients'] => {
   if (Array.isArray(ingredientsJson)) {
-    return ingredientsJson.map((ing: any) => ({
-      name: String(ing?.name || ''),
-      quantity: String(ing?.quantity !== undefined && ing?.quantity !== null ? ing.quantity : ''),
-      unit: String(ing?.unit || '')
-    }));
+    return (ingredientsJson as unknown[]).map((ing) => {
+      const item = ing as Record<string, unknown> | null;
+      return {
+        name: String(item?.name || ''),
+        quantity: String(item?.quantity !== undefined && item?.quantity !== null ? item.quantity : ''),
+        unit: String(item?.unit || '')
+      };
+    });
   }
   return [];
 };
 
 // Helper to parse instructions JSON array
-const parseInstructions = (instructionsJson: any): string[] => {
+const parseInstructions = (instructionsJson: unknown): string[] => {
   if (Array.isArray(instructionsJson)) {
-    return instructionsJson.map((inst: any) => String(inst || ''));
+    return (instructionsJson as unknown[]).map((inst) => String(inst || ''));
   }
   return [];
 };
 
 // Helper to parse cocktail metadata
-const parseCocktailMetadata = (metadataJson: any): CocktailMetadata | null => {
+const parseCocktailMetadata = (metadataJson: unknown): CocktailMetadata | null => {
   if (metadataJson && typeof metadataJson === 'object' && !Array.isArray(metadataJson)) {
+    const meta = metadataJson as Record<string, unknown>;
     return {
-      spiritBase: metadataJson.spiritBase ? String(metadataJson.spiritBase) : undefined,
-      glassType: metadataJson.glassType ? String(metadataJson.glassType) : undefined,
-      garnish: metadataJson.garnish ? String(metadataJson.garnish) : undefined,
-      method: metadataJson.method ? String(metadataJson.method) : undefined,
-      ice: metadataJson.ice ? String(metadataJson.ice) : undefined
+      spiritBase: meta.spiritBase ? String(meta.spiritBase) : undefined,
+      glassType: meta.glassType ? String(meta.glassType) : undefined,
+      garnish: meta.garnish ? String(meta.garnish) : undefined,
+      method: meta.method ? String(meta.method) : undefined,
+      ice: meta.ice ? String(meta.ice) : undefined
     };
   }
   return null;
 };
 
 // Helper to parse metadata for shopping list items
-const parseShoppingItemMetadata = (metaJson: any): ShoppingListItem['meta_data'] => {
+const parseShoppingItemMetadata = (metaJson: unknown): ShoppingListItem['meta_data'] => {
   if (metaJson && typeof metaJson === 'object' && !Array.isArray(metaJson)) {
+    const meta = metaJson as Record<string, unknown>;
+    const filters = meta.filters as Record<string, unknown> | undefined;
     return {
-      filters: metaJson.filters ? {
-        brand_filters: Array.isArray(metaJson.filters.brand_filters) ? metaJson.filters.brand_filters.map(String) : undefined,
-        health_filters: Array.isArray(metaJson.filters.health_filters) ? metaJson.filters.health_filters.map(String) : undefined,
+      filters: filters ? {
+        brand_filters: Array.isArray(filters.brand_filters) ? (filters.brand_filters as unknown[]).map(String) : undefined,
+        health_filters: Array.isArray(filters.health_filters) ? (filters.health_filters as unknown[]).map(String) : undefined,
       } : undefined,
-      line_item_measurements: Array.isArray(metaJson.line_item_measurements) ? metaJson.line_item_measurements : undefined,
+      line_item_measurements: Array.isArray(meta.line_item_measurements) ? (meta.line_item_measurements as unknown[]) : undefined,
     };
   }
   return {};
@@ -92,7 +98,7 @@ export function mapRecipe(row: DbRecipe): Recipe {
  * Maps a database user profile row to the frontend UserProfile type.
  */
 export function mapUserProfile(row: DbUserProfile): UserProfile {
-  const rowAsAny = row as any;
+  const rowAsUnknown = row as unknown as Record<string, unknown>;
   return {
     id: row.id,
     user_id: row.user_id,
@@ -103,10 +109,10 @@ export function mapUserProfile(row: DbUserProfile): UserProfile {
     has_seen_onboarding: row.has_seen_onboarding || false,
     created_at: row.created_at || new Date().toISOString(),
     updated_at: row.updated_at || new Date().toISOString(),
-    login_count: rowAsAny.login_count || 0,
-    recipe_count: rowAsAny.recipe_count || 0,
-    chat_count: rowAsAny.chat_count || 0,
-    meal_count: rowAsAny.meal_count || 0
+    login_count: (rowAsUnknown.login_count as number) || 0,
+    recipe_count: (rowAsUnknown.recipe_count as number) || 0,
+    chat_count: (rowAsUnknown.chat_count as number) || 0,
+    meal_count: (rowAsUnknown.meal_count as number) || 0
   };
 }
 

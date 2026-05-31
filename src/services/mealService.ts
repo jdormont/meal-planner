@@ -1,5 +1,5 @@
 import { addDays, format, parseISO } from 'date-fns';
-import { supabase, Meal, MealWithRecipes, WeeklyMealSet, DbMeal, DbMealRecipe, DbMealInsert, DbMealUpdate, DbMealRecipeInsert } from '../lib/supabase';
+import { supabase, Meal, MealWithRecipes, WeeklyMealSet, DbMeal, DbRecipe, DbMealRecipe, DbMealInsert, DbMealUpdate, DbMealRecipeInsert } from '../lib/supabase';
 import { mapMeal } from '../lib/mappers';
 
 export const mealService = {
@@ -17,9 +17,13 @@ export const mealService = {
 
     if (error) throw error;
 
-    return (data || []).map((meal: any) => {
-      const mealRecipes = meal.meal_recipes || [];
-      return mapMeal(meal as DbMeal, mealRecipes);
+    return (data || []).map((meal) => {
+      const mealRecipes = (meal as { meal_recipes?: unknown }).meal_recipes;
+      const recipeRows = Array.isArray(mealRecipes) ? mealRecipes : [];
+      return mapMeal(
+        meal as unknown as DbMeal,
+        recipeRows as unknown as (DbMealRecipe & { recipe: DbRecipe | null })[]
+      );
     });
   },
 
@@ -328,7 +332,7 @@ export const mealService = {
     return {
       id: data.id,
       week_start_date: data.week_start_date,
-      recipes: (data.recipes as any[]) || []
+      recipes: (data.recipes as unknown[]) || []
     };
   },
 
@@ -350,14 +354,15 @@ export const mealService = {
     userId: string,
     targetId: string,
     rating: 'thumbs_up' | 'thumbs_down',
-    recipeJson: any
+    recipeJson: unknown
   ): Promise<void> {
     const { error } = await supabase.from('meal_feedback').insert({
       user_id: userId,
       target_id: targetId,
       target_type: 'suggestion',
       rating: rating,
-      details: { recipe_json: recipeJson }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      details: { recipe_json: recipeJson } as any
     });
 
     if (error) throw error;

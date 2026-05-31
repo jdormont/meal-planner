@@ -110,7 +110,7 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
         ...msg,
         role: msg.role as 'user' | 'assistant',
         suggestions: (msg.suggestions as unknown as RecipeSuggestion[]) || [],
-        cuisineMetadata: (msg.cuisine_metadata as any) || undefined
+        cuisineMetadata: (msg.cuisine_metadata as unknown as Message['cuisineMetadata']) || undefined
       }));
       setMessages(formattedMessages as unknown as Message[]);
       setCurrentChatId(chatId);

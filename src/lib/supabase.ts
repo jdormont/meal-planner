@@ -186,6 +186,6 @@ export type LLMModel = {
 
 export type WeeklyMealSet = {
   id: string;
-  recipes: any[];
+  recipes: unknown[];
   week_start_date: string;
 };

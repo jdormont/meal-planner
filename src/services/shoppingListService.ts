@@ -6,7 +6,7 @@ export const shoppingListService = {
    * Fetches the active shopping list for a user. If none exists, creates one.
    */
   async getOrCreateActiveList(userId: string): Promise<{ list: ShoppingList; items: ShoppingListItem[] }> {
-    let { data: list, error } = await supabase
+    const { data: fetchedList, error } = await supabase
       .from('shopping_lists')
       .select('*')
       .eq('user_id', userId)
@@ -15,6 +15,8 @@ export const shoppingListService = {
       .maybeSingle();
 
     if (error) throw error;
+
+    let list = fetchedList;
 
     if (!list) {
       const { data: newList, error: createError } = await supabase

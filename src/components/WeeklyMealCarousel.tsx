@@ -6,6 +6,20 @@ import { recipeService } from '../services/recipeService';
 import { mealService } from '../services/mealService';
 import { WeeklyMealSet } from '../lib/supabase';
 
+interface WeeklyPlannerRecipe {
+  title: string;
+  description: string;
+  image_url?: string | null;
+  time_estimate?: string;
+  difficulty?: string;
+  ingredients?: unknown;
+  instructions?: unknown;
+  tags?: {
+    protein?: string;
+    method?: string;
+  };
+}
+
 type WeeklyMealCarouselProps = {
     onMealAdded?: () => void;
 };
@@ -18,7 +32,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
     const [addedToWeek, setAddedToWeek] = useState<Record<string, boolean>>({});
     const [feedback, setFeedback] = useState<Record<string, 'thumbs_up' | 'thumbs_down' | null>>({});
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [selectedRecipe, setSelectedRecipe] = useState<any | null>(null);
+    const [selectedRecipe, setSelectedRecipe] = useState<WeeklyPlannerRecipe | null>(null);
 
     useEffect(() => {
         // Fetch global set, user doesn't strictly need to be logged in for public global set, 
@@ -53,7 +67,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
         }
     }
 
-    async function handleAddToWeek(recipe: any) {
+    async function handleAddToWeek(recipe: WeeklyPlannerRecipe) {
         if (!user) {
             alert("Please sign in to add meals to your week.");
             return;
@@ -62,18 +76,18 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
 
         try {
             // 1. Create the Recipe in the user's library (promoted from suggestion)
-            const timeInt = parseInt(recipe.time_estimate) || 30;
+            const timeInt = parseInt(recipe.time_estimate || '') || 30;
 
             const recipeData = {
                 title: recipe.title,
                 description: recipe.description || '',
                 image_url: recipe.image_url || undefined,
                 total_time: timeInt,
-                ingredients: recipe.ingredients || [],
-                instructions: recipe.instructions || [],
-                tags: ['Weekly Drop', recipe.tags?.protein, recipe.tags?.method, recipe.difficulty].filter(Boolean),
+                ingredients: (recipe.ingredients as unknown as Array<{ name: string; quantity: string; unit: string }>) || [],
+                instructions: (recipe.instructions as unknown as string[]) || [],
+                tags: ['Weekly Drop', recipe.tags?.protein, recipe.tags?.method, recipe.difficulty].filter((t): t is string => !!t),
                 source_url: 'Weekly Meal Planner',
-                notes: `Difficulty: ${recipe.difficulty}`,
+                notes: `Difficulty: ${recipe.difficulty || ''}`,
                 recipe_type: 'food' as const,
                 is_shared: false,
                 servings: 4
@@ -111,7 +125,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
         }
     }
 
-    async function handleFeedback(recipe: any, rating: 'thumbs_up' | 'thumbs_down') {
+    async function handleFeedback(recipe: WeeklyPlannerRecipe, rating: 'thumbs_up' | 'thumbs_down') {
         if (!user) return;
         const recipeTitle = recipe.title;
         setFeedback(prev => ({ ...prev, [recipeTitle]: rating }));
@@ -163,7 +177,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
     }
 
     const recipes = weeklySet?.recipes || [];
-    const currentRecipe = recipes[currentIndex];
+    const currentRecipe = recipes[currentIndex] as WeeklyPlannerRecipe;
 
     if (!currentRecipe) return null;
 

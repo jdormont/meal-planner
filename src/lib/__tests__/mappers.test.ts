@@ -112,7 +112,7 @@ describe('Mappers Unit Tests', () => {
         recipe_count: 10,
         chat_count: 2,
         meal_count: 3
-      } as any as DbUserProfile;
+      } as unknown as DbUserProfile;
 
       const result = mapUserProfile(dbRow);
 
@@ -142,7 +142,7 @@ describe('Mappers Unit Tests', () => {
         recipe_count: null,
         chat_count: null,
         meal_count: null
-      } as any as DbUserProfile;
+      } as unknown as DbUserProfile;
 
       const result = mapUserProfile(dbRow);
 

@@ -171,9 +171,10 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
       setShowMealSelector(false);
       setSelectedMealId(null);
       alert('Recipe added to meal successfully!');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding recipe to meal:', error);
-      if (error?.code === '23505') {
+      const err = error as { code?: string } | null;
+      if (err?.code === '23505') {
         alert('This recipe is already in the selected meal.');
       } else {
         alert('Failed to add recipe to meal. Please try again.');
