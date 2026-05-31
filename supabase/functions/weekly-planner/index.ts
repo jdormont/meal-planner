@@ -6,11 +6,7 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { render } from "npm:@react-email/render@0.0.12";
 import { WeeklyMenuEmail } from "../_shared/emails/WeeklyMenuEmail.tsx";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 // --- Shared LLM Logic ---
 
