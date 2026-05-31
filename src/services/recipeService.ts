@@ -214,6 +214,21 @@ export const recipeService = {
   },
 
   /**
+   * Fetches a single recipe by its ID.
+   */
+  async getRecipe(recipeId: string): Promise<Recipe | null> {
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('id', recipeId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+    return mapRecipe(data);
+  },
+
+  /**
    * Copies a shared community recipe into the user's cookbook.
    */
   async copyRecipe(userId: string, recipe: Recipe): Promise<Recipe> {

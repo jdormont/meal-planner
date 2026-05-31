@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Recipe } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { recipeService } from '../services/recipeService';
@@ -45,19 +46,26 @@ export const updateCachedFeaturedRecipe = (userId: string | undefined, recipeId:
 
 export function useRecipeDashboard(): DashboardData {
     const { user } = useAuth();
-    const [data, setData] = useState<{
-        quickWins: Recipe[];
-        favorites: Recipe[];
-        recent: Recipe[];
-        featured: Recipe[];
-    }>({
-        quickWins: [],
-        favorites: [],
-        recent: [],
-        featured: [],
+    const queryClient = useQueryClient();
+    const [featured, setFeatured] = useState<Recipe[]>([]);
+
+    const {
+        data: dashboardData = { quickWins: [], favorites: [], recent: [], older: [] },
+        isLoading,
+        error: queryError,
+    } = useQuery({
+        queryKey: ['dashboard-data', user?.id],
+        queryFn: async () => {
+            if (!user) return { quickWins: [], favorites: [], recent: [], older: [] };
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            return recipeService.getDashboardData(user.id, thirtyDaysAgo.toISOString());
+        },
+        enabled: !!user,
     });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+    const loading = isLoading;
+    const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load dashboard') : null;
 
     const selectDailyFeatured = (
         favorites: Recipe[], 
@@ -67,7 +75,6 @@ export function useRecipeDashboard(): DashboardData {
         const today = new Date().toISOString().split('T')[0];
         const storageKey = `featured_recipes_${user?.id}_${today}`;
         
-        // 1. Try to load from local storage
         try {
             const stored = localStorage.getItem(storageKey);
             if (stored) {
@@ -81,13 +88,11 @@ export function useRecipeDashboard(): DashboardData {
             console.error('Failed to parse stored featured recipes', e);
         }
 
-        // 2. Generate new selection
         console.log('Generating new daily featured recipes');
         const selection: Recipe[] = [];
         const seenIds = new Set<string>();
 
         const addUnique = (pool: Recipe[], count: number) => {
-            // Shuffle pool copy
             const shuffled = [...pool].sort(() => 0.5 - Math.random());
             let added = 0;
             for (const recipe of shuffled) {
@@ -99,33 +104,18 @@ export function useRecipeDashboard(): DashboardData {
                 }
             }
         };
-
-        // Strategy:
-        // - 1-2 from Favorites (High rated)
-        // - 1-2 from Recent (Fresh)
-        // - 1-2 from Older (Rediscover)
         
-        // We aim for 5 total.
-        
-        // 1. Rediscover (Older) - Prioritize these to ensure rotation
         addUnique(older, 2);
-        
-        // 2. Favorites
         addUnique(favorites, 2);
-        
-        // 3. Recent - fill the rest
         addUnique(recent, 5 - selection.length);
         
-        // 4. Fallback - if we still don't have 5, fill from any pool
         if (selection.length < 5) {
             const allPool = [...favorites, ...recent, ...older];
             addUnique(allPool, 5 - selection.length);
         }
 
-        // Shuffle the final selection so the types are mixed
         const finalSelection = selection.sort(() => 0.5 - Math.random());
 
-        // 3. Save to local storage
         try {
             localStorage.setItem(storageKey, JSON.stringify(finalSelection));
         } catch (e) {
@@ -135,47 +125,23 @@ export function useRecipeDashboard(): DashboardData {
         return finalSelection;
     };
 
-    const fetchDashboard = async () => {
-        if (!user) return;
-        setLoading(true);
-        setError(null);
-
-        try {
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
-
-            // Parallel Fetch
-            const dashboardData = await recipeService.getDashboardData(user.id, thirtyDaysAgoStr);
-
-            // Select Daily Featured
-            const featured = selectDailyFeatured(
+    // Keep daily featured selection up to date when query data updates
+    useEffect(() => {
+        if (user && dashboardData && (dashboardData.favorites.length > 0 || dashboardData.recent.length > 0 || dashboardData.older.length > 0)) {
+            const selected = selectDailyFeatured(
                 dashboardData.favorites,
                 dashboardData.recent,
                 dashboardData.older
             );
-
-            setData({
-                quickWins: dashboardData.quickWins,
-                favorites: dashboardData.favorites,
-                recent: dashboardData.recent,
-                featured: featured
-            });
-
-        } catch (err) {
-            console.error('Error loading dashboard:', err);
-            setError(err instanceof Error ? err.message : 'Failed to load dashboard');
-        } finally {
-            setLoading(false);
+            setFeatured(selected);
         }
-    };
+    }, [dashboardData, user?.id]);
 
+    // Handle updates when a recipe is edited (compatibility with other tabs)
     useEffect(() => {
-        fetchDashboard();
-
         const handleUpdate = (e: CustomEvent) => {
             if (e.detail?.newFeatured) {
-                setData(prev => ({ ...prev, featured: e.detail.newFeatured }));
+                setFeatured(e.detail.newFeatured);
             }
         };
 
@@ -183,12 +149,19 @@ export function useRecipeDashboard(): DashboardData {
         return () => {
             window.removeEventListener('dashboard-recipes-updated', handleUpdate as EventListener);
         };
-    }, [user]);
+    }, []);
+
+    const refresh = useCallback(async () => {
+        await queryClient.invalidateQueries({ queryKey: ['dashboard-data', user?.id] });
+    }, [queryClient, user?.id]);
 
     return {
-        ...data,
+        quickWins: dashboardData.quickWins,
+        favorites: dashboardData.favorites,
+        recent: dashboardData.recent,
+        featured,
         loading,
         error,
-        refresh: fetchDashboard
+        refresh
     };
 }
