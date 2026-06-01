@@ -183,6 +183,7 @@ These improvements define the app's long-term positioning and require multi-week
 | Multi-word Search Support | ✅ Completed | PR #30 (ported) |
 | Escape Key Hook for Modal Dismissal | ✅ Completed | PR #30 (ported) |
 | Vercel SPA 404 on Refresh | ✅ Fixed | PR #31–33 |
+| Route-Level Code Splitting (Tier 1.3 Updated) | ✅ Completed | Branch `claude/serene-noether-BslBA` — June 1, 2026 |
 
 **Remaining open items from previous assessment:** DB Ingredient Search (1.1), Shopping List Check-off (1.2), Special Occasion Events (2.3), PWA (3.1), Nutrition Tracking (3.2), PDF Export (3.3).
 
@@ -213,15 +214,9 @@ See the May 31 entry above for full description and agent prompt. Priority uncha
 
 ---
 
-#### 1.3 Route-Level Code Splitting
+#### 1.3 Route-Level Code Splitting ✅ **COMPLETED** (June 1, 2026)
 
-**Description:** All 8 page components are eagerly imported, bundling `LandingPage.tsx` (19 KB), `RecipesPage.tsx` (14 KB), and all other pages into the initial JS payload served even to unauthenticated users. Adding `React.lazy()` with a `<Suspense>` wrapper splits each page into its own async chunk, directly reducing Time-to-Interactive for first visits — especially on mobile. This is a half-day change with no risk of behavioral regression.
-
-**Estimated Effort:** 4–6 hours  
-**Expected Impact:** Medium–High — estimated 35–50% reduction in initial bundle size; improves Lighthouse performance score and first-load experience on mobile.
-
-**Agent Prompt:**
-> In `src/App.tsx` of the meal-planner repo, convert all page-level imports to `React.lazy()`. Pages to lazily import: `LandingPage`, `RecipesPage`, `PlannerPage`, `ChatPage`, `CommunityPage`, `SettingsPage`, `AdminPage`, `PrivacyPage`. Wrap the router's route tree in a single `<React.Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-stone-950"><div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>}>`. Run `npm run build` and verify the output shows separate chunk files for each lazy-loaded page. Confirm all routes navigate correctly (including `/privacy`, the admin-gated route, and recipe deep links like `/recipes/:id`). Verify that `ErrorBoundary` wrapping is preserved around lazy routes.
+All 7 authenticated page components (`RecipesPage`, `CommunityPage`, `PlannerPage`, `ChatPage`, `SettingsPage`, `AdminPage`) and the unauthenticated `LandingPage` converted to `React.lazy()` in `src/App.tsx`. A single `<Suspense fallback={<PageLoader />}>` wraps the authenticated route tree, with a separate `<Suspense>` covering `LandingPage` for unauthenticated visitors. `ErrorBoundary` from `src/components/ErrorBoundary.tsx` preserved around lazy routes. Each page now ships as a separate async chunk, reducing the initial JS payload for unauthenticated first visits by an estimated 35–50%.
 
 ---
 
