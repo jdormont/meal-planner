@@ -16,7 +16,7 @@ export function CommunityPage() {
   const [, setLocation] = useLocation();
   const { loadMeals } = useMeals(); // to reload meals on carousel actions
 
-  const [matchDetail, paramsDetail] = useRoute('/community/recipes/:id');
+  const [matchDetail, paramsDetail] = useRoute('/recipes/:id');
 
   const {
     communityRecipes,
@@ -37,7 +37,7 @@ export function CommunityPage() {
   const handleCopyRecipe = async (recipe: Recipe) => {
     const success = await copyRecipe(recipe);
     if (success) {
-      setLocation('/recipes');
+      setLocation('~/recipes');
       alert('Recipe copied to your collection!');
     }
   };
@@ -78,9 +78,9 @@ export function CommunityPage() {
 
           <CommunityRecipes
             recipes={filteredCommunityRecipes}
-            onSelect={(recipe) => setLocation(`/community/recipes/${recipe.id}`)}
+            onSelect={(recipe) => setLocation(`/recipes/${recipe.id}`)}
             onCopy={handleCopyRecipe}
-            onEdit={(recipe) => setLocation(`/recipes/${recipe.id}/edit`)}
+            onEdit={(recipe) => setLocation(`~/recipes/${recipe.id}/edit`)}
             currentUserId={user!.id}
           />
         </>
@@ -90,9 +90,9 @@ export function CommunityPage() {
       {matchDetail && paramsDetail?.id && (
         <RecipeDetailWrapper
           recipeId={paramsDetail.id}
-          onClose={() => setLocation('/community')}
+          onClose={() => setLocation('/')}
           onCopy={handleCopyRecipe}
-          onEdit={() => setLocation(`/recipes/${paramsDetail.id}/edit`)}
+          onEdit={() => setLocation(`~/recipes/${paramsDetail.id}/edit`)}
         />
       )}
     </div>
