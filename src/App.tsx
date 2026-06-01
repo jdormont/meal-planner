@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { Route, Switch, Redirect, useLocation } from 'wouter';
 import { useAuth } from './contexts/AuthContext';
 import { useAnalytics } from './hooks/useAnalytics';
-import { LandingPage } from './pages/LandingPage';
 import { AccountStatus } from './components/AccountStatus';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
 import { Layout } from './components/Layout';
 import { supabase } from './lib/supabase';
@@ -12,13 +12,19 @@ import { ShoppingListDrawer } from './components/ShoppingListDrawer';
 import { parseIngredient } from './utils/recipeParser';
 import { RecipeSuggestion } from './components/RecipeSuggestionCard';
 
-// Pages
-import { RecipesPage } from './pages/RecipesPage';
-import { CommunityPage } from './pages/CommunityPage';
-import { PlannerPage } from './pages/PlannerPage';
-import { ChatPage } from './pages/ChatPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { AdminPage } from './pages/AdminPage';
+const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
+const RecipesPage = lazy(() => import('./pages/RecipesPage').then(m => ({ default: m.RecipesPage })));
+const CommunityPage = lazy(() => import('./pages/CommunityPage').then(m => ({ default: m.CommunityPage })));
+const PlannerPage = lazy(() => import('./pages/PlannerPage').then(m => ({ default: m.PlannerPage })));
+const ChatPage = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-stone-950">
+    <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 function App() {
   const { user, userProfile, loading: authLoading, signOut } = useAuth();
@@ -28,7 +34,6 @@ function App() {
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
 
-  // Track page views on location transitions
   useEffect(() => {
     if (user) {
       pageView(location);
@@ -65,7 +70,6 @@ function App() {
     setShowOnboardingWizard(false);
     await markOnboardingSeen();
 
-    // Format the suggestion as a recipe payload
     const tempRecipe = {
       title: suggestion.title,
       description: suggestion.description,
@@ -99,7 +103,9 @@ function App() {
   if (!user) {
     return (
       <ShoppingListProvider>
-        <LandingPage />
+        <Suspense fallback={<PageLoader />}>
+          <LandingPage />
+        </Suspense>
       </ShoppingListProvider>
     );
   }
@@ -128,26 +134,30 @@ function App() {
         onNewMeal={() => setLocation('/planner/meals/new')}
         onOpenShoppingList={() => setShowShoppingList(true)}
       >
-        <Switch>
-          <Route path="/">
-            <Redirect to="/recipes" />
-          </Route>
-          <Route path="/recipes" nest>
-            <RecipesPage />
-          </Route>
-          <Route path="/community" nest>
-            <CommunityPage />
-          </Route>
-          <Route path="/planner" nest>
-            <PlannerPage />
-          </Route>
-          <Route path="/chat" component={ChatPage} />
-          <Route path="/settings" component={SettingsPage} />
-          {userProfile?.is_admin && <Route path="/admin" component={AdminPage} />}
-          <Route>
-            <Redirect to="/recipes" />
-          </Route>
-        </Switch>
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Switch>
+              <Route path="/">
+                <Redirect to="/recipes" />
+              </Route>
+              <Route path="/recipes" nest>
+                <RecipesPage />
+              </Route>
+              <Route path="/community" nest>
+                <CommunityPage />
+              </Route>
+              <Route path="/planner" nest>
+                <PlannerPage />
+              </Route>
+              <Route path="/chat" component={ChatPage} />
+              <Route path="/settings" component={SettingsPage} />
+              {userProfile?.is_admin && <Route path="/admin" component={AdminPage} />}
+              <Route>
+                <Redirect to="/recipes" />
+              </Route>
+            </Switch>
+          </Suspense>
+        </ErrorBoundary>
 
         {showOnboardingWizard && (
           <OnboardingWizard onComplete={handleWizardComplete} />
