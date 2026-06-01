@@ -162,3 +162,115 @@ These improvements define the app's long-term positioning and require multi-week
 
 **Agent Prompt:**
 > Add a "Print / Export PDF" button to `RecipeDetail.tsx`. Install `react-to-print`. Create `src/components/RecipePrintView.tsx` as a printable-optimized layout component rendering: recipe title, image (if available), metadata (servings, prep/cook times), ingredient list, and numbered instructions — styled for A4/letter paper with `@media print` CSS. Use black-and-white-friendly styles (no colored backgrounds or icons). Wire the print button to `useReactToPrint()` referencing the `RecipePrintView` ref. Ensure the print view does not show navigation, modals, or action buttons. Test across Chrome and Firefox print preview.
+
+---
+
+## Reassessment — June 1, 2026
+
+*Assessment Date: June 1, 2026*
+
+---
+
+### Progress Since May 31 Assessment
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Service Layer Extraction (Tier 1.3) | ✅ Completed | PR #27 |
+| Client-Side Routing with `wouter` (Tier 2.1) | ✅ Completed | PR #29 |
+| TanStack Query Integration (Tier 2.2) | ✅ Completed | PR #29 |
+| RecipeForm Modularization | ✅ Completed | PR #30 |
+| Error Boundary | ✅ Completed | PR #30 (ported) |
+| Multi-word Search Support | ✅ Completed | PR #30 (ported) |
+| Escape Key Hook for Modal Dismissal | ✅ Completed | PR #30 (ported) |
+| Vercel SPA 404 on Refresh | ✅ Fixed | PR #31–33 |
+
+**Remaining open items from previous assessment:** DB Ingredient Search (1.1), Shopping List Check-off (1.2), Special Occasion Events (2.3), PWA (3.1), Nutrition Tracking (3.2), PDF Export (3.3).
+
+**New findings from current codebase review (June 1, 2026):**
+- `src/pages/SettingsPage.tsx` (168 bytes) and `src/pages/AdminPage.tsx` (184 bytes) are empty stub components — users who navigate to Settings see a blank page.
+- No `React.lazy()` code splitting in place despite 8 page components; `LandingPage.tsx` alone is 19 KB and `RecipesPage.tsx` is 14 KB — both fully eager-loaded for every visitor.
+- `PlannerPage.tsx` (8 KB) is relatively lean; weekly meal plan navigation lacks mobile swipe gestures.
+
+---
+
+### Updated Tier 1 — High-Impact, Quick Wins
+
+---
+
+#### 1.1 Database-Side Ingredient Search *(Carried Forward — Status: Open)*
+
+See the May 31 entry above for full description and agent prompt. Priority unchanged.
+
+**Estimated Effort:** 2–3 days | **Expected Impact:** High
+
+---
+
+#### 1.2 Shopping List Check-Off and Store Categorization *(Carried Forward — Status: Open)*
+
+See the May 31 entry above for full description and agent prompt. Priority unchanged.
+
+**Estimated Effort:** 2–3 days | **Expected Impact:** High
+
+---
+
+#### 1.3 Route-Level Code Splitting
+
+**Description:** All 8 page components are eagerly imported, bundling `LandingPage.tsx` (19 KB), `RecipesPage.tsx` (14 KB), and all other pages into the initial JS payload served even to unauthenticated users. Adding `React.lazy()` with a `<Suspense>` wrapper splits each page into its own async chunk, directly reducing Time-to-Interactive for first visits — especially on mobile. This is a half-day change with no risk of behavioral regression.
+
+**Estimated Effort:** 4–6 hours  
+**Expected Impact:** Medium–High — estimated 35–50% reduction in initial bundle size; improves Lighthouse performance score and first-load experience on mobile.
+
+**Agent Prompt:**
+> In `src/App.tsx` of the meal-planner repo, convert all page-level imports to `React.lazy()`. Pages to lazily import: `LandingPage`, `RecipesPage`, `PlannerPage`, `ChatPage`, `CommunityPage`, `SettingsPage`, `AdminPage`, `PrivacyPage`. Wrap the router's route tree in a single `<React.Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-stone-950"><div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>}>`. Run `npm run build` and verify the output shows separate chunk files for each lazy-loaded page. Confirm all routes navigate correctly (including `/privacy`, the admin-gated route, and recipe deep links like `/recipes/:id`). Verify that `ErrorBoundary` wrapping is preserved around lazy routes.
+
+---
+
+### Updated Tier 2 — Medium-Impact, Moderate Effort
+
+---
+
+#### 2.1 Implement SettingsPage and AdminPage (Currently Blank Stubs)
+
+**Description:** `src/pages/SettingsPage.tsx` (168 bytes) and `src/pages/AdminPage.tsx` (184 bytes) are empty placeholder files that render nothing. Any authenticated user who clicks "Settings" in the navigation sees a blank page. The admin approval workflow — fully designed in `ADMIN_APPROVAL_SYSTEM.md` with backend support in place — also has no frontend surface. These represent incomplete wiring from the PR #29 routing refactor and are the most immediately visible UX gaps in the app.
+
+**Estimated Effort:** 3–4 days  
+**Expected Impact:** Medium–High — fixes the most visible navigation dead end for all authenticated users; surfaces the admin approval workflow that is already supported by the backend.
+
+**Agent Prompt:**
+> Implement `src/pages/SettingsPage.tsx` and `src/pages/AdminPage.tsx` for the meal-planner app. For **SettingsPage**: render sections for (1) Profile — display name and avatar URL input fields reading/writing via `src/services/profileService.ts`; (2) Dietary Preferences — allergen checkboxes and cuisine preference toggles persisted to the user profile; (3) Account — sign-out button. Match the dark stone-950/amber-500 design system used on other pages. Use TanStack Query mutations for saves with toast feedback on success. For **AdminPage**: review `ADMIN_APPROVAL_SYSTEM.md` to understand the approval flow, then render a table of pending user approval requests with Approve and Reject action buttons that call the appropriate Supabase RPC or service function. Guard `AdminPage` with an `isAdmin` check on the user profile — redirect non-admins to `/recipes`. Both pages must follow the existing layout pattern from `RecipesPage.tsx` for visual consistency.
+
+---
+
+#### 2.2 Special Occasion Event Planning (Phase 3 MVP) *(Carried Forward — Status: Open)*
+
+See the May 31 entry above for full description and agent prompt.
+
+**Estimated Effort:** 5–7 days | **Expected Impact:** Medium-High
+
+---
+
+### Updated Tier 3 — Strategic, Longer-Term
+
+---
+
+#### 3.1 Progressive Web App (PWA) *(Carried Forward — Status: Open)*
+
+See the May 31 entry above. No change in status or priority.
+
+**Estimated Effort:** 1–2 weeks | **Expected Impact:** High long-term
+
+---
+
+#### 3.2 Nutrition Information Tracking *(Carried Forward — Status: Open)*
+
+See the May 31 entry above. No change in status or priority.
+
+**Estimated Effort:** 2–3 weeks | **Expected Impact:** High long-term
+
+---
+
+#### 3.3 Print-Friendly Recipe PDF Export *(Carried Forward — Status: Open)*
+
+See the May 31 entry above. No change in status or priority.
+
+**Estimated Effort:** 2–3 days | **Expected Impact:** Medium
