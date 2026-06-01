@@ -38,6 +38,12 @@ However, as features have grown (including complex scaling, Instacart integratio
 2. **Move Layout Views into Page Components:** Split `App.tsx` into decoupled pages (e.g., `src/pages/RecipesPage.tsx`, `src/pages/PlannerPage.tsx`, `src/pages/ChatPage.tsx`) which are lazy-loaded.
 3. **Route-Driven Modals:** Instead of local boolean states, drive modal visibility using route paths or URL query parameters (e.g., `/recipes/new`, `/recipes/:id/edit`, `/planner?import=true`). This keeps the state cleanly in the URL, enabling deep-linking.
 
+> [!NOTE]
+> **Status: Completed**
+> - **Lightweight Routing:** Integrated `wouter` for URL-driven client-side routing.
+> - **Page Components:** Split the monolithic rendering of `App.tsx` into decoupled page components in `src/pages/` (`RecipesPage`, `PlannerPage`, `ChatPage`, `CommunityPage`, `SettingsPage`, `AdminPage`).
+> - **Deep-Link Support:** Modal views and page sub-tabs are now driven by routes and URL parameters, supporting the browser back button and direct link sharing.
+
 ---
 
 ### 2. Data Access & Services Layer
@@ -59,6 +65,12 @@ However, as features have grown (including complex scaling, Instacart integratio
    ```
 3. **Database-Side Ingredient Indexing:** Create a Postgres RPC function or utilize a materialized view to search recipe ingredients on the database side, ensuring that search queries return paginated items matching any ingredient.
 
+> [!NOTE]
+> **Status: Partially Completed**
+> - **Centralized Service Layer (Completed):** Created `src/services/` modules containing `recipeService.ts`, `mealService.ts`, `profileService.ts`, and `shoppingListService.ts` to abstract database interactions away from component lifecycles.
+> - **Compile-time Typing (Completed):** Configured automated database typing mapping in `src/types/database.types.ts` for clean schemas and compile-time verification.
+> - **Database-Side Search Indexing (Pending):** Ingredient search is still waiting for database-side indexing implementation.
+
 ---
 
 ### 3. Server-State Caching & Realtime Subscriptions
@@ -77,6 +89,11 @@ However, as features have grown (including complex scaling, Instacart integratio
    - Implements declarative cache invalidation (e.g., mutating a recipe invalidates `['recipes']` query, auto-refetching relevant lists).
    - Standardizes optimistic updates for operations like dragging-and-dropping meals.
 2. **Utilize Supabase Realtime Sync:** For collaborative or cross-device coordination, listen to realtime database changes. Set up a hook `useRealtimeSync()` that updates the local TanStack cache when Supabase broadcasts changes to `recipes` or `meals`.
+
+> [!NOTE]
+> **Status: Partially Completed**
+> - **TanStack Query Integration (Completed):** Configured `@tanstack/react-query` wrapper and cache providers. Hooks `useRecipes` and `useMeals` are refactored to fetch via service methods and invalidate query keys upon mutation, establishing reliable server-state synchronization.
+> - **Realtime Sync Subscription (Pending):** Realtime database syncing has not yet been implemented.
 
 ---
 
@@ -98,6 +115,11 @@ However, as features have grown (including complex scaling, Instacart integratio
    - `CocktailMetadataFields.tsx` (for spirit, glass, garnish, method inputs).
    - `ImageUploadManager.tsx` (handling Supabase storage upload and preview).
 3. **Extract Component UI Primitives:** Create reusable design system tokens and layout primitives in `/src/components/ui/` (e.g., `Modal.tsx`, `Button.tsx`, `Card.tsx`, `Badge.tsx`) to replace repetitive Tailwind styles.
+
+> [!NOTE]
+> **Status: Partially Completed**
+> - **RecipeForm Modularization (Completed):** Extracted modular subcomponents from the monolithic `RecipeForm.tsx` (such as `ImageUpload.tsx`, `SearchSuggestions.tsx`, `RecipeTypeToggle.tsx`, and specific input fields) to reduce cognitive load and form bloat.
+> - **Normalization & UI Primitives (Pending):** Unifying AI models with database records and extracting clean `/src/components/ui/` primitive design components are planned for later stages.
 
 ---
 
@@ -137,17 +159,22 @@ However, as features have grown (including complex scaling, Instacart integratio
    - Allergen blocklist generation (to guarantee safety).
 3. **Component Testing:** Add Vitest + React Testing Library to write basic integration tests for core screens (e.g., checking if clicking "Add to Meal" triggers the correct modal popup).
 
+> [!NOTE]
+> **Status: Completed**
+> - **Testing Infrastructure:** Vitest is configured with `src/test/setup.ts`, complete coverage settings, and is fully integrated into the GitHub Actions CI pipeline.
+> - **Comprehensive Unit Tests:** Implemented unit tests for `recipeParser.ts`, `recipeScaler.ts`, `allergenUtils.ts`, and db mapping layers, verifying 56 distinct logic scenarios on code updates.
+
 ---
 
 ## Action Plan: Priority Roadmap
 
 We recommend implementing these changes in three phases:
 
-| Priority | Task | Description | Estimated Effort |
+| Priority | Task | Description | Status / Effort |
 | :--- | :--- | :--- | :--- |
-| **High** | **1. Setup Test Suite** | Install Vitest and add unit tests for `recipeScaler.ts` and `recipeParser.ts` to secure core utilities. | 1–2 days |
-| **High** | **2. Create Service Layer** | Move database operations from hooks and components into `src/services/`. Auto-generate types. | 2–3 days |
-| **Medium** | **3. Add Client-Side Router** | Integrated `wouter`. Break `App.tsx` down into `/src/pages` and convert modal views to routes. | 3–4 days |
-| **Medium** | **4. Modularize RecipeForm** | Refactor `RecipeForm.tsx` into sub-components (`IngredientInput`, `CocktailForm`) for legibility. | 2 days |
-| **Medium** | **5. Integrate TanStack Query** | Add caching layer to manage network queries, refetches, and standard loading states. | 3–4 days |
-| **Low** | **6. Edge Function Split** | Refactor `ai-chat` Edge Function into separate prompt builders and provider modules. | 2 days |
+| **High** | **1. Setup Test Suite** | Install Vitest and add unit tests for `recipeScaler.ts` and `recipeParser.ts` to secure core utilities. | **Completed** (feat/p0) |
+| **High** | **2. Create Service Layer** | Move database operations from hooks and components into `src/services/`. Auto-generate types. | **Completed** (PR #27) |
+| **Medium** | **3. Add Client-Side Router** | Integrated `wouter`. Break `App.tsx` down into `/src/pages` and convert modal views to routes. | **Completed** (PR #29) |
+| **Medium** | **4. Modularize RecipeForm** | Refactor `RecipeForm.tsx` into sub-components (`IngredientInput`, `CocktailForm`) for legibility. | **Completed** (PR #29) |
+| **Medium** | **5. Integrate TanStack Query** | Add caching layer to manage network queries, refetches, and standard loading states. | **Completed** (PR #29) |
+| **Low** | **6. Edge Function Split** | Refactor `ai-chat` Edge Function into separate prompt builders and provider modules. | Pending (2 days) |

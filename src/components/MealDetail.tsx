@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { MealWithRecipes, MealRecipe, Recipe } from '../lib/supabase';
 import { X, Calendar, CheckCircle2, Circle, Clock, Users, Eye, Edit2, Trash2, ShoppingCart, GripVertical } from 'lucide-react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { formatTime } from '../utils/time';
 import { useShoppingList } from '../contexts/ShoppingListContext';
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -78,7 +80,7 @@ function SortableRecipeRow({
             {totalTime > 0 && (
               <div className="flex items-center gap-2 text-gray-700">
                 <Clock className="w-5 h-5 text-terracotta-600" />
-                <span className="font-medium">{totalTime} min</span>
+                <span className="font-medium">{formatTime(totalTime)}</span>
               </div>
             )}
             {recipe.servings > 0 && (
@@ -123,6 +125,7 @@ export function MealDetail({
   onDelete,
   onReorderRecipes,
 }: MealDetailProps) {
+  useEscapeKey(onClose);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
 

@@ -33,8 +33,7 @@ export const recipeService = {
       .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
 
     if (searchTerm) {
-      const safeTerm = encodeURIComponent(searchTerm);
-      query = query.or(`title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`);
+      query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
     }
 
     if (selectedTags.length > 0) {

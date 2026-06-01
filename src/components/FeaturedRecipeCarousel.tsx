@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Recipe } from '../lib/supabase';
 import { Clock, Users, ChevronRight, ChevronLeft, Award } from 'lucide-react';
+import { formatTime } from '../utils/time';
 
 type FeaturedRecipeCarouselProps = {
     recipes: Recipe[];
@@ -34,8 +35,7 @@ export function FeaturedRecipeCarousel({ recipes, onClick }: FeaturedRecipeCarou
         setCurrentIndex((prev) => (prev - 1 + recipes.length) % recipes.length);
     };
 
-    // Calculate total time safely
-    const getTotalTime = (r: Recipe) => r.total_time;
+
 
     return (
         <div className="relative w-full h-[400px] sm:h-[450px] rounded-3xl overflow-hidden shadow-2xl mb-12 group bg-gray-900">
@@ -109,7 +109,7 @@ export function FeaturedRecipeCarousel({ recipes, onClick }: FeaturedRecipeCarou
                     <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-4">
                         <div className="flex items-center gap-2 text-gray-100 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
                             <Clock className="w-5 h-5 text-terracotta-200" />
-                            <span className="font-medium">{getTotalTime(currentRecipeValue)} min</span>
+                            <span className="font-medium">{formatTime(currentRecipeValue.total_time)}</span>
                         </div>
 
                         <div className="flex items-center gap-2 text-gray-100 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
