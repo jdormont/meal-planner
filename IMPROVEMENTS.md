@@ -16,6 +16,17 @@ This assessment was conducted by reviewing the PRD, architecture evaluation docu
 
 ---
 
+## Refactoring Status Overview
+
+A series of high-priority architectural updates have been executed to clean up technical debt, establish routing, introduce state caching, and decouple UI from direct database queries:
+- **Service Layer Extraction:** Completed. All database-directed Supabase queries are centralized in `src/services/` under typed services, backed by auto-generated TS types.
+- **Lightweight Client-Side Routing:** Completed. Routing using `wouter` was introduced, migrating the monolithic `App.tsx` views into modular pages in `/src/pages` and enabling deep-linking.
+- **TanStack Query Integration:** Completed. Server-state is managed and cached using `@tanstack/react-query`, avoiding redundant fetches and ensuring instant UI synchronization on mutations.
+- **Test Suite Configured:** Completed. Vitest runs 56 unit/integration tests covering core parsers, converters, and mapping utilities.
+- **RecipeForm Modularization:** Completed. Monolithic form split into manageable subcomponents.
+
+---
+
 ## Tier 1 — High-Impact, Quick Wins
 
 These improvements deliver immediate user or stability value with modest effort and should be addressed first.
@@ -46,11 +57,15 @@ These improvements deliver immediate user or stability value with modest effort 
 
 ---
 
-### 1.3 Service Layer Extraction (Data Access Consolidation)
+### 1.3 Service Layer Extraction (Data Access Consolidation) [COMPLETED]
+
+> [!NOTE]
+> **Status: Completed** (Merged in PR #27)
+> Created centralized `src/services/` modules for all Supabase API and DB interaction (`recipeService.ts`, `mealService.ts`, `profileService.ts`, `shoppingListService.ts`). Cleanly integrated auto-generated database types.
 
 **Description:** Raw Supabase queries are currently scattered across custom hooks and components, tightly coupling UI to table schemas. This makes schema changes risky (no single update point), prevents unit testing of data logic, and duplicates query patterns across multiple files. Extracting all Supabase calls into a `src/services/` layer is the highest-leverage architectural improvement identified in the formal architecture evaluation (May 31, 2026).
 
-**Estimated Effort:** 3–4 days  
+**Estimated Effort:** 3–4 days (Completed)  
 **Expected Impact:** High — dramatically improves testability and maintainability; enables safe schema evolution; unblocks auto-generated TypeScript types integration; directly prerequisite for TanStack Query adoption.
 
 **Agent Prompt:**
@@ -64,11 +79,15 @@ These improvements materially improve the product but require a longer focused e
 
 ---
 
-### 2.1 Client-Side Routing with Deep-Link Support
+### 2.1 Client-Side Routing with Deep-Link Support [COMPLETED]
+
+> [!NOTE]
+> **Status: Completed** (Merged in PR #29)
+> Replaced state-based tab routing in `App.tsx` with `wouter` client-side routes. Extracted pages into individual modular components in `/src/pages` (`RecipesPage`, `PlannerPage`, `ChatPage`, `CommunityPage`, `SettingsPage`, `AdminPage`). Supported browser history navigation and route-based modals.
 
 **Description:** Navigation is currently driven by a `view` state variable in `App.tsx`, which has grown to ~800 lines managing modals, page state, and routing simultaneously. Users cannot bookmark a specific recipe, share a URL to the community page, or use the browser back button to return to the previous tab. Introducing a lightweight router (`wouter`) and splitting `App.tsx` into page components fixes these UX issues, reduces unnecessary re-renders, and makes the codebase significantly more maintainable.
 
-**Estimated Effort:** 3–5 days  
+**Estimated Effort:** 3–5 days (Completed)  
 **Expected Impact:** Medium-High — fixes broken browser navigation UX; enables shareable recipe links; eliminates the primary scalability bottleneck in the codebase.
 
 **Agent Prompt:**
@@ -76,11 +95,15 @@ These improvements materially improve the product but require a longer focused e
 
 ---
 
-### 2.2 TanStack Query for Server State Management
+### 2.2 TanStack Query for Server State Management [COMPLETED]
+
+> [!NOTE]
+> **Status: Completed** (Merged in PR #29)
+> Configured `@tanstack/react-query` to manage client-side server-state. Replaced manual DB polling with queries and mutations, ensuring reliable data synchronization across views.
 
 **Description:** Data fetching currently uses manual `useState` + `useEffect` patterns with explicit `loadRecipes()` / `loadMeals()` refresh calls after mutations. This causes stale views when switching tabs and wastes bandwidth on redundant fetches. Integrating TanStack Query (`@tanstack/react-query`) provides automatic background refresh, cache invalidation, deduplication, and standardized loading/error states — improving perceived performance and data consistency throughout the app.
 
-**Estimated Effort:** 3–4 days  
+**Estimated Effort:** 3–4 days (Completed)  
 **Expected Impact:** Medium — eliminates stale-state bugs after mutations; reduces redundant network calls; standardizes loading/error states; directly prerequisite for optimistic UI on drag-and-drop.
 
 **Agent Prompt:**
