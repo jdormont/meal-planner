@@ -18,11 +18,11 @@ export function RecipesPage() {
   const [, setLocation] = useLocation();
 
   // Route matches for deep linking
-  const [matchNew] = useRoute('/recipes/new');
-  const [matchImport] = useRoute('/recipes/import');
-  const [matchScan] = useRoute('/recipes/scan');
-  const [matchDetail, paramsDetail] = useRoute('/recipes/:id');
-  const [matchEdit, paramsEdit] = useRoute('/recipes/:id/edit');
+  const [matchNew] = useRoute('/new');
+  const [matchImport] = useRoute('/import');
+  const [matchScan] = useRoute('/scan');
+  const [matchDetail, paramsDetail] = useRoute('/:id');
+  const [matchEdit, paramsEdit] = useRoute('/:id/edit');
 
   const {
     recipes,
@@ -59,7 +59,7 @@ export function RecipesPage() {
     const isNewRecipe = !paramsEdit?.id;
     const success = await saveRecipe(recipeData, paramsEdit?.id);
     if (success) {
-      setLocation('/recipes');
+      setLocation('/');
       if (isNewRecipe) {
         checkFirstRecipeNudge();
       }
@@ -70,7 +70,7 @@ export function RecipesPage() {
     if (confirm('Are you sure you want to delete this recipe?')) {
       const success = await deleteRecipe(id);
       if (success) {
-        setLocation('/recipes');
+        setLocation('/');
       } else {
         alert('Failed to delete recipe. Please try again.');
       }
@@ -80,7 +80,7 @@ export function RecipesPage() {
   const handleCopyRecipe = async (recipe: Recipe) => {
     const success = await copyRecipe(recipe);
     if (success) {
-      setLocation('/recipes');
+      setLocation('/');
       alert('Recipe copied to your collection!');
     }
   };
@@ -94,7 +94,7 @@ export function RecipesPage() {
             <div className={`absolute bottom-full right-0 mb-4 flex flex-col items-end gap-3 transition-all duration-200 ${showAddMenu ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
               <button
                 onClick={() => {
-                  setLocation('/chat');
+                  setLocation('~/chat');
                   setShowAddMenu(false);
                 }}
                 className="flex items-center gap-2 pr-2"
@@ -106,7 +106,7 @@ export function RecipesPage() {
               </button>
               <button
                 onClick={() => {
-                  setLocation('/recipes/scan');
+                  setLocation('/scan');
                   setShowAddMenu(false);
                 }}
                 className="flex items-center gap-2 pr-2"
@@ -118,7 +118,7 @@ export function RecipesPage() {
               </button>
               <button
                 onClick={() => {
-                  setLocation('/recipes/import');
+                  setLocation('/import');
                   setShowAddMenu(false);
                 }}
                 className="flex items-center gap-2 pr-2"
@@ -130,7 +130,7 @@ export function RecipesPage() {
               </button>
               <button
                 onClick={() => {
-                  setLocation('/recipes/import');
+                  setLocation('/import');
                   setShowAddMenu(false);
                 }}
                 className="flex items-center gap-2 pr-2"
@@ -142,7 +142,7 @@ export function RecipesPage() {
               </button>
               <button
                 onClick={() => {
-                  setLocation('/recipes/new');
+                  setLocation('/new');
                   setShowAddMenu(false);
                 }}
                 className="flex items-center gap-2 pr-2"
@@ -201,16 +201,16 @@ export function RecipesPage() {
               setSelectedTags([]);
               setSelectedTimeFilter('');
             }}
-            onEdit={(recipe) => setLocation(`/recipes/${recipe.id}/edit`)}
+            onEdit={(recipe) => setLocation(`/${recipe.id}/edit`)}
             onDelete={handleDeleteRecipe}
-            onSelect={(recipe) => setLocation(`/recipes/${recipe.id}`)}
-            onCreateNew={() => setLocation('/recipes/new')}
-            onOpenChat={() => setLocation('/chat')}
-            onImportFromWeb={() => setLocation('/recipes/import')}
+            onSelect={(recipe) => setLocation(`/${recipe.id}`)}
+            onCreateNew={() => setLocation('/new')}
+            onOpenChat={() => setLocation('~/chat')}
+            onImportFromWeb={() => setLocation('/import')}
             onLoadMore={loadMore}
             hasMore={hasMore}
             totalRecipeCount={recipes.length}
-            onScanPhoto={() => setLocation('/recipes/scan')}
+            onScanPhoto={() => setLocation('/scan')}
           />
         </>
       )}
@@ -219,7 +219,7 @@ export function RecipesPage() {
       {matchNew && (
         <RecipeFormNewWrapper
           onSave={handleSaveRecipe}
-          onCancel={() => setLocation('/recipes')}
+          onCancel={() => setLocation('/')}
         />
       )}
 
@@ -227,7 +227,7 @@ export function RecipesPage() {
         <RecipeEditWrapper
           recipeId={paramsEdit.id}
           onSave={handleSaveRecipe}
-          onCancel={() => setLocation('/recipes')}
+          onCancel={() => setLocation('/')}
           onDelete={handleDeleteRecipe}
         />
       )}
@@ -235,30 +235,30 @@ export function RecipesPage() {
       {matchDetail && paramsDetail?.id && (
         <RecipeDetailWrapper
           recipeId={paramsDetail.id}
-          onClose={() => setLocation('/recipes')}
-          onEdit={() => setLocation(`/recipes/${paramsDetail.id}/edit`)}
+          onClose={() => setLocation('/')}
+          onEdit={() => setLocation(`/${paramsDetail.id}/edit`)}
           onCopy={handleCopyRecipe}
         />
       )}
 
       {matchImport && (
         <RecipeImportModal
-          onClose={() => setLocation('/recipes')}
+          onClose={() => setLocation('/')}
           onImportComplete={(recipe) => {
             // Put it in local storage or temp state so RecipeForm can open it.
             // But since we navigate to a new recipe with prefilled data, we can store it in sessionStorage!
             sessionStorage.setItem('temp_import_recipe', JSON.stringify(recipe));
-            setLocation('/recipes/new?source=import');
+            setLocation('/new?source=import');
           }}
         />
       )}
 
       {matchScan && (
         <RecipePhotoModal
-          onClose={() => setLocation('/recipes')}
+          onClose={() => setLocation('/')}
           onImportComplete={(recipe) => {
             sessionStorage.setItem('temp_import_recipe', JSON.stringify(recipe));
-            setLocation('/recipes/new?source=scan');
+            setLocation('/new?source=scan');
           }}
         />
       )}
@@ -267,7 +267,7 @@ export function RecipesPage() {
         <ProfileNudgeModal
           onClose={() => setShowProfileNudge(false)}
           onGoToSettings={() => {
-            setLocation('/settings');
+            setLocation('~/settings');
             setShowProfileNudge(false);
           }}
         />

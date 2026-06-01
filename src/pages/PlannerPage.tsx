@@ -16,10 +16,10 @@ export function PlannerPage() {
   const [location, setLocation] = useLocation();
 
   // Sub-routes for overlays
-  const [matchNew] = useRoute('/planner/meals/new');
-  const [matchDetail, paramsDetail] = useRoute('/planner/meals/:id');
-  const [matchEdit, paramsEdit] = useRoute('/planner/meals/:id/edit');
-  const [matchRecipe, paramsRecipe] = useRoute('/planner/recipes/:id');
+  const [matchNew] = useRoute('/meals/new');
+  const [matchDetail, paramsDetail] = useRoute('/meals/:id');
+  const [matchEdit, paramsEdit] = useRoute('/meals/:id/edit');
+  const [matchRecipe, paramsRecipe] = useRoute('/recipes/:id');
 
   const {
     meals,
@@ -53,7 +53,7 @@ export function PlannerPage() {
   ) => {
     const success = await saveMeal(mealData, recipeIds, paramsEdit?.id);
     if (success) {
-      setLocation(isCollectionsView ? '/planner/collections' : '/planner');
+      setLocation(isCollectionsView ? '/collections' : '/');
     } else {
       alert('Failed to save meal. Please try again.');
     }
@@ -63,7 +63,7 @@ export function PlannerPage() {
     if (confirm('Are you sure you want to delete this meal?')) {
       const success = await deleteMeal(id);
       if (success) {
-        setLocation(isCollectionsView ? '/planner/collections' : '/planner');
+        setLocation(isCollectionsView ? '/collections' : '/');
       } else {
         alert('Failed to delete meal. Please try again.');
       }
@@ -90,7 +90,7 @@ export function PlannerPage() {
     <div>
       <div className="flex gap-4 mb-6">
         <button
-          onClick={() => setLocation('/planner')}
+          onClick={() => setLocation('/')}
           className={`px-4 py-2 rounded-lg font-medium transition ${!isCollectionsView
             ? 'bg-terracotta-500 text-white shadow-sm'
             : 'bg-white text-gray-600 hover:bg-gray-50'
@@ -99,7 +99,7 @@ export function PlannerPage() {
           Weekly Plan
         </button>
         <button
-          onClick={() => setLocation('/planner/collections')}
+          onClick={() => setLocation('/collections')}
           className={`px-4 py-2 rounded-lg font-medium transition ${isCollectionsView
             ? 'bg-terracotta-500 text-white shadow-sm'
             : 'bg-white text-gray-600 hover:bg-gray-50'
@@ -118,9 +118,9 @@ export function PlannerPage() {
         <MealCalendar
           meals={calendarMeals}
           onMoveMeal={moveMeal}
-          onAddMeal={(date, type) => setLocation(`/planner/meals/new?date=${date}&type=${type}`)}
-          onMealClick={(meal) => setLocation(`/planner/meals/${meal.id}`)}
-          onRecipeClick={(recipe) => setLocation(`/planner/recipes/${recipe.id}`)}
+          onAddMeal={(date, type) => setLocation(`/meals/new?date=${date}&type=${type}`)}
+          onMealClick={(meal) => setLocation(`/meals/${meal.id}`)}
+          onRecipeClick={(recipe) => setLocation(`/recipes/${recipe.id}`)}
           onRemoveRecipe={removeRecipeFromMeal}
           onCopyPreviousWeek={async (toWeekStart) =>
             copyWeekMeals(subWeeks(toWeekStart, 1), toWeekStart)
@@ -129,8 +129,8 @@ export function PlannerPage() {
       ) : (
         <MealList
           meals={collectionMeals}
-          onSelect={(meal) => setLocation(`/planner/meals/${meal.id}`)}
-          onCreateNew={() => setLocation('/planner/meals/new')}
+          onSelect={(meal) => setLocation(`/meals/${meal.id}`)}
+          onCreateNew={() => setLocation('/meals/new')}
         />
       )}
 
@@ -141,7 +141,7 @@ export function PlannerPage() {
           recipes={[...recipes, ...communityRecipes]}
           selectedRecipeIds={[]}
           onSave={handleSaveMeal}
-          onCancel={() => setLocation(isCollectionsView ? '/planner/collections' : '/planner')}
+          onCancel={() => setLocation(isCollectionsView ? '/collections' : '/')}
           initialDate={defaultDate}
           initialMealType={defaultType}
         />
@@ -154,7 +154,7 @@ export function PlannerPage() {
           recipes={[...recipes, ...communityRecipes]}
           selectedRecipeIds={activeMeal.recipes.map(mr => mr.recipe_id)}
           onSave={handleSaveMeal}
-          onCancel={() => setLocation(`/planner/meals/${activeMeal.id}`)}
+          onCancel={() => setLocation(`/meals/${activeMeal.id}`)}
           initialDate={activeMeal.date}
           initialMealType={activeMeal.meal_type}
         />
@@ -164,10 +164,10 @@ export function PlannerPage() {
       {matchDetail && activeMeal && (
         <MealDetail
           meal={activeMeal}
-          onClose={() => setLocation(isCollectionsView ? '/planner/collections' : '/planner')}
+          onClose={() => setLocation(isCollectionsView ? '/collections' : '/')}
           onToggleRecipeCompletion={handleToggleRecipeCompletion}
-          onViewRecipe={(recipe) => setLocation(`/planner/recipes/${recipe.id}`)}
-          onEdit={() => setLocation(`/planner/meals/${activeMeal.id}/edit`)}
+          onViewRecipe={(recipe) => setLocation(`/recipes/${recipe.id}`)}
+          onEdit={() => setLocation(`/meals/${activeMeal.id}/edit`)}
           onDelete={() => handleDeleteMeal(activeMeal.id)}
           onReorderRecipes={reorderMealRecipes}
         />
@@ -177,9 +177,9 @@ export function PlannerPage() {
       {matchRecipe && paramsRecipe?.id && (
         <RecipeDetailWrapper
           recipeId={paramsRecipe.id}
-          onClose={() => setLocation(isCollectionsView ? '/planner/collections' : '/planner')}
+          onClose={() => setLocation(isCollectionsView ? '/collections' : '/')}
           onCopy={handleCopyRecipe}
-          onEdit={() => setLocation(`/recipes/${paramsRecipe.id}/edit`)}
+          onEdit={() => setLocation(`~/recipes/${paramsRecipe.id}/edit`)}
         />
       )}
     </div>
