@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Edit2, Trash2, Clock, Users, ArrowRight } from 'lucide-react';
+import { Edit2, Trash2, Clock, Users, ArrowRight, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Recipe } from '../lib/supabase';
+import { formatTime } from '../utils/time';
 import { RecipeLane } from './RecipeLane';
 import { FeaturedRecipeCarousel } from './FeaturedRecipeCarousel';
 import { useRecipeDashboard } from '../hooks/useRecipeDashboard';
@@ -9,7 +10,7 @@ import { OnboardingLaunchpad } from './OnboardingLaunchpad';
 type RecipeListProps = {
   recipes: Recipe[];
   onEdit: (recipe: Recipe) => void;
-  onDelete: (id: string, e: React.MouseEvent) => void;
+  onDelete: (id: string) => void;
   onSelect: (recipe: Recipe) => void;
   onCreateNew?: () => void;
   onOpenChat?: () => void;
@@ -207,11 +208,23 @@ export function RecipeList({
                 <img
                   src={recipe.image_url}
                   alt={recipe.title}
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
                   <span className="text-4xl">🍳</span>
+                </div>
+              )}
+              {recipe.rating && (
+                <div className={`absolute top-2 left-2 p-1.5 rounded-full shadow ${
+                  recipe.rating === 'thumbs_up'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-red-400 text-white'
+                }`}>
+                  {recipe.rating === 'thumbs_up'
+                    ? <ThumbsUp className="w-3 h-3" />
+                    : <ThumbsDown className="w-3 h-3" />}
                 </div>
               )}
             </div>
@@ -230,7 +243,7 @@ export function RecipeList({
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={(e) => onDelete(recipe.id, e)}
+                    onClick={(e) => { e.stopPropagation(); onDelete(recipe.id); }}
                     className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Delete Recipe"
                   >
@@ -242,7 +255,7 @@ export function RecipeList({
               <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{recipe.total_time}m</span>
+                  <span>{formatTime(recipe.total_time)}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />

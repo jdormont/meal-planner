@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Recipe, CocktailMetadata } from '../lib/supabase';
 import { X, Plus, Minus, Loader2, Trash2, Sparkles } from 'lucide-react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { IngredientInput } from './IngredientInput';
 import { CocktailMetadataFields } from './CocktailMetadataFields';
 
@@ -12,6 +13,7 @@ type RecipeFormProps = {
 };
 
 export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormProps) {
+  useEscapeKey(onCancel);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: string; unit: string }>>([
@@ -151,7 +153,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         totalTime,
         recipeType,
       };
-      console.log('Sending auto-tag request:', payload);
+
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-tag-recipe`,
