@@ -16,7 +16,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
   useEscapeKey(onCancel);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: string; unit: string }>>([
+  const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: string; unit: string }}>([
     { name: '', quantity: '', unit: '' },
   ]);
   const [instructions, setInstructions] = useState<string[]>(['']);
@@ -112,8 +112,6 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       );
 
       const data = await response.json();
-      console.log("[fetchRecipeImage] Edge function response HTTP status:", response.status);
-      console.log("[fetchRecipeImage] Edge function response data:", data);
       
       if (!response.ok) {
         console.error("[fetchRecipeImage] Failed with status:", response.status, data);
@@ -129,13 +127,10 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
   const regenerateImage = async () => {
     if (!title.trim()) return;
 
-    console.log("[regenerateImage] Starting regeneration for:", title);
     setIsRegeneratingImage(true);
     const fetchedImageUrl = await fetchRecipeImage(title);
-    console.log("[regenerateImage] fetchRecipeImage returned:", fetchedImageUrl);
     if (fetchedImageUrl) {
       setImageUrl(fetchedImageUrl);
-      console.log("[regenerateImage] Set imageUrl state to:", fetchedImageUrl);
     }
     setIsRegeneratingImage(false);
   };
@@ -154,7 +149,6 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         recipeType,
       };
 
-
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-tag-recipe`,
         {
@@ -172,9 +166,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       if (data.tags && Object.keys(data.tags).length > 0) {
         let newTags = [...tags];
 
-        // Remove incompatible tags based on recipe type
         if (recipeType === 'cocktail') {
-          // Remove food-specific tags from cocktails
           newTags = newTags.filter(t =>
             !t.startsWith('technique:') &&
             !t.startsWith('grain:') &&
@@ -183,7 +175,6 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             !t.startsWith('meal:')
           );
         } else {
-          // Remove cocktail-specific tags from food recipes
           newTags = newTags.filter(t =>
             !t.startsWith('base:') &&
             !t.startsWith('flavor:') &&
@@ -193,7 +184,6 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
           );
         }
 
-        // Handle food tags
         if (data.tags.technique) {
           const techniqueTag = `technique:${data.tags.technique}`;
           const filtered = newTags.filter(t => !t.startsWith('technique:'));
@@ -234,7 +224,6 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
           newTags.push(...filtered);
         }
 
-        // Handle cocktail tags
         if (data.tags.base) {
           const baseTag = `base:${data.tags.base}`;
           const filtered = newTags.filter(t => !t.startsWith('base:'));
@@ -278,7 +267,6 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         setTags(newTags);
       }
 
-      // Populate cocktail detail fields if present
       if (data.cocktailDetails && recipeType === 'cocktail') {
         setCocktailMetadata({
           spiritBase: data.cocktailDetails.baseSpirit || '',
@@ -299,20 +287,15 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
     e.preventDefault();
 
     let finalImageUrl = imageUrl;
-    console.log("[handleSubmit] Current imageUrl state:", finalImageUrl);
 
     if (!finalImageUrl) {
-      console.log("[handleSubmit] No image present, fetching new one...");
       setIsFetchingImage(true);
       const fetchedImageUrl = await fetchRecipeImage(title);
-      console.log("[handleSubmit] fetchedImageUrl returned:", fetchedImageUrl);
       if (fetchedImageUrl) {
         finalImageUrl = fetchedImageUrl;
       }
       setIsFetchingImage(false);
     }
-
-    console.log("[handleSubmit] Calling onSave with finalImageUrl:", finalImageUrl);
 
     const cocktailMetadataToSave = recipeType === 'cocktail' && (
       cocktailMetadata.spiritBase ||
@@ -691,7 +674,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                       <option value="quinoa">Quinoa</option>
                       <option value="couscous">Couscous</option>
                       <option value="bread">Bread</option>
-                      <option value="potatoes">Potatoes</option>
+<option value="potatoes">Potatoes</option>
                       <option value="polenta">Polenta</option>
                       <option value="other">Other</option>
                     </select>
