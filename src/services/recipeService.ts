@@ -15,6 +15,8 @@ export type RecipeFilterParams = {
 export const recipeService = {
   /**
    * Fetches a paginated page of recipes for a user, applying filters.
+   * When searchTerm is set, uses the search_recipes_by_ingredient RPC so ingredient
+   * names are matched server-side across the entire collection, not just the current page.
    */
   async getRecipes({
     userId,
@@ -24,43 +26,63 @@ export const recipeService = {
     selectedTags = [],
     selectedTimeFilter = ''
   }: RecipeFilterParams): Promise<{ recipes: Recipe[]; hasMore: boolean }> {
-    let query = supabase
-      .from('recipes')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('recipe_type', recipeType)
-      .order('created_at', { ascending: false })
-      .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let rawData: any[] | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let queryError: any;
 
     if (searchTerm) {
-      query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-    }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (supabase as any).rpc('search_recipes_by_ingredient', {
+        search_term: searchTerm,
+        p_user_id: userId,
+        p_recipe_type: recipeType,
+        p_tags: selectedTags.length > 0 ? selectedTags : [],
+        p_time_filter: selectedTimeFilter || '',
+        p_limit: ITEMS_PER_PAGE,
+        p_offset: page * ITEMS_PER_PAGE
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rawData = result.data as any[] | null;
+      queryError = result.error;
+    } else {
+      let query = supabase
+        .from('recipes')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('recipe_type', recipeType)
+        .order('created_at', { ascending: false })
+        .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
 
-    if (selectedTags.length > 0) {
-      query = query.contains('tags', selectedTags);
-    }
-
-    if (selectedTimeFilter) {
-      switch (selectedTimeFilter) {
-        case 'quick':
-          query = query.lte('total_time', 30);
-          break;
-        case 'medium':
-          query = query.gt('total_time', 30).lte('total_time', 45);
-          break;
-        case 'hour':
-          query = query.gt('total_time', 45).lte('total_time', 90);
-          break;
-        case 'project':
-          query = query.gt('total_time', 90);
-          break;
+      if (selectedTags.length > 0) {
+        query = query.contains('tags', selectedTags);
       }
+
+      if (selectedTimeFilter) {
+        switch (selectedTimeFilter) {
+          case 'quick':
+            query = query.lte('total_time', 30);
+            break;
+          case 'medium':
+            query = query.gt('total_time', 30).lte('total_time', 45);
+            break;
+          case 'hour':
+            query = query.gt('total_time', 45).lte('total_time', 90);
+            break;
+          case 'project':
+            query = query.gt('total_time', 90);
+            break;
+        }
+      }
+
+      const result = await query;
+      rawData = result.data;
+      queryError = result.error;
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
+    if (queryError) throw queryError;
 
-    let recipesList = (data || []).map(mapRecipe);
+    let recipesList = (rawData || []).map(mapRecipe);
 
     // Fetch ratings for the retrieved recipes
     const visibleRecipeIds = recipesList.map(r => r.id);
@@ -82,22 +104,9 @@ export const recipeService = {
       }
     }
 
-    // Client-side fallback for ingredient filtering
-    if (searchTerm) {
-      const termLower = searchTerm.toLowerCase();
-      recipesList = recipesList.filter(recipe => {
-        const inTitle = recipe.title?.toLowerCase().includes(termLower);
-        const inDesc = recipe.description?.toLowerCase().includes(termLower);
-        const inIngredients = recipe.ingredients?.some((ing) =>
-          ing.name?.toLowerCase().includes(termLower)
-        );
-        return inTitle || inDesc || inIngredients;
-      });
-    }
-
     return {
       recipes: recipesList,
-      hasMore: (data?.length || 0) === ITEMS_PER_PAGE
+      hasMore: (rawData?.length || 0) === ITEMS_PER_PAGE
     };
   },
 
@@ -130,7 +139,7 @@ export const recipeService = {
 
     const tagSet = new Set<string>();
     data?.forEach(row => {
-      row.tags?.forEach((tag) => tagSet.add(tag));
+      row.tags?.forEach((tag: string) => tagSet.add(tag));
     });
     return Array.from(tagSet).sort();
   },
@@ -270,7 +279,6 @@ export const recipeService = {
     older: Recipe[];
   }> {
     const [quickWinsRes, favoritesRes, recentRes, olderRes] = await Promise.all([
-      // Quick Wins: time <= 30
       supabase
         .from('recipes')
         .select('*')
@@ -279,7 +287,6 @@ export const recipeService = {
         .order('created_at', { ascending: false })
         .limit(10),
 
-      // Favorites: fetch ratings with thumbs_up
       supabase
         .from('recipe_ratings')
         .select('recipe_id')
@@ -287,7 +294,6 @@ export const recipeService = {
         .eq('rating', 'thumbs_up')
         .limit(20),
 
-      // Recent
       supabase
         .from('recipes')
         .select('*')
@@ -295,7 +301,6 @@ export const recipeService = {
         .order('created_at', { ascending: false })
         .limit(15),
 
-      // Older (Rediscover)
       supabase
         .from('recipes')
         .select('*')
@@ -309,7 +314,6 @@ export const recipeService = {
     if (recentRes.error) throw recentRes.error;
     if (olderRes.error) throw olderRes.error;
 
-    // Process Favorites
     let favorites: Recipe[] = [];
     if (favoritesRes.data && favoritesRes.data.length > 0) {
       const favIds = favoritesRes.data.map(r => r.recipe_id);
