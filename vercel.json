@@ -2,7 +2,19 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!assets|privacy|.*\\.).*)",
+      "source": "/privacy",
+      "destination": "/privacy"
+    },
+    {
+      "source": "/privacy/:path*",
+      "destination": "/privacy/:path*"
+    },
+    {
+      "source": "/:path*.:ext",
+      "destination": "/:path*.:ext"
+    },
+    {
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
