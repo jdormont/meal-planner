@@ -16,7 +16,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
   useEscapeKey(onCancel);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: string; unit: string }}>([
+  const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: string; unit: string }>>([
     { name: '', quantity: '', unit: '' },
   ]);
   const [instructions, setInstructions] = useState<string[]>(['']);
