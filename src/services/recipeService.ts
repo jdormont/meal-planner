@@ -32,7 +32,8 @@ export const recipeService = {
     let queryError: any;
 
     if (searchTerm) {
-      const result = await supabase.rpc('search_recipes_by_ingredient', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (supabase as any).rpc('search_recipes_by_ingredient', {
         search_term: searchTerm,
         p_user_id: userId,
         p_recipe_type: recipeType,
@@ -41,7 +42,8 @@ export const recipeService = {
         p_limit: ITEMS_PER_PAGE,
         p_offset: page * ITEMS_PER_PAGE
       });
-      rawData = result.data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rawData = result.data as any[] | null;
       queryError = result.error;
     } else {
       let query = supabase
