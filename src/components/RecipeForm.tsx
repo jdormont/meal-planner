@@ -112,7 +112,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       );
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         console.error("[fetchRecipeImage] Failed with status:", response.status, data);
         return null;
@@ -149,6 +149,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         recipeType,
       };
 
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-tag-recipe`,
         {
@@ -166,7 +167,9 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
       if (data.tags && Object.keys(data.tags).length > 0) {
         let newTags = [...tags];
 
+        // Remove incompatible tags based on recipe type
         if (recipeType === 'cocktail') {
+          // Remove food-specific tags from cocktails
           newTags = newTags.filter(t =>
             !t.startsWith('technique:') &&
             !t.startsWith('grain:') &&
@@ -175,6 +178,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
             !t.startsWith('meal:')
           );
         } else {
+          // Remove cocktail-specific tags from food recipes
           newTags = newTags.filter(t =>
             !t.startsWith('base:') &&
             !t.startsWith('flavor:') &&
@@ -184,6 +188,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
           );
         }
 
+        // Handle food tags
         if (data.tags.technique) {
           const techniqueTag = `technique:${data.tags.technique}`;
           const filtered = newTags.filter(t => !t.startsWith('technique:'));
@@ -224,6 +229,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
           newTags.push(...filtered);
         }
 
+        // Handle cocktail tags
         if (data.tags.base) {
           const baseTag = `base:${data.tags.base}`;
           const filtered = newTags.filter(t => !t.startsWith('base:'));
@@ -267,6 +273,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         setTags(newTags);
       }
 
+      // Populate cocktail detail fields if present
       if (data.cocktailDetails && recipeType === 'cocktail') {
         setCocktailMetadata({
           spiritBase: data.cocktailDetails.baseSpirit || '',
@@ -674,7 +681,7 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
                       <option value="quinoa">Quinoa</option>
                       <option value="couscous">Couscous</option>
                       <option value="bread">Bread</option>
-<option value="potatoes">Potatoes</option>
+                      <option value="potatoes">Potatoes</option>
                       <option value="polenta">Polenta</option>
                       <option value="other">Other</option>
                     </select>
