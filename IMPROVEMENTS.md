@@ -269,3 +269,121 @@ See the May 31 entry above. No change in status or priority.
 See the May 31 entry above. No change in status or priority.
 
 **Estimated Effort:** 2–3 days | **Expected Impact:** Medium
+
+---
+
+## Reassessment — June 2, 2026
+
+*Assessment Date: June 2, 2026*
+*Assessment based on: full source read of all pages (`src/pages/`), components (`src/components/`), hooks (`src/hooks/`), services (`src/services/`), migration history (`supabase/migrations/`), edge functions inventory, and the 30 most recent commits.*
+
+---
+
+### Progress Since June 1 Assessment
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Route-Level Code Splitting (Tier 1.3 Updated) | ✅ Completed | PR #35, merged June 1 |
+| SettingsPage — blank stub (Tier 2.1) | ✅ Completed | `SettingsPage.tsx` now delegates to `Settings.tsx` (15 KB full implementation) |
+| AdminPage — blank stub (Tier 2.1) | ✅ Completed | `AdminPage.tsx` now delegates to `AdminDashboard.tsx` (29 KB full implementation) |
+| Shopping List Check-Off (part of Tier 1.2) | ✅ Completed | `ShoppingListDrawer.tsx` has working `toggleItem` + `is_checked` strikethrough |
+| Onboarding Wizard (NEW — not previously tracked) | ✅ Completed | Full 5-step wizard shipped: `OnboardingWizard.tsx` + WelcomeStep, AllergyStep, TimeStep, SkillStep, ReviewStep, ResultsStep in `src/components/onboarding/` |
+
+**Remaining open items from June 1 assessment:** DB Ingredient Search (1.1), Shopping List Store Categorization / Clear Checked (1.2 remainder), Special Occasion Events (2.2/2.3), PWA (3.1), Nutrition Tracking (3.2), PDF Export (3.3).
+
+**New findings from June 2 codebase review:**
+- `recipeService.getRecipes()` sends `title.ilike` + `description.ilike` to the DB but still does a **client-side fallback** for ingredient matching on the already-paginated 12-record window — Tier 1.1 correctness bug confirmed still open.
+- `ShoppingListDrawer.tsx` check-off works; still missing store categorization and "Clear Checked" button.
+- Debug `console.log` statements from the May 31 commit `54fe4083` ("debug: add image fetch logging to RecipeForm") are still present in `RecipeForm.tsx` — production console noise.
+- `recipeService.getDashboardData()` fetches favorite recipe IDs from `recipe_ratings`, then issues a **second query** to fetch full recipe rows by ID — a two-step fan-out for the favorites shelf that can be collapsed into a single join.
+- Service layer (`recipeService.ts`, `mealService.ts`, `shoppingListService.ts`) has **zero Vitest test coverage** — only pure utilities are tested.
+- `recipeService.getCommunityRecipes()` is hardcoded to `limit(24)` with no pagination; `CommunityPage.tsx` renders all results at once — community content is not browsable beyond 24 recipes.
+
+---
+
+### Updated Tier 1 — Quick Wins (June 2, 2026)
+
+---
+
+#### 1.1 Database-Side Ingredient Search *(Carried Forward — Still Open)*
+
+`recipeService.getRecipes()` at `src/services/recipeService.ts` sends `title.ilike` and `description.ilike` to the DB but performs ingredient matching as a client-side loop on the 12 already-fetched records. A user with 200 recipes who searches "garlic" sees matches only in the 12 recipes on the current page. See the May 31 entry for the full description and agent prompt. Priority unchanged.
+
+**Estimated Effort:** 2–3 days | **Expected Impact:** High
+
+---
+
+#### 1.2 Shopping List: Store Categorization + "Clear Checked" Button
+
+Check-off is now fully working (strikethrough + `is_checked` persisted via `ShoppingListContext`). What remains of the original Tier 1.2 goal: grouping items by store section and a "Clear Checked" action. These two UX touches are the last friction points for the in-store mobile experience.
+
+**Estimated Effort:** 1 day | **Expected Impact:** Medium–High
+
+**Agent Prompt:**
+> In `src/components/ShoppingListDrawer.tsx`, add two improvements to the existing check-off UI. (1) Create a `categorizeIngredient(name: string): string` utility in `src/utils/ingredientCategories.ts` that maps ingredient names to store sections (Produce, Dairy, Meat & Seafood, Pantry, Frozen, Bakery, Other) using a keyword lookup table. (2) Group the rendered ingredient list by category: sort items by category name, render a sticky `<h3>` section header above each group using amber-500 text to match the design system. (3) Add a "Clear Checked" button in the drawer footer (left of the Instacart button) that calls a new `clearCheckedItems()` function in `src/contexts/ShoppingListContext.tsx` — it should remove all items where `is_checked === true` from both local state and the `shopping_lists` DB table rows via `shoppingListService`. Only render "Clear Checked" when at least one item is checked.
+
+---
+
+#### 1.3 Remove Debug Logging from RecipeForm.tsx
+
+A `debug: add image fetch logging to RecipeForm` commit (May 31, SHA `54fe4083`) was never reverted. Console noise in production leaks URL details and fetch timing into browser DevTools for any authenticated user who opens the developer console.
+
+**Estimated Effort:** 30 minutes | **Expected Impact:** Low (polish + security hygiene)
+
+**Agent Prompt:**
+> In `src/components/RecipeForm.tsx`, search for all `console.log` statements that were added by the image-fetch debug commit (look for logs referencing image URLs, fetch responses, or any `console.log` near image-loading logic). Remove them. Do not remove `console.error` statements. Run `npm run lint && npm run build` to confirm no regressions.
+
+---
+
+### Updated Tier 2 — Moderate Effort (June 2, 2026)
+
+---
+
+#### 2.1 Service Layer Test Coverage
+
+`recipeService.ts` (12 KB), `mealService.ts` (10 KB), and `shoppingListService.ts` (3.3 KB) have zero Vitest coverage. These are the most critical data-access paths in the app — a silent bug in `saveRecipe` or `getMeals` corrupts user data with no test signal. The existing suite covers only pure utilities. Adding mocked-Supabase tests is the highest-leverage testing investment available.
+
+**Estimated Effort:** 2–3 days | **Expected Impact:** High (reliability, safe refactoring, developer confidence)
+
+**Agent Prompt:**
+> Add Vitest unit tests for the three service files. Create test files in `src/test/`: `recipeService.test.ts`, `mealService.test.ts`, `shoppingListService.test.ts`. At the top of each, mock the Supabase client: `vi.mock('../lib/supabase', () => ({ supabase: { from: vi.fn().mockReturnValue({ select: vi.fn(), insert: vi.fn(), update: vi.fn(), delete: vi.fn(), eq: vi.fn(), ... }) } }))`. Tests to cover: (1) `recipeService.getRecipes` — verify the `.or()` filter clause includes both title and description when `searchTerm` is set; verify `.range()` pagination math for page 0 and page 2; verify `.contains('tags', ...)` is called when `selectedTags` is non-empty; (2) `recipeService.saveRecipe` — verify it calls `.update()` for a non-temp `editingId` and `.insert()` for a new recipe; (3) `mealService` — verify at least one read and one write path; (4) `shoppingListService` — verify `addItem` inserts with the correct shape. Aim for 5+ tests per file (15+ total).
+
+---
+
+#### 2.2 Community Recipe Pagination / Infinite Scroll
+
+`recipeService.getCommunityRecipes()` has a hardcoded `limit(24)` with no offset support. `CommunityPage.tsx` renders all results at once with no load-more control. Any recipe added after the initial 24 is invisible to users who don't refresh, and users who join a large community never discover older shared recipes.
+
+**Estimated Effort:** 2 days | **Expected Impact:** Medium
+
+**Agent Prompt:**
+> In `src/services/recipeService.ts`, add a new function `getCommunityRecipesPaginated(page: number, limit = 12): Promise<{ recipes: Recipe[]; hasMore: boolean }>` that applies `.range(page * limit, (page + 1) * limit - 1)`. In `src/pages/CommunityPage.tsx` (or `src/components/CommunityRecipes.tsx`), replace the current `useQuery` call with `useInfiniteQuery` keyed by `['community-recipes-paged']` using the new function; set `getNextPageParam` to return the next page index when `hasMore` is true. Add a "Load More" button at the bottom of the community grid that calls `fetchNextPage()` and is hidden when `!hasNextPage`. Show a spinner while `isFetchingNextPage`. Keep the old `getCommunityRecipes(limit)` function to avoid breaking any callers, but mark it `@deprecated`.
+
+---
+
+#### 2.3 Fix Favorites N+1 in getDashboardData
+
+`recipeService.getDashboardData()` fetches favorite recipe IDs from `recipe_ratings` and then issues a second query to fetch the full recipe rows by those IDs. For a user with many thumbs-up ratings this is two serial round-trips where one join would suffice. While the current impact is low (dashboard loads once), it sets a pattern that will compound as the dashboard grows.
+
+**Estimated Effort:** 0.5 days | **Effort:** S
+
+**Agent Prompt:**
+> In `src/services/recipeService.ts`, in the `getDashboardData` function, replace the two-step favorites fetch (first fetch `recipe_id` from `recipe_ratings`, then fetch recipes `in(uniqueFavIds)`) with a single Supabase join query: `supabase.from('recipe_ratings').select('recipe_id, recipes(*)')` filtered by `user_id` and `rating = 'thumbs_up'`. Map the nested `recipes` object directly. This eliminates the serial round-trip and the extra `const uniqueFavIds` dedup step. Verify the dashboard still renders favorites correctly.
+
+---
+
+#### 2.4 Special Occasion Event Planning (Phase 3 MVP) *(Carried Forward)*
+
+See the May 31 entry above for full description and agent prompt.
+
+**Estimated Effort:** 5–7 days | **Expected Impact:** Medium-High
+
+---
+
+### Updated Tier 3 — Strategic (June 2, 2026)
+
+Carried forward from previous assessments — no change in status or priority:
+
+- **3.1 Progressive Web App (PWA)** — see May 31 entry. **Effort:** L | **Impact:** High long-term
+- **3.2 Nutrition Information Tracking** — see May 31 entry. **Effort:** XL | **Impact:** High long-term
+- **3.3 Print-Friendly Recipe PDF Export** — see May 31 entry. **Effort:** S | **Impact:** Medium
