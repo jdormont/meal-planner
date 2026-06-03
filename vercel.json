@@ -1,53 +1,6 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/recipes",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/recipes/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/community",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/community/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/planner",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/planner/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/chat",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/chat/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/settings",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/settings/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/admin/:path*",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
