@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { AuthForm } from '../components/AuthForm';
 import { RecipeSuggestionCard, RecipeSuggestion } from '../components/RecipeSuggestionCard';
 import { Sparkles, ArrowRight, MessageSquare, Download, X, ChefHat, Calendar } from 'lucide-react';
-
 import { supabase, Recipe } from '../lib/supabase';
 import { parseIngredient } from '../utils/recipeParser';
 import { RecipeDetail } from '../components/RecipeDetail';
+import { showError, showInfo } from '../utils/toast';
 
 export function LandingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -45,7 +45,7 @@ export function LandingPage() {
         total_time: parseInt(suggestion.time_estimate) || 0,
         servings: 4,
         tags: ['Social Import'],
-        image_url: '', // We could use cover image from Apify if we passed it through
+        image_url: '',
         source_url: importUrl,
         notes: suggestion.full_details?.nutrition_notes || '',
         is_shared: false,
@@ -55,7 +55,7 @@ export function LandingPage() {
       };
 
       setViewingRecipe(tempRecipe);
-      setImportUrl(''); // Clear input on success
+      setImportUrl('');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Import error:", err);
@@ -64,14 +64,12 @@ export function LandingPage() {
       if (err.message && err.message.includes("Daily limit reached")) {
          setAuthMode('signup');
          setShowAuthModal(true);
-         // Optional: nicer UI than alert, but alert ensures they see why the modal opened
-         alert("You've accepted your daily limit of 3 free imports! Sign up to continue.");
+         showInfo("You've reached your daily limit of 3 free imports! Sign up to continue.");
          return;
       }
 
-      // Attempt to extract context if available (e.g. from FunctionsHttpError)
       const context = err.context ? ` (Context: ${JSON.stringify(err.context)})` : '';
-      alert((err.message || "Failed to import recipe.") + context);
+      showError((err.message || "Failed to import recipe.") + context);
     } finally {
       setImporting(false);
     }
@@ -150,7 +148,6 @@ export function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      {/* Hero Section */}
       <section className="relative pt-20 pb-12 lg:pt-24 lg:pb-24 overflow-visible px-6">
           <div className="max-w-4xl mx-auto text-center z-10 relative mb-12">
              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100/50 border border-orange-200 text-orange-700 text-xs font-semibold uppercase tracking-wider mb-6 animate-fade-in-up">
@@ -207,10 +204,8 @@ export function LandingPage() {
                   <h2 className="text-3xl lg:text-4xl font-serif text-gray-900 mb-4">Everything you need to master your kitchen.</h2>
               </div>
 
-              {/* Strict Grid Structure */}
               <div className="grid grid-cols-1 md:grid-cols-6 gap-6 auto-rows-[minmax(300px,auto)]">
                   
-                  {/* Talk to Chef: md:col-span-4 bg-stone-50 */}
                   <div className="md:col-span-4 bg-stone-50 rounded-3xl p-8 md:p-10 border border-stone-100 relative overflow-hidden flex flex-col justify-between group">
                       <div className="relative z-10">
                           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-orange-600 mb-6 shadow-sm">
@@ -222,7 +217,6 @@ export function LandingPage() {
                           </p>
                       </div>
                       
-                      {/* Visual: Mock Chat Bubbles */}
                       <div className="mt-8 relative max-w-lg space-y-3">
                           <div className="bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm border border-stone-100 w-[80%] transform transition-transform group-hover:translate-x-1">
                               <p className="text-sm text-gray-600">
@@ -237,7 +231,6 @@ export function LandingPage() {
                       </div>
                   </div>
 
-                  {/* Import: md:col-span-2 bg-orange-50 */}
                   <div className="md:col-span-2 bg-orange-50 rounded-3xl p-8 border border-orange-100 relative overflow-hidden flex flex-col group hover:bg-orange-100 transition-colors">
                       <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-orange-600 mb-6 shadow-sm">
                           <Download size={24} />
@@ -271,7 +264,6 @@ export function LandingPage() {
                       </form>
                   </div>
 
-                  {/* Smart Scaling: md:col-span-2 md:row-span-2 */}
                   <div className="md:col-span-2 md:row-span-2 rounded-3xl relative overflow-hidden group">
                        <img 
                            src="/smart-scaling.png" 
@@ -291,7 +283,6 @@ export function LandingPage() {
                        </div>
                   </div>
 
-                  {/* Meal Plan: md:col-span-4 bg-white border border-gray-200 */}
                   <div className="md:col-span-4 bg-white border border-gray-200 rounded-3xl p-8 md:p-10 relative overflow-hidden flex flex-col md:flex-row md:items-center gap-8 group hover:border-gray-300 transition-colors">
                        <div className="flex-1">
                           <div className="w-12 h-12 bg-stone-50 rounded-2xl flex items-center justify-center text-stone-600 mb-6">
@@ -303,7 +294,6 @@ export function LandingPage() {
                           </p>
                        </div>
                        
-                       {/* Visual: Row of 7 small squares */}
                        <div className="flex-shrink-0 flex gap-2">
                           {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
                               <div key={`${day}-${i}`} className={`w-10 h-14 rounded-lg flex flex-col items-center justify-center border transition-all duration-300 ${day === 'W' ? 'bg-orange-500 border-orange-500 text-white transform -translate-y-2 shadow-md' : 'bg-white border-gray-100 text-gray-400 group-hover:border-gray-200'}`}>
@@ -341,14 +331,11 @@ export function LandingPage() {
            recipe={viewingRecipe}
            onClose={() => setViewingRecipe(null)}
            onEdit={() => {
-              // Redirect to signup if they want to "Edit" (Save)
               openAuth('signup');
            }}
            onCopy={() => {
-               // Redirect to signup if they want to "Copy" (Save)
                openAuth('signup');
            }}
-           // Hide specific user actions
            onFirstAction={undefined}
            onOpenRecipe={undefined} 
         />

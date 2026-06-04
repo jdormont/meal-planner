@@ -5,6 +5,7 @@ import { RecipeDetailsModal } from './RecipeDetailsModal';
 import { recipeService } from '../services/recipeService';
 import { mealService } from '../services/mealService';
 import { WeeklyMealSet } from '../lib/supabase';
+import { showError, showInfo } from '../utils/toast';
 
 interface WeeklyPlannerRecipe {
   title: string;
@@ -35,8 +36,6 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
     const [selectedRecipe, setSelectedRecipe] = useState<WeeklyPlannerRecipe | null>(null);
 
     useEffect(() => {
-        // Fetch global set, user doesn't strictly need to be logged in for public global set, 
-        // but for "Add to Week" they do. We show it regardless.
         fetchWeeklySet();
     }, []);
 
@@ -61,7 +60,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
             setCurrentIndex(0);
         } catch (err) {
             console.error("Error generating meals:", err);
-            alert("Failed to generate weekly meals. Check console.");
+            showError("Failed to generate weekly meals. Check console.");
         } finally {
             setGenerating(false);
         }
@@ -69,13 +68,12 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
 
     async function handleAddToWeek(recipe: WeeklyPlannerRecipe) {
         if (!user) {
-            alert("Please sign in to add meals to your week.");
+            showInfo("Please sign in to add meals to your week.");
             return;
         }
         const recipeTitle = recipe.title;
 
         try {
-            // 1. Create the Recipe in the user's library (promoted from suggestion)
             const timeInt = parseInt(recipe.time_estimate || '') || 30;
 
             const recipeData = {
@@ -95,7 +93,6 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
 
             const stringRecipe = await recipeService.saveRecipe(user.id, recipeData);
 
-            // 2. Create the Meal (Calendar Event) and link it
             const dateStr = new Date().toISOString().split('T')[0];
             await mealService.saveMeal(
                 user.id,
@@ -111,7 +108,6 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
                 [stringRecipe.id]
             );
 
-            // Trigger main app refresh so it shows on calendar immediately
             if (onMealAdded) onMealAdded();
 
             setAddedToWeek(prev => ({ ...prev, [recipeTitle]: true }));
@@ -121,7 +117,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
 
         } catch (err) {
             console.error("Error adding to week:", err);
-            alert("Failed to add meal. " + (err instanceof Error ? err.message : ''));
+            showError("Failed to add meal. " + (err instanceof Error ? err.message : ''));
         }
     }
 
@@ -157,7 +153,7 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
     }
 
     if (!weeklySet && !userProfile?.is_admin) {
-        return null; // Don't show anything if no global set yet and not admin
+        return null;
     }
 
     if (!weeklySet && userProfile?.is_admin) {
@@ -204,7 +200,6 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
 
             {/* Hero Carousel */}
             <div className="relative group">
-                {/* Navigation Buttons (Overlay) */}
                 <button 
                     onClick={(e) => { e.stopPropagation(); prevSlide(); }}
                     title="Previous Slide"
@@ -222,12 +217,10 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
                     <ChevronRight className="w-6 h-6" />
                 </button>
 
-                {/* Main Card */}
                 <div 
                     onClick={() => setSelectedRecipe(currentRecipe)}
                     className="relative w-full h-[500px] rounded-3xl overflow-hidden shadow-xl cursor-pointer transition-transform duration-500"
                 >
-                    {/* Background Image */}
                     {currentRecipe.image_url ? (
                         <img
                             src={currentRecipe.image_url}
@@ -240,7 +233,6 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
                         </div>
                     )}
                     
-                    {/* Gradient & Content */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                     
                     <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-12 text-white">
@@ -288,7 +280,6 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
                     </div>
                 </div>
 
-                {/* Pagination Dots */}
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                     {recipes.map((_, idx) => (
                         <button
@@ -318,4 +309,3 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
         </div>
     );
 }
-

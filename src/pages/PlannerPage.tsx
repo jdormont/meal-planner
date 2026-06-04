@@ -11,6 +11,7 @@ import { recipeService } from '../services/recipeService';
 import { Meal, Recipe } from '../lib/supabase';
 import { Calendar, Loader2 } from 'lucide-react';
 import { subWeeks } from 'date-fns';
+import { showSuccess, showError } from '../utils/toast';
 
 export function PlannerPage() {
   const [location, setLocation] = useLocation();
@@ -55,7 +56,7 @@ export function PlannerPage() {
     if (success) {
       setLocation(isCollectionsView ? '/collections' : '/');
     } else {
-      alert('Failed to save meal. Please try again.');
+      showError('Failed to save meal. Please try again.');
     }
   };
 
@@ -65,7 +66,7 @@ export function PlannerPage() {
       if (success) {
         setLocation(isCollectionsView ? '/collections' : '/');
       } else {
-        alert('Failed to delete meal. Please try again.');
+        showError('Failed to delete meal. Please try again.');
       }
     }
   };
@@ -77,7 +78,7 @@ export function PlannerPage() {
   const handleCopyRecipe = async (recipe: Recipe) => {
     const success = await copyRecipe(recipe);
     if (success) {
-      alert('Recipe copied to your collection!');
+      showSuccess('Recipe copied to your collection!');
     }
   };
 
