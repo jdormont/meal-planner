@@ -6,7 +6,7 @@ _Assessment based on: fresh code read of `src/hooks/useRecipes.ts` (filteredComm
 ---
 
 ## Current Sprint
-Replace browser alert() with toast notifications — [IN PROGRESS — branch: claude/loving-allen-YLJO8, started: 2026-06-04]
+Replace browser alert() with toast notifications — [IN PROGRESS — branch: claude/loving-allen-YLJO8, PR: #44, started: 2026-06-04]
 
 ---
 
@@ -28,7 +28,7 @@ Replace browser alert() with toast notifications — [IN PROGRESS — branch: cl
 
 ## Tier 1 — Quick Wins
 
-### Replace browser alert() with toast notifications — IN PROGRESS
+### Replace browser alert() with toast notifications — IN PROGRESS (PR #44)
 
 - **What:** 18+ native `alert()` calls are the sole feedback mechanism throughout the app. Every user action — copy recipe, delete recipe, add to shopping list, save recipe — blocks execution with a jarring browser-native dialog. Confirmed June 4: `CommunityPage.tsx` has `alert('Recipe copied to your collection!')` as its only copy-success feedback. The app already ships `framer-motion`; adding `react-hot-toast` (~2 KB) and replacing all `alert()` calls eliminates the blocking behavior and aligns feedback with the warm design system.
 - **Why now:** Every user action currently ends with a modal popup that must be dismissed before the UI can update. It's the single highest-visibility UX issue in the app, and it's a mechanical find-and-replace across 7 files — no logic changes required.
