@@ -12,6 +12,7 @@ import { parseIngredient } from '../utils/recipeParser';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useAuth } from '../contexts/AuthContext';
+import { showSuccess, showError, showInfo } from '../utils/toast';
 
 type RecipeDetailProps = {
   recipe: Recipe;
@@ -95,14 +96,14 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
       };
       const savedRecipe = await recipeService.saveRecipe(user.id, newRecipeData);
 
-      alert('Recipe rescaled and saved to your cookbook!');
+      showSuccess('Recipe rescaled and saved to your cookbook!');
       if (onOpenRecipe && savedRecipe) {
         onOpenRecipe(savedRecipe);
       }
       
     } catch (error) {
       console.error('Error asking chef:', error);
-      alert('Chef is busy right now. Please try again later.');
+      showError('Chef is busy right now. Please try again later.');
     } finally {
       setIsRescaling(false);
     }
@@ -124,10 +125,10 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
         return addItem(combinedName, parseFloat(ingredient.quantity) || 1, 'each', recipe.id);
       });
       await Promise.all(promises);
-      alert('Ingredients added to shopping list!');
+      showSuccess('Ingredients added to shopping list!');
     } catch (error) {
       console.error('Error adding to list:', error);
-      alert('Failed to add ingredients to list.');
+      showError('Failed to add ingredients to list.');
     } finally {
       setAddingToCart(false);
     }
@@ -173,14 +174,14 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
       await mealService.addRecipeToMeal(user.id, selectedMealId, recipe.id);
       setShowMealSelector(false);
       setSelectedMealId(null);
-      alert('Recipe added to meal successfully!');
+      showSuccess('Recipe added to meal successfully!');
     } catch (error) {
       console.error('Error adding recipe to meal:', error);
       const err = error as { code?: string } | null;
       if (err?.code === '23505') {
-        alert('This recipe is already in the selected meal.');
+        showInfo('This recipe is already in the selected meal.');
       } else {
-        alert('Failed to add recipe to meal. Please try again.');
+        showError('Failed to add recipe to meal. Please try again.');
       }
     } finally {
       setAddingToMeal(false);
