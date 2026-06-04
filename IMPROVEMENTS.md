@@ -1,7 +1,7 @@
 # Improvements
-_Last assessment: 2026-06-03_
-_Last knowledge sync: 2026-06-03_
-_Assessment based on: full source read of `src/pages/`, `src/components/ShoppingListDrawer.tsx`, `src/hooks/useRecipes.ts`, `src/hooks/useRecipeDashboard.ts`, `src/services/recipeService.ts` / `mealService.ts` / `shoppingListService.ts`, `src/contexts/ShoppingListContext.tsx`, `src/utils/`, `supabase/migrations/`, git log (last 30 commits), all GitHub PRs, and open issues (none open)._
+_Last assessment: 2026-06-04_
+_Last knowledge sync: 2026-06-04_
+_Assessment based on: fresh code read of `src/hooks/useRecipes.ts` (filteredCommunityRecipes alias confirmed, community time filter also not wired to the community query), `src/components/ShoppingListDrawer.tsx` (no categorization or Clear Checked confirmed), `src/pages/CommunityPage.tsx` (alert() call confirmed), git log (last 30 commits), all PRs (none open), open issues (none). No commits since June 3 assessment._
 
 ---
 
@@ -13,7 +13,7 @@ None — ready for next implementation run
 ## Recently Completed ✓
 
 | Item | Status | Reference |
-|------|--------|-----------|
+|------|--------|------------|
 | DB-side ingredient search (Tier 1.1) | ✅ Done | commit `f333c88`, June 2, 2026 — `search_recipes_by_ingredient` Postgres RPC with GIN index |
 | Remove debug console.logs from RecipeForm (Tier 1.3) | ✅ Done | commit `f333c88`, June 2, 2026 |
 | Vercel SPA routing (404 on refresh) | ✅ Done | PRs #31–41, stable `vercel.json` with SPA rewrite |
@@ -30,7 +30,7 @@ None — ready for next implementation run
 
 ### Replace browser alert() with toast notifications — OPEN
 
-- **What:** 18+ native `alert()` calls are the sole feedback mechanism throughout the app. Every user action — copy recipe, delete recipe, add to shopping list, save recipe — blocks execution with a jarring browser-native dialog. The app already ships `framer-motion`; adding `react-hot-toast` (~2 KB) and replacing all `alert()` calls eliminates the blocking behavior and aligns feedback with the warm design system.
+- **What:** 18+ native `alert()` calls are the sole feedback mechanism throughout the app. Every user action — copy recipe, delete recipe, add to shopping list, save recipe — blocks execution with a jarring browser-native dialog. Confirmed June 4: `CommunityPage.tsx` has `alert('Recipe copied to your collection!')` as its only copy-success feedback. The app already ships `framer-motion`; adding `react-hot-toast` (~2 KB) and replacing all `alert()` calls eliminates the blocking behavior and aligns feedback with the warm design system.
 - **Why now:** Every user action currently ends with a modal popup that must be dismissed before the UI can update. It's the single highest-visibility UX issue in the app, and it's a mechanical find-and-replace across 7 files — no logic changes required.
 - **Effort estimate:** M
 - **Actual effort:** —
@@ -38,9 +38,9 @@ None — ready for next implementation run
 
 ---
 
-### Shopping List: Store Categorization + "Clear Checked" Button — OPEN
+### Shopping List: Store Categorization + \"Clear Checked\" Button — OPEN
 
-- **What:** Check-off is working (`is_checked` toggle with strikethrough persisted to the DB). What remains of the original shopping list plan: grouping items by grocery store section so the in-store scanning experience is faster, and a "Clear Checked" action so the list resets cleanly after a shopping trip.
+- **What:** Check-off is working (`is_checked` toggle with strikethrough persisted to the DB). What remains: grouping items by grocery store section so the in-store scanning experience is faster, and a \"Clear Checked\" action so the list resets cleanly after a shopping trip. Confirmed June 4: `ShoppingListDrawer.tsx` renders a flat unsorted list with no section headers and no bulk-clear action.
 - **Why now:** The check-off feature alone is half-useful — a user in-store still scans a flat unsorted list. The remaining work is contained entirely in `ShoppingListDrawer.tsx` and a new utility file; no DB schema changes are needed.
 - **Effort estimate:** S
 - **Actual effort:** —
@@ -50,11 +50,11 @@ None — ready for next implementation run
 
 ### Fix Non-Functional Community Recipe Search — OPEN
 
-- **What:** `CommunityPage.tsx` renders a `RecipeSearch` bar, but `filteredCommunityRecipes` is a verbatim alias for `communityRecipes` in `useRecipes.ts` (line 198: `filteredCommunityRecipes: communityRecipes`). Typing in the search box, toggling tags, or switching recipe type has zero effect on community results. Users see the search UI but it silently does nothing.
+- **What:** `CommunityPage.tsx` renders a `RecipeSearch` bar, but `filteredCommunityRecipes` is a verbatim alias for `communityRecipes` in `useRecipes.ts` (confirmed June 4: `filteredCommunityRecipes: communityRecipes` with no derivation). Typing in the search box, toggling tags, or switching recipe type has zero effect on community results. The community time filter has the same root cause — the underlying `getCommunityRecipes(24)` query runs once on mount with no filter arguments, so search, tags, and time filter are all entirely non-functional in the community view.
 - **Why now:** This is a correctness bug, not a missing feature. The fix is a `useMemo` derivation in the hook — no service or DB changes needed — and unlocks meaningful community browsing for users with growing shared recipe libraries.
 - **Effort estimate:** S
 - **Actual effort:** —
-- **Agent prompt:** "In `src/hooks/useRecipes.ts`, replace the `filteredCommunityRecipes: communityRecipes` line with a `useMemo` that filters `communityRecipes` by `debouncedSearchTerm` (matching `recipe.title`, `recipe.description`, and ingredient name strings), `selectedTags`, and `recipeType`. Key the memo on `[communityRecipes, debouncedSearchTerm, selectedTags, recipeType]`. No service or DB changes are needed — this is a pure derived-state fix inside the hook. Verify that typing in the community search bar now updates the visible recipe grid."
+- **Agent prompt:** "In `src/hooks/useRecipes.ts`, replace the `filteredCommunityRecipes: communityRecipes` line with a `useMemo` that filters `communityRecipes` by `debouncedSearchTerm` (matching `recipe.title`, `recipe.description`, and ingredient name strings), `selectedTags`, `recipeType`, and `selectedTimeFilter` (match against `recipe.total_time` if set). Key the memo on `[communityRecipes, debouncedSearchTerm, selectedTags, recipeType, selectedTimeFilter]`. No service or DB changes are needed — this is a pure derived-state fix inside the hook. Verify that typing in the community search bar, toggling a tag, and changing the time filter now all visibly update the community recipe grid."
 
 ---
 
@@ -82,7 +82,7 @@ None — ready for next implementation run
 
 ### Fix Favorites N+1 in getDashboardData — OPEN
 
-- **What:** `recipeService.getDashboardData()` (lines 275–350 of `recipeService.ts`) fetches favorite IDs from `recipe_ratings`, then issues a second serial query via `.in('id', uniqueFavIds)`. Two round-trips where a single Supabase join suffices.
+- **What:** `recipeService.getDashboardData()` fetches favorite IDs from `recipe_ratings`, then issues a second serial query via `.in('id', uniqueFavIds)`. Two round-trips where a single Supabase join suffices.
 - **Why now:** A 0.5-day fix that eliminates a serial round-trip pattern before the dashboard grows. Clean it up while the code is being touched for other service work.
 - **Effort estimate:** S
 - **Actual effort:** —
@@ -93,7 +93,7 @@ None — ready for next implementation run
 ### Special Occasion Event Planning (Phase 3 MVP) — OPEN
 
 - **What:** The most valuable unbuilt product feature: named events (dinner party, holiday meal) with attached recipes and guest-count-scaled servings. The `scaleIngredient` utility already handles the math; all prerequisite infrastructure (service layer, routing, TanStack Query) is in place.
-- **Why now:** This unlocks the "host" user persona identified in the PRD and differentiates the app from simple recipe managers. All blocking infrastructure work has shipped.
+- **Why now:** This unlocks the \"host\" user persona identified in the PRD and differentiates the app from simple recipe managers. All blocking infrastructure work has shipped.
 - **Effort estimate:** L
 - **Actual effort:** —
 - **Agent prompt:** "Implement Phase 3 Event Planning MVP. Create a migration with `special_events(id uuid, user_id uuid, name text, event_date date, guest_count int, notes text, created_at, updated_at)` and `event_recipes(id uuid, event_id uuid, recipe_id uuid, sort_order int)` with RLS mirroring the `meals` table. Create `src/services/eventService.ts` with full CRUD. Create `src/pages/EventsPage.tsx` with an event list and create/edit modal. Create `src/components/EventDetail.tsx` showing attached recipes with servings auto-scaled to `guest_count` using `scaleIngredient` from `src/utils/recipeScaler.ts`. Add an 'Events' nav tab to `src/components/Layout.tsx`. Register the `/events` route in `src/App.tsx` with `React.lazy()`. Timeline optimization is out of scope for this MVP."
@@ -124,7 +124,7 @@ None — ready for next implementation run
 
 ### Community Recipe Ratings & Comments — NEW
 
-- **What:** Community users can browse shared recipes but cannot express any feedback on them. Adding star ratings and short comments to shared recipes would increase engagement, surface recipe quality signals, and feed future AI recommendation improvements. The `recipe_ratings` table already exists for personal AI thumbs-up/down; community reactions would be a separate, public-facing system.
+- **What:** Community users can browse shared recipes but cannot express any feedback on them. Adding star ratings and short comments to shared recipes would increase engagement, surface recipe quality signals, and feed future AI recommendation improvements.
 - **Why now:** The community tab is currently passive. Social signals are the natural next layer once the discovery features (search, pagination) are stable.
 - **Effort estimate:** L
 - **Actual effort:** —
