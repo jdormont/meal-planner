@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Recipe } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -191,11 +191,48 @@ export function useRecipes() {
         return allUserTags;
     };
 
+    const filteredCommunityRecipes = useMemo(() => {
+        let result = communityRecipes;
+
+        result = result.filter(r => r.recipe_type === recipeType);
+
+        if (debouncedSearchTerm) {
+            const term = debouncedSearchTerm.toLowerCase();
+            result = result.filter(r =>
+                r.title.toLowerCase().includes(term) ||
+                r.description.toLowerCase().includes(term) ||
+                r.ingredients.some(i => i.name.toLowerCase().includes(term))
+            );
+        }
+
+        if (selectedTags.length > 0) {
+            result = result.filter(r =>
+                selectedTags.every(tag => r.tags.includes(tag))
+            );
+        }
+
+        if (selectedTimeFilter) {
+            result = result.filter(r => {
+                const t = r.total_time;
+                if (!t) return false;
+                switch (selectedTimeFilter) {
+                    case 'quick':   return t <= 30;
+                    case 'medium':  return t > 30 && t <= 45;
+                    case 'hour':    return t > 45 && t <= 90;
+                    case 'project': return t > 90;
+                    default:        return true;
+                }
+            });
+        }
+
+        return result;
+    }, [communityRecipes, debouncedSearchTerm, selectedTags, recipeType, selectedTimeFilter]);
+
     return {
         recipes,
         communityRecipes,
         filteredRecipes: recipes,
-        filteredCommunityRecipes: communityRecipes,
+        filteredCommunityRecipes,
         loading,
         error,
         searchTerm,
