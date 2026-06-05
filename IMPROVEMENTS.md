@@ -1,7 +1,7 @@
 # Improvements
-_Last assessment: 2026-06-04_
-_Last knowledge sync: 2026-06-04_
-_Assessment based on: fresh code read of `src/hooks/useRecipes.ts` (filteredCommunityRecipes alias confirmed, community time filter also not wired to the community query), `src/components/ShoppingListDrawer.tsx` (no categorization or Clear Checked confirmed), `src/pages/CommunityPage.tsx` (alert() call confirmed), git log (last 30 commits), all PRs (none open), open issues (none). No commits since June 3 assessment._
+_Last assessment: 2026-06-05_
+_Last knowledge sync: 2026-06-05_
+_Assessment based on: git log (last 30 commits), all PRs (none open), open issues (none). PR #44 merged June 5 — toast notifications complete. No new code to assess beyond that merge. Tier 3 item staleness decisions applied: "Shareable Public Recipe Links" escalated to Tier 2 (3rd consecutive assessment, M effort, natural extension of community work); "Community Recipe Ratings & Comments" dropped as stale (3rd consecutive, L effort, blocked by community search/pagination work not yet started)._
 
 ---
 
@@ -14,7 +14,7 @@ None — ready for next implementation run
 
 | Item | Status | Reference |
 |------|--------|------------|
-| Replace browser alert() with toast notifications (Tier 1) | ✅ Done | PR #44, June 4, 2026 — `react-hot-toast` installed; 18+ `alert()` calls replaced across 7 files with `showSuccess`/`showError`/`showInfo` toast wrappers |
+| Replace browser alert() with toast notifications (Tier 1) | ✅ Done | PR #44, June 5, 2026 — `react-hot-toast` installed; 18+ `alert()` calls replaced across 7 files with `showSuccess`/`showError`/`showInfo` toast wrappers |
 | DB-side ingredient search (Tier 1.1) | ✅ Done | commit `f333c88`, June 2, 2026 — `search_recipes_by_ingredient` Postgres RPC with GIN index |
 | Remove debug console.logs from RecipeForm (Tier 1.3) | ✅ Done | commit `f333c88`, June 2, 2026 |
 | Vercel SPA routing (404 on refresh) | ✅ Done | PRs #31–41, stable `vercel.json` with SPA rewrite |
@@ -29,9 +29,9 @@ None — ready for next implementation run
 
 ## Tier 1 — Quick Wins
 
-### Shopping List: Store Categorization + \"Clear Checked\" Button — OPEN
+### Shopping List: Store Categorization + "Clear Checked" Button — OPEN
 
-- **What:** Check-off is working (`is_checked` toggle with strikethrough persisted to the DB). What remains: grouping items by grocery store section so the in-store scanning experience is faster, and a \"Clear Checked\" action so the list resets cleanly after a shopping trip. Confirmed June 4: `ShoppingListDrawer.tsx` renders a flat unsorted list with no section headers and no bulk-clear action.
+- **What:** Check-off is working (`is_checked` toggle with strikethrough persisted to the DB). What remains: grouping items by grocery store section so the in-store scanning experience is faster, and a "Clear Checked" action so the list resets cleanly after a shopping trip. Confirmed June 4: `ShoppingListDrawer.tsx` renders a flat unsorted list with no section headers and no bulk-clear action.
 - **Why now:** The check-off feature alone is half-useful — a user in-store still scans a flat unsorted list. The remaining work is contained entirely in `ShoppingListDrawer.tsx` and a new utility file; no DB schema changes are needed.
 - **Effort estimate:** S
 - **Actual effort:** —
@@ -84,7 +84,7 @@ None — ready for next implementation run
 ### Special Occasion Event Planning (Phase 3 MVP) — OPEN
 
 - **What:** The most valuable unbuilt product feature: named events (dinner party, holiday meal) with attached recipes and guest-count-scaled servings. The `scaleIngredient` utility already handles the math; all prerequisite infrastructure (service layer, routing, TanStack Query) is in place.
-- **Why now:** This unlocks the \"host\" user persona identified in the PRD and differentiates the app from simple recipe managers. All blocking infrastructure work has shipped.
+- **Why now:** This unlocks the "host" user persona identified in the PRD and differentiates the app from simple recipe managers. All blocking infrastructure work has shipped.
 - **Effort estimate:** L
 - **Actual effort:** —
 - **Agent prompt:** "Implement Phase 3 Event Planning MVP. Create a migration with `special_events(id uuid, user_id uuid, name text, event_date date, guest_count int, notes text, created_at, updated_at)` and `event_recipes(id uuid, event_id uuid, recipe_id uuid, sort_order int)` with RLS mirroring the `meals` table. Create `src/services/eventService.ts` with full CRUD. Create `src/pages/EventsPage.tsx` with an event list and create/edit modal. Create `src/components/EventDetail.tsx` showing attached recipes with servings auto-scaled to `guest_count` using `scaleIngredient` from `src/utils/recipeScaler.ts`. Add an 'Events' nav tab to `src/components/Layout.tsx`. Register the `/events` route in `src/App.tsx` with `React.lazy()`. Timeline optimization is out of scope for this MVP."
@@ -94,29 +94,29 @@ None — ready for next implementation run
 ### Print-Friendly Recipe PDF Export — OPEN _(escalated from Tier 3)_
 
 - **What:** A print/export-to-PDF button on `RecipeDetail.tsx` that renders a clean A4/letter layout: recipe title, image, metadata, ingredient list, and numbered instructions. No DB changes needed.
-- **Why now:** Escalated from Tier 3 after appearing in 3 consecutive assessments without movement. S effort, self-contained, no architecture dependencies. A worthwhile add alongside any `RecipeDetail` work.
+- **Why now:** Escalated from Tier 3 after appearing in 3 consecutive assessments. S effort, self-contained, no architecture dependencies. A worthwhile add alongside any `RecipeDetail` work.
 - **Effort estimate:** S
 - **Actual effort:** —
 - **Agent prompt:** "Add a 'Print / Export PDF' button to `src/components/RecipeDetail.tsx`. Install `react-to-print`. Create `src/components/RecipePrintView.tsx` as a printable-optimized layout — recipe title, image, metadata (servings, prep/cook times), ingredient list, numbered instructions — styled for A4/letter with `@media print` CSS. Use black-and-white-friendly styles (no colored backgrounds, no icons). Wire the print button to `useReactToPrint()` referencing the `RecipePrintView` ref. Ensure the print view excludes navigation, modals, and action buttons. Test in Chrome and Firefox print preview."
 
 ---
 
-## Tier 3 — Strategic
-
-### Shareable Public Recipe Links — NEW
+### Shareable Public Recipe Links — OPEN _(escalated from Tier 3)_
 
 - **What:** Shared recipes (`is_shared = true`) are only visible in the Community tab to logged-in users. A public route (e.g., `/r/:id`) viewable without authentication would let users share recipes via URL — on social media, in messages, or in food blogs. The wouter routing and RLS infrastructure are already in place.
-- **Why now:** The routing refactor (PR #29) created the foundation. A public recipe view requires only a new Supabase RLS policy for the `anon` role, a service function that bypasses user-auth, a simplified recipe detail layout, and a 'Share' copy-link button on `RecipeDetail`.
+- **Why now:** Escalated from Tier 3 after 3 consecutive appearances without movement. The routing refactor (PR #29) created the foundation — this requires only a new anon RLS policy, one service function, a simplified page component, and a copy-link button. M effort but no blocking dependencies.
 - **Effort estimate:** M
 - **Actual effort:** —
 - **Agent prompt:** "Create a public recipe view. Add an RLS policy on the `recipes` table allowing `SELECT` for `anon` when `is_shared = true`. Create `recipeService.getPublicRecipe(id)` that does not require a session. Add a `/r/:id` route in `src/App.tsx` outside the auth guard, rendering a new `src/pages/PublicRecipePage.tsx` — simplified layout (title, image, description, ingredients, instructions; no edit/copy actions for unauthenticated visitors). Add a 'Share' button on `RecipeDetail.tsx` that copies the public URL to clipboard, only visible when `recipe.is_shared === true`. Test that unauthenticated access to `/r/:id` works."
 
 ---
 
-### Community Recipe Ratings & Comments — NEW
+## Tier 3 — Strategic
+
+### Community Recipe Ratings & Comments — OPEN
 
 - **What:** Community users can browse shared recipes but cannot express any feedback on them. Adding star ratings and short comments to shared recipes would increase engagement, surface recipe quality signals, and feed future AI recommendation improvements.
-- **Why now:** The community tab is currently passive. Social signals are the natural next layer once the discovery features (search, pagination) are stable.
+- **Why now:** The community tab is currently passive. Social signals are the natural next layer once the discovery features (search, pagination) are stable — do not start until the Tier 1 community search fix and Tier 2 pagination work are complete.
 - **Effort estimate:** L
 - **Actual effort:** —
 - **Agent prompt:** "Add a community reaction layer. Create a migration for `community_reactions(id uuid, recipe_id uuid, user_id uuid, rating int CHECK (rating BETWEEN 1 AND 5), comment text, created_at)` with RLS (authenticated users can insert their own row; everyone can read). Create `src/services/communityService.ts` with `addReaction(recipeId, rating, comment)` and `getReactions(recipeId)`. In `RecipeDetail.tsx` (community view), add a 1–5 star rating widget and optional short comment input that call `addReaction`. Display the aggregate rating (average + count) on recipe cards in `CommunityRecipes.tsx`."
