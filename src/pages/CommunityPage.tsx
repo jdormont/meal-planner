@@ -10,11 +10,12 @@ import { RecipeDetail } from '../components/RecipeDetail';
 import { recipeService } from '../services/recipeService';
 import { Recipe } from '../lib/supabase';
 import { Users, Loader2 } from 'lucide-react';
+import { showSuccess } from '../utils/toast';
 
 export function CommunityPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { loadMeals } = useMeals(); // to reload meals on carousel actions
+  const { loadMeals } = useMeals();
 
   const [matchDetail, paramsDetail] = useRoute('/recipes/:id');
 
@@ -38,7 +39,7 @@ export function CommunityPage() {
     const success = await copyRecipe(recipe);
     if (success) {
       setLocation('~/recipes');
-      alert('Recipe copied to your collection!');
+      showSuccess('Recipe copied to your collection!');
     }
   };
 
@@ -99,7 +100,6 @@ export function CommunityPage() {
   );
 }
 
-// Reuse detail wrapper or define local for isolation
 function RecipeDetailWrapper({ recipeId, onClose, onCopy, onEdit }: { recipeId: string; onClose: () => void; onCopy: (recipe: Recipe) => void; onEdit: () => void }) {
   const { data: recipe, isLoading, error } = useQuery({
     queryKey: ['recipe', recipeId],

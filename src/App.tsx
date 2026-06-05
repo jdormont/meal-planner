@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
 import { Route, Switch, Redirect, useLocation } from 'wouter';
+import { Toaster } from 'react-hot-toast';
 import { useAuth } from './contexts/AuthContext';
 import { useAnalytics } from './hooks/useAnalytics';
 import { AccountStatus } from './components/AccountStatus';
@@ -106,6 +107,7 @@ function App() {
         <Suspense fallback={<PageLoader />}>
           <LandingPage />
         </Suspense>
+        <Toaster position="bottom-right" />
       </ShoppingListProvider>
     );
   }
@@ -168,6 +170,7 @@ function App() {
           onClose={() => setShowShoppingList(false)}
         />
       </Layout>
+      <Toaster position="bottom-right" />
     </ShoppingListProvider>
   );
 }

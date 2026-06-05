@@ -13,6 +13,7 @@ import { ProfileNudgeModal } from '../components/ProfileNudgeModal';
 import { recipeService } from '../services/recipeService';
 import { Recipe } from '../lib/supabase';
 import { Plus, BookOpen, Sparkles, Camera, Share2, Globe, Loader2 } from 'lucide-react';
+import { showSuccess, showError } from '../utils/toast';
 
 export function RecipesPage() {
   const [, setLocation] = useLocation();
@@ -72,7 +73,7 @@ export function RecipesPage() {
       if (success) {
         setLocation('/');
       } else {
-        alert('Failed to delete recipe. Please try again.');
+        showError('Failed to delete recipe. Please try again.');
       }
     }
   };
@@ -81,7 +82,7 @@ export function RecipesPage() {
     const success = await copyRecipe(recipe);
     if (success) {
       setLocation('/');
-      alert('Recipe copied to your collection!');
+      showSuccess('Recipe copied to your collection!');
     }
   };
 
@@ -245,8 +246,6 @@ export function RecipesPage() {
         <RecipeImportModal
           onClose={() => setLocation('/')}
           onImportComplete={(recipe) => {
-            // Put it in local storage or temp state so RecipeForm can open it.
-            // But since we navigate to a new recipe with prefilled data, we can store it in sessionStorage!
             sessionStorage.setItem('temp_import_recipe', JSON.stringify(recipe));
             setLocation('/new?source=import');
           }}
@@ -313,7 +312,7 @@ function RecipeDetailWrapper({ recipeId, onClose, onEdit, onCopy }: { recipeId: 
       onClose={onClose}
       onEdit={onEdit}
       onCopy={onCopy}
-      onOpenRecipe={(r) => onCopy(r)} // copy community/shared or direct view
+      onOpenRecipe={(r) => onCopy(r)}
     />
   );
 }

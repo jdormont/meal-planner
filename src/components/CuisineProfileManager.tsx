@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, CreditCard as Edit2, Trash2, ChevronUp, ChevronDown, Save, X, Upload } from 'lucide-react';
+import { showError } from '../utils/toast';
 
 type CuisineProfile = {
   id: string;
@@ -150,7 +151,7 @@ export default function CuisineProfileManager() {
     if (!editingProfile) return;
 
     if (!editingProfile.cuisine_name || !editingProfile.style_focus) {
-      alert('Cuisine name and style focus are required');
+      showError('Cuisine name and style focus are required');
       return;
     }
 
@@ -181,7 +182,7 @@ export default function CuisineProfileManager() {
 
       if (error) {
         console.error('Error creating profile:', error);
-        alert('Error creating profile: ' + error.message);
+        showError('Error creating profile: ' + error.message);
         return;
       }
     } else {
@@ -199,7 +200,7 @@ export default function CuisineProfileManager() {
 
       if (error) {
         console.error('Error updating profile:', error);
-        alert('Error updating profile: ' + error.message);
+        showError('Error updating profile: ' + error.message);
         return;
       }
     }
