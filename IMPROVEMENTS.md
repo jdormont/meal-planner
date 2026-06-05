@@ -6,7 +6,7 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 ---
 
 ## Current Sprint
-**Fix Non-Functional Community Recipe Search** — [IN PROGRESS — branch: claude/loving-allen-geySJ, started: 2026-06-05]
+**Fix Non-Functional Community Recipe Search** — [IN PROGRESS — PR: #47, branch: claude/loving-allen-geySJ, started: 2026-06-05]
 
 ---
 
@@ -39,12 +39,12 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 
 ---
 
-### Fix Non-Functional Community Recipe Search — OPEN
+### Fix Non-Functional Community Recipe Search — [IN PROGRESS — PR: #47]
 
 - **What:** `CommunityPage.tsx` renders a `RecipeSearch` bar, but `filteredCommunityRecipes` is a verbatim alias for `communityRecipes` in `useRecipes.ts` (confirmed June 4: `filteredCommunityRecipes: communityRecipes` with no derivation). Typing in the search box, toggling tags, or switching recipe type has zero effect on community results. The community time filter has the same root cause — the underlying `getCommunityRecipes(24)` query runs once on mount with no filter arguments, so search, tags, and time filter are all entirely non-functional in the community view.
 - **Why now:** This is a correctness bug, not a missing feature. The fix is a `useMemo` derivation in the hook — no service or DB changes needed — and unlocks meaningful community browsing for users with growing shared recipe libraries.
 - **Effort estimate:** S
-- **Actual effort:** —
+- **Actual effort:** S — single file, ~35 lines, < 1 hour
 - **Agent prompt:** "In `src/hooks/useRecipes.ts`, replace the `filteredCommunityRecipes: communityRecipes` line with a `useMemo` that filters `communityRecipes` by `debouncedSearchTerm` (matching `recipe.title`, `recipe.description`, and ingredient name strings), `selectedTags`, `recipeType`, and `selectedTimeFilter` (match against `recipe.total_time` if set). Key the memo on `[communityRecipes, debouncedSearchTerm, selectedTags, recipeType, selectedTimeFilter]`. No service or DB changes are needed — this is a pure derived-state fix inside the hook. Verify that typing in the community search bar, toggling a tag, and changing the time filter now all visibly update the community recipe grid."
 
 ---
