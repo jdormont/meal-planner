@@ -6,7 +6,7 @@ _Assessment based on: fresh code read of `src/hooks/useRecipes.ts` (filteredComm
 ---
 
 ## Current Sprint
-Replace browser alert() with toast notifications — [IN PROGRESS — branch: claude/loving-allen-YLJO8, PR: #44, started: 2026-06-04]
+None — ready for next implementation run
 
 ---
 
@@ -14,6 +14,7 @@ Replace browser alert() with toast notifications — [IN PROGRESS — branch: cl
 
 | Item | Status | Reference |
 |------|--------|------------|
+| Replace browser alert() with toast notifications (Tier 1) | ✅ Done | PR #44, June 5, 2026 — react-hot-toast, 18+ alert() calls replaced across 7 files |
 | DB-side ingredient search (Tier 1.1) | ✅ Done | commit `f333c88`, June 2, 2026 — `search_recipes_by_ingredient` Postgres RPC with GIN index |
 | Remove debug console.logs from RecipeForm (Tier 1.3) | ✅ Done | commit `f333c88`, June 2, 2026 |
 | Vercel SPA routing (404 on refresh) | ✅ Done | PRs #31–41, stable `vercel.json` with SPA rewrite |
@@ -27,16 +28,6 @@ Replace browser alert() with toast notifications — [IN PROGRESS — branch: cl
 ---
 
 ## Tier 1 — Quick Wins
-
-### Replace browser alert() with toast notifications — IN PROGRESS (PR #44)
-
-- **What:** 18+ native `alert()` calls are the sole feedback mechanism throughout the app. Every user action — copy recipe, delete recipe, add to shopping list, save recipe — blocks execution with a jarring browser-native dialog. Confirmed June 4: `CommunityPage.tsx` has `alert('Recipe copied to your collection!')` as its only copy-success feedback. The app already ships `framer-motion`; adding `react-hot-toast` (~2 KB) and replacing all `alert()` calls eliminates the blocking behavior and aligns feedback with the warm design system.
-- **Why now:** Every user action currently ends with a modal popup that must be dismissed before the UI can update. It's the single highest-visibility UX issue in the app, and it's a mechanical find-and-replace across 7 files — no logic changes required.
-- **Effort estimate:** M
-- **Actual effort:** —
-- **Agent prompt:** "Install `react-hot-toast`. Add `<Toaster position='bottom-right' />` to `src/App.tsx`. Create `src/utils/toast.ts` exporting `showSuccess(msg: string)`, `showError(msg: string)`, and `showInfo(msg: string)` — thin wrappers over `toast.success()` / `toast.error()` / `toast()` styled with the terracotta palette (e.g. `{ style: { background: '#c4714a', color: '#fff' } }` for success). Then replace every `alert(...)` call in `src/pages/RecipesPage.tsx`, `src/pages/CommunityPage.tsx`, `src/pages/PlannerPage.tsx`, `src/pages/LandingPage.tsx`, `src/components/RecipeDetail.tsx`, `src/components/WeeklyMealCarousel.tsx`, and `src/components/CuisineProfileManager.tsx` with the appropriate `show*` wrapper. Do not replace `console.error` calls. Run `npm run lint && npm run typecheck` to verify no regressions."
-
----
 
 ### Shopping List: Store Categorization + \"Clear Checked\" Button — OPEN
 
