@@ -6,7 +6,7 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 ---
 
 ## Current Sprint
-None — ready for next implementation run
+**Fix Non-Functional Community Recipe Search** — [IN PROGRESS — branch: claude/loving-allen-geySJ, started: 2026-06-05]
 
 ---
 
