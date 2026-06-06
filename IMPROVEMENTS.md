@@ -1,12 +1,12 @@
 # Improvements
-_Last assessment: 2026-06-05_
-_Last knowledge sync: 2026-06-05_
-_Assessment based on: git log (last 30 commits), all PRs (none open), open issues (none). PR #44 merged June 5 — toast notifications complete. No new code to assess beyond that merge. Tier 3 item staleness decisions applied: "Shareable Public Recipe Links" escalated to Tier 2 (3rd consecutive assessment, M effort, natural extension of community work); "Community Recipe Ratings & Comments" dropped as stale (3rd consecutive, L effort, blocked by community search/pagination work not yet started)._
+_Last assessment: 2026-06-06_
+_Last knowledge sync: 2026-06-06_
+_Assessment based on: git log (last 30 commits), all PRs (PR #47 merged June 5 — no others open), open issues (none), code inspection of ShoppingListDrawer.tsx (95 lines, flat list confirmed), recipeService.ts (getDashboardData N+1 confirmed), useRecipes.ts (useMemo fix confirmed live)._
 
 ---
 
 ## Current Sprint
-**Fix Non-Functional Community Recipe Search** — [IN PROGRESS — PR: #47, branch: claude/loving-allen-geySJ, started: 2026-06-05]
+None — ready for next implementation run
 
 ---
 
@@ -14,7 +14,8 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 
 | Item | Status | Reference |
 |------|--------|------------|
-| Replace browser alert() with toast notifications (Tier 1) | ✅ Done | PR #44, June 5, 2026 — `react-hot-toast` installed; 18+ `alert()` calls replaced across 7 files with `showSuccess`/`showError`/`showInfo` toast wrappers |
+| Fix Non-Functional Community Recipe Search (Tier 1) | ✅ Done | PR #47, June 5, 2026 — `filteredCommunityRecipes` replaced with `useMemo` keyed on search term, tags, recipe type, and time filter |
+| Replace browser alert() with toast notifications (Tier 1) | ✅ Done | PR #44, June 5, 2026 — `react-hot-toast` installed; 18+ `alert()` calls replaced across 7 files |
 | DB-side ingredient search (Tier 1.1) | ✅ Done | commit `f333c88`, June 2, 2026 — `search_recipes_by_ingredient` Postgres RPC with GIN index |
 | Remove debug console.logs from RecipeForm (Tier 1.3) | ✅ Done | commit `f333c88`, June 2, 2026 |
 | Vercel SPA routing (404 on refresh) | ✅ Done | PRs #31–41, stable `vercel.json` with SPA rewrite |
@@ -31,21 +32,11 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 
 ### Shopping List: Store Categorization + "Clear Checked" Button — OPEN
 
-- **What:** Check-off is working (`is_checked` toggle with strikethrough persisted to the DB). What remains: grouping items by grocery store section so the in-store scanning experience is faster, and a "Clear Checked" action so the list resets cleanly after a shopping trip. Confirmed June 4: `ShoppingListDrawer.tsx` renders a flat unsorted list with no section headers and no bulk-clear action.
-- **Why now:** The check-off feature alone is half-useful — a user in-store still scans a flat unsorted list. The remaining work is contained entirely in `ShoppingListDrawer.tsx` and a new utility file; no DB schema changes are needed.
+- **What:** Check-off is working (`is_checked` toggle with strikethrough persisted to the DB). What remains: grouping items by grocery store section so the in-store scanning experience is faster, and a "Clear Checked" action so the list resets cleanly after a shopping trip. Confirmed June 6: `ShoppingListDrawer.tsx` is 95 lines, flat unsorted list with no section headers and no bulk-clear action.
+- **Why now:** The check-off feature alone is half-useful — a user in-store still scans a flat unsorted list. The remaining work is contained entirely in `ShoppingListDrawer.tsx` and a new utility file; no DB schema changes are needed. With community search fixed (PR #47), this is the only remaining Tier 1 item.
 - **Effort estimate:** S
 - **Actual effort:** —
 - **Agent prompt:** "In `src/components/ShoppingListDrawer.tsx`, add two improvements to the existing check-off UI. (1) Create `src/utils/ingredientCategories.ts` exporting `categorizeIngredient(name: string): string` that maps ingredient names to store sections (Produce, Dairy, Meat & Seafood, Pantry, Frozen, Bakery, Other) using a keyword lookup table. (2) Group the rendered ingredient list by category: sort items by category name, render a sticky amber-500 `<h3>` section header above each group. (3) Add a 'Clear Checked' button in the drawer footer (left of the Instacart button) that calls a new `clearCheckedItems()` function in `src/contexts/ShoppingListContext.tsx` — remove all items where `is_checked === true` from both local state and the DB via `shoppingListService`. Only render 'Clear Checked' when at least one item is checked."
-
----
-
-### Fix Non-Functional Community Recipe Search — [IN PROGRESS — PR: #47]
-
-- **What:** `CommunityPage.tsx` renders a `RecipeSearch` bar, but `filteredCommunityRecipes` is a verbatim alias for `communityRecipes` in `useRecipes.ts` (confirmed June 4: `filteredCommunityRecipes: communityRecipes` with no derivation). Typing in the search box, toggling tags, or switching recipe type has zero effect on community results. The community time filter has the same root cause — the underlying `getCommunityRecipes(24)` query runs once on mount with no filter arguments, so search, tags, and time filter are all entirely non-functional in the community view.
-- **Why now:** This is a correctness bug, not a missing feature. The fix is a `useMemo` derivation in the hook — no service or DB changes needed — and unlocks meaningful community browsing for users with growing shared recipe libraries.
-- **Effort estimate:** S
-- **Actual effort:** S — single file, ~35 lines, < 1 hour
-- **Agent prompt:** "In `src/hooks/useRecipes.ts`, replace the `filteredCommunityRecipes: communityRecipes` line with a `useMemo` that filters `communityRecipes` by `debouncedSearchTerm` (matching `recipe.title`, `recipe.description`, and ingredient name strings), `selectedTags`, `recipeType`, and `selectedTimeFilter` (match against `recipe.total_time` if set). Key the memo on `[communityRecipes, debouncedSearchTerm, selectedTags, recipeType, selectedTimeFilter]`. No service or DB changes are needed — this is a pure derived-state fix inside the hook. Verify that typing in the community search bar, toggling a tag, and changing the time filter now all visibly update the community recipe grid."
 
 ---
 
@@ -63,8 +54,8 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 
 ### Community Recipe Pagination / Infinite Scroll — OPEN
 
-- **What:** `getCommunityRecipes` is hardcoded to `limit(24)` in `recipeService.ts`; `useRecipes.ts` passes 24 as a constant. Any shared recipe beyond the first 24 is permanently invisible to all users. Naturally follows the community search fix (Tier 1 above).
-- **Why now:** Once the community surpasses 24 shared recipes, discovery silently breaks. The TanStack Query `useInfiniteQuery` API is already available.
+- **What:** `getCommunityRecipes` is hardcoded to `limit(24)` in `recipeService.ts`; `useRecipes.ts` passes 24 as a constant. Any shared recipe beyond the first 24 is permanently invisible to all users. The community search fix (PR #47) now correctly filters over those 24, making pagination the highest-priority remaining community issue.
+- **Why now:** Once the community surpasses 24 shared recipes, discovery silently breaks. The TanStack Query `useInfiniteQuery` API is already available. This is the direct follow-on to the now-merged community search fix.
 - **Effort estimate:** M
 - **Actual effort:** —
 - **Agent prompt:** "In `src/services/recipeService.ts`, add `getCommunityRecipesPaginated(page: number, limit = 12): Promise<{ recipes: Recipe[]; hasMore: boolean }>` using `.range(page * limit, (page + 1) * limit - 1)`. In `src/hooks/useRecipes.ts`, replace the static `getCommunityRecipes(24)` query with `useInfiniteQuery` keyed by `['community-recipes-paged']` and `getNextPageParam` returning the next page when `hasMore` is true. Flatten the pages array for `communityRecipes`. In `src/components/CommunityRecipes.tsx`, add a 'Load More' button at the grid bottom calling `fetchNextPage()`, hidden when `!hasNextPage`, with a spinner while `isFetchingNextPage`. Keep `getCommunityRecipes(limit)` but mark `@deprecated`."
@@ -73,7 +64,7 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 
 ### Fix Favorites N+1 in getDashboardData — OPEN
 
-- **What:** `recipeService.getDashboardData()` fetches favorite IDs from `recipe_ratings`, then issues a second serial query via `.in('id', uniqueFavIds)`. Two round-trips where a single Supabase join suffices.
+- **What:** `recipeService.getDashboardData()` fetches favorite IDs from `recipe_ratings`, then issues a second serial query via `.in('id', uniqueFavIds)`. Two round-trips where a single Supabase join suffices. Confirmed June 6: `uniqueFavIds` dedup + second `.in()` query pattern still present at lines 320–325 of `recipeService.ts`.
 - **Why now:** A 0.5-day fix that eliminates a serial round-trip pattern before the dashboard grows. Clean it up while the code is being touched for other service work.
 - **Effort estimate:** S
 - **Actual effort:** —
@@ -91,20 +82,20 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 
 ---
 
-### Print-Friendly Recipe PDF Export — OPEN _(escalated from Tier 3)_
+### Print-Friendly Recipe PDF Export — OPEN _(escalated from Tier 3 at June 3 assessment)_
 
 - **What:** A print/export-to-PDF button on `RecipeDetail.tsx` that renders a clean A4/letter layout: recipe title, image, metadata, ingredient list, and numbered instructions. No DB changes needed.
-- **Why now:** Escalated from Tier 3 after appearing in 3 consecutive assessments. S effort, self-contained, no architecture dependencies. A worthwhile add alongside any `RecipeDetail` work.
+- **Why now:** Escalated from Tier 3 after 3 consecutive appearances. S effort, self-contained, no architecture dependencies. A worthwhile add alongside any `RecipeDetail` work.
 - **Effort estimate:** S
 - **Actual effort:** —
 - **Agent prompt:** "Add a 'Print / Export PDF' button to `src/components/RecipeDetail.tsx`. Install `react-to-print`. Create `src/components/RecipePrintView.tsx` as a printable-optimized layout — recipe title, image, metadata (servings, prep/cook times), ingredient list, numbered instructions — styled for A4/letter with `@media print` CSS. Use black-and-white-friendly styles (no colored backgrounds, no icons). Wire the print button to `useReactToPrint()` referencing the `RecipePrintView` ref. Ensure the print view excludes navigation, modals, and action buttons. Test in Chrome and Firefox print preview."
 
 ---
 
-### Shareable Public Recipe Links — OPEN _(escalated from Tier 3)_
+### Shareable Public Recipe Links — OPEN _(escalated from Tier 3 at June 5 assessment)_
 
 - **What:** Shared recipes (`is_shared = true`) are only visible in the Community tab to logged-in users. A public route (e.g., `/r/:id`) viewable without authentication would let users share recipes via URL — on social media, in messages, or in food blogs. The wouter routing and RLS infrastructure are already in place.
-- **Why now:** Escalated from Tier 3 after 3 consecutive appearances without movement. The routing refactor (PR #29) created the foundation — this requires only a new anon RLS policy, one service function, a simplified page component, and a copy-link button. M effort but no blocking dependencies.
+- **Why now:** Escalated from Tier 3 after 3 consecutive appearances. The routing refactor (PR #29) created the foundation — this requires only a new anon RLS policy, one service function, a simplified page component, and a copy-link button. M effort but no blocking dependencies.
 - **Effort estimate:** M
 - **Actual effort:** —
 - **Agent prompt:** "Create a public recipe view. Add an RLS policy on the `recipes` table allowing `SELECT` for `anon` when `is_shared = true`. Create `recipeService.getPublicRecipe(id)` that does not require a session. Add a `/r/:id` route in `src/App.tsx` outside the auth guard, rendering a new `src/pages/PublicRecipePage.tsx` — simplified layout (title, image, description, ingredients, instructions; no edit/copy actions for unauthenticated visitors). Add a 'Share' button on `RecipeDetail.tsx` that copies the public URL to clipboard, only visible when `recipe.is_shared === true`. Test that unauthenticated access to `/r/:id` works."
@@ -116,7 +107,7 @@ _Assessment based on: git log (last 30 commits), all PRs (none open), open issue
 ### Community Recipe Ratings & Comments — OPEN
 
 - **What:** Community users can browse shared recipes but cannot express any feedback on them. Adding star ratings and short comments to shared recipes would increase engagement, surface recipe quality signals, and feed future AI recommendation improvements.
-- **Why now:** The community tab is currently passive. Social signals are the natural next layer once the discovery features (search, pagination) are stable — do not start until the Tier 1 community search fix and Tier 2 pagination work are complete.
+- **Why now:** The community search fix (PR #47) makes the community tab actually functional — ratings are the natural next social layer once discovery is working and paginated. Do not start until the Tier 2 community pagination work is complete.
 - **Effort estimate:** L
 - **Actual effort:** —
 - **Agent prompt:** "Add a community reaction layer. Create a migration for `community_reactions(id uuid, recipe_id uuid, user_id uuid, rating int CHECK (rating BETWEEN 1 AND 5), comment text, created_at)` with RLS (authenticated users can insert their own row; everyone can read). Create `src/services/communityService.ts` with `addReaction(recipeId, rating, comment)` and `getReactions(recipeId)`. In `RecipeDetail.tsx` (community view), add a 1–5 star rating widget and optional short comment input that call `addReaction`. Display the aggregate rating (average + count) on recipe cards in `CommunityRecipes.tsx`."
