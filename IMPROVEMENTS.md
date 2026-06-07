@@ -6,7 +6,7 @@ _Assessment based on: git log (last 30 commits — no new commits since the June
 ---
 
 ## Current Sprint
-**Print-Friendly Recipe PDF Export** — [QUEUED — added to sprint 2026-06-07, not yet started]
+**Print-Friendly Recipe PDF Export** — [IN PROGRESS — branch: claude/loving-allen-52FtZ, started: 2026-06-07]
 
 ---
 
