@@ -1,18 +1,20 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
 import { useShoppingList } from '../contexts/ShoppingListContext';
 import { recipeService } from '../services/recipeService';
 import { mealService } from '../services/mealService';
-import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, AlertTriangle, Minus, Plus } from 'lucide-react';
+import { X, Clock, Users, Edit2, ExternalLink, ThumbsUp, ThumbsDown, Calendar, Copy, Share2, AlertTriangle, Minus, Plus, Printer } from 'lucide-react';
 import { formatTime } from '../utils/time';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { InstacartButton } from './InstacartButton';
+import { RecipePrintView } from './RecipePrintView';
 import { scaleIngredient } from '../utils/recipeScaler';
 import { parseIngredient } from '../utils/recipeParser';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useAuth } from '../contexts/AuthContext';
 import { showSuccess, showError, showInfo } from '../utils/toast';
+import { useReactToPrint } from 'react-to-print';
 
 type RecipeDetailProps = {
   recipe: Recipe;
@@ -57,6 +59,13 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
       )
     );
   }, [recipe.ingredients, recipe.servings, currentServings]);
+
+  const printContentRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+    contentRef: printContentRef,
+    documentTitle: recipe.title,
+    pageStyle: '@page { margin: 0.75in; }',
+  });
 
   const handleUpdateServings = (increment: number) => {
     const newServings = Math.max(1, currentServings + increment);
@@ -537,11 +546,22 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
               Add to Meal
             </button>
             <button
+              onClick={() => handlePrint()}
+              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium flex items-center justify-center gap-2"
+            >
+              <Printer className="w-5 h-5" />
+              Print / Export PDF
+            </button>
+            <button
               onClick={onClose}
               className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
             >
               Close
             </button>
+          </div>
+
+          <div ref={printContentRef}>
+            <RecipePrintView recipe={recipe} scaledIngredients={scaledIngredients} displayServings={currentServings} />
           </div>
         </div>
       </div>
