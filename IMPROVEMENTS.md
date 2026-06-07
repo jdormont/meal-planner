@@ -6,7 +6,7 @@ _Assessment based on: git log (last 30 commits — no new commits since the June
 ---
 
 ## Current Sprint
-None — ready for next implementation run
+**Print-Friendly Recipe PDF Export** — [QUEUED — added to sprint 2026-06-07, not yet started]
 
 ---
 
@@ -57,10 +57,10 @@ None — ready for next implementation run
 
 ---
 
-### Print-Friendly Recipe PDF Export — ESCALATED FROM TIER 2 _(4th consecutive appearance)_ — OPEN
+### Print-Friendly Recipe PDF Export — QUEUED FOR CURRENT SPRINT (2026-06-07)
 
 - **What:** A print/export-to-PDF button on `RecipeDetail.tsx` that renders a clean A4/letter layout: recipe title, image, metadata, ingredient list, and numbered instructions. No DB changes needed.
-- **Why now:** This item has now appeared in four consecutive assessments (June 3–6) without being picked up, despite being S effort with zero architectural dependencies — it was already escalated once from Tier 3. Rather than let it go stale a second time, it's promoted to Tier 1: it's genuinely small, self-contained, and shippable alongside the other quick wins above in the same sprint.
+- **Why now:** This item appeared in four consecutive assessments (June 3–6) without being picked up, despite being S effort with zero architectural dependencies — it was already escalated once from Tier 3 to Tier 1. It's now been pulled into the current sprint so it doesn't go stale a second time: genuinely small, self-contained, and shippable on its own.
 - **Effort estimate:** S
 - **Actual effort:** —
 - **Agent prompt:** "Add a 'Print / Export PDF' button to `src/components/RecipeDetail.tsx`. Install `react-to-print`. Create `src/components/RecipePrintView.tsx` as a printable-optimized layout — recipe title, image, metadata (servings, prep/cook times), ingredient list, numbered instructions — styled for A4/letter with `@media print` CSS. Use black-and-white-friendly styles (no colored backgrounds, no icons). Wire the print button to `useReactToPrint()` referencing the `RecipePrintView` ref. Ensure the print view excludes navigation, modals, and action buttons. Test in Chrome and Firefox print preview."
