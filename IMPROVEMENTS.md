@@ -120,3 +120,59 @@ None — ready for next implementation run
 |------|--------|
 | **Progressive Web App (PWA)** | Appeared 3+ consecutive assessments without movement. Revisit if offline-first becomes an explicit product priority. |
 | **Nutrition Information Tracking** | XL effort, no traction across 3 assessments. Revisit if health tracking becomes a product direction. |
+
+---
+
+## UX/UI Improvement Areas
+
+_Assessment Date: June 6, 2026_
+_Source: Manual end-to-end walkthrough of the onboarding flow on [somm.joshdormont.com](https://somm.joshdormont.com) using a test account._
+
+### O-1 No Required Selection on "Favorite Styles" (Step 1)
+
+The first onboarding step asks users to choose wine types they enjoy (Red, White, Rosé, etc.), but allows advancing without selecting any. For a taste-profile product, this is the most important question in the flow. A user who skips it will receive generic recommendations with no personalization signal.
+
+- **Recommendation:** Require at least one selection before "Next" is enabled, or add an explicit "Skip / I'm not sure yet" affordance that makes the intentional skip clear — and surfaces a prompt to complete it later.
+- **Estimated Effort:** S | **Impact:** Medium
+
+### O-2 Progress Bar Step Count Mismatch
+
+The progress indicator at the top of the onboarding modal renders **7 dots**, but only **6 steps** were presented during the walkthrough (Favorite Styles → Regions → Flavor Profile → Avoidances → Adventurousness → Budget). Either a step is conditionally hidden without updating the indicator, or the dot count is hardcoded incorrectly.
+
+- **Recommendation:** Audit the step array used to render the progress bar and ensure it matches the actual rendered step count. If steps are conditionally skipped, derive the dot count dynamically.
+- **Estimated Effort:** S | **Impact:** Low (polish)
+
+### O-3 Restaurant Budget Min Shows Wrong Value After Save
+
+During onboarding, the Restaurant budget min field defaulted to **$38**. After completing onboarding and navigating to the Preferences page, the stored Restaurant min was **$50** — not the displayed default. This is either a state mutation bug (editing the store min field triggering an incorrect update on the restaurant min), or the restaurant min being silently snapped to a floor relative to another field.
+
+- **Recommendation:** Investigate the budget state management in the onboarding step. Add a validation guard so that if `restaurantMin < storeMin`, a warning is shown rather than silently overwriting the value. Add a regression test covering the budget save path.
+- **Estimated Effort:** S | **Impact:** Medium (data correctness)
+
+### O-4 Silent Dismiss — No Re-Entry Path for Skipped Onboarding
+
+The welcome modal ("Welcome to Somm") has an ✕ close button. Clicking it silently skips the entire profile-building flow with no messaging. Users who dismiss it have no indication that they skipped something, and there is no prompt or nudge to revisit it later. This is a meaningful retention risk — new users who close the modal without building a profile will receive worse recommendations and may churn.
+
+- **Recommendation:** On dismiss, show a brief inline banner or persistent widget in the dashboard (e.g., "Your taste profile is incomplete — finish setup for better recommendations") that links back to the onboarding wizard. Alternatively, surface the wizard from the Tastes/Preferences page so re-entry is clearly discoverable.
+- **Estimated Effort:** M | **Impact:** Medium-High
+
+### O-5 No Success Feedback After Completing Onboarding
+
+After clicking "Finish" on the final onboarding step, the modal closes and the user lands on the dashboard with no confirmation. There is no toast, animation, or banner indicating that the profile was saved. For a multi-step setup flow, the absence of a completion moment feels abrupt and leaves users uncertain whether their choices were recorded.
+
+- **Recommendation:** Show a brief success toast ("Taste profile saved! Recommendations are now personalized for you.") immediately after "Finish" is clicked, before the modal closes.
+- **Estimated Effort:** S | **Impact:** Low-Medium (polish, confidence)
+
+### O-6 No Contextual Explanation of How Preferences Affect Results
+
+Questions like "Flavor Profile" and "Adventurousness" appear without any hint of what they influence. A wine-curious new user may not know what "Mineral" or "Tannic" means in the context of recommendations, and there is no tooltip, info icon, or sub-copy explaining how these inputs are used.
+
+- **Recommendation:** Add a one-line subheading or info icon on each step explaining the impact (e.g., _"Used to rank match scores in your scan results"_). For flavor terminology, consider adding a brief tooltip or example wine on hover.
+- **Estimated Effort:** S | **Impact:** Medium (comprehension, completion rate)
+
+### O-7 Budget Input is Free-Text with No Range Validation
+
+The budget step uses plain `<input type="text">` fields for min/max price. No validation was observed preventing nonsensical entries (e.g., min > max, negative values, non-numeric input). The rest of the Preferences page uses range sliders for continuous values, making the text inputs visually inconsistent and behaviorally fragile.
+
+- **Recommendation:** Either replace the text inputs with a dual-handle range slider (consistent with the Preferences page), or add inline validation: enforce numeric-only input, clamp to reasonable bounds (e.g., $1–$999), and show an error if min ≥ max. Display a currency symbol prefix inside the field for clarity.
+- **Estimated Effort:** M | **Impact:** Medium (correctness + consistency)
