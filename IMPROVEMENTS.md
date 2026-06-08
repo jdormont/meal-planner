@@ -6,7 +6,7 @@ _Assessment based on: git log (last 30 commits — no new commits since the June
 ---
 
 ## Current Sprint
-**Print-Friendly Recipe PDF Export** — [QUEUED — added to sprint 2026-06-07, not yet started]
+**Print-Friendly Recipe PDF Export** — [IN PROGRESS — branch: claude/loving-allen-52FtZ, started: 2026-06-07]
 
 ---
 
@@ -57,12 +57,12 @@ _Assessment based on: git log (last 30 commits — no new commits since the June
 
 ---
 
-### Print-Friendly Recipe PDF Export — QUEUED FOR CURRENT SPRINT (2026-06-07)
+### Print-Friendly Recipe PDF Export — IN PROGRESS — branch: claude/loving-allen-52FtZ
 
 - **What:** A print/export-to-PDF button on `RecipeDetail.tsx` that renders a clean A4/letter layout: recipe title, image, metadata, ingredient list, and numbered instructions. No DB changes needed.
 - **Why now:** This item appeared in four consecutive assessments (June 3–6) without being picked up, despite being S effort with zero architectural dependencies — it was already escalated once from Tier 3 to Tier 1. It's now been pulled into the current sprint so it doesn't go stale a second time: genuinely small, self-contained, and shippable on its own.
 - **Effort estimate:** S
-- **Actual effort:** —
+- **Actual effort:** S — ~1 hour. Installed `react-to-print` (v3, `useReactToPrint({ contentRef })` API), created `src/components/RecipePrintView.tsx` (black-and-white layout: title, image, total time, servings, scaled ingredient list, numbered instructions, notes — using `hidden print:block` so it's always mounted for the ref but only rendered in print context), and wired a "Print / Export PDF" button into `RecipeDetail.tsx`'s action row using `useReactToPrint`. Reuses the existing `scaledIngredients`/`currentServings` state so the printout reflects the user's adjusted serving size. `npm run lint`, `npm run typecheck`, and `npm run build` all pass clean. **Note:** interactive print-preview testing in Chrome/Firefox could not be completed — this remote environment has no browser automation tooling and no Chromium binary; verification was limited to lint/typecheck/build plus a dev-server smoke check that the app serves without errors.
 - **Agent prompt:** "Add a 'Print / Export PDF' button to `src/components/RecipeDetail.tsx`. Install `react-to-print`. Create `src/components/RecipePrintView.tsx` as a printable-optimized layout — recipe title, image, metadata (servings, prep/cook times), ingredient list, numbered instructions — styled for A4/letter with `@media print` CSS. Use black-and-white-friendly styles (no colored backgrounds, no icons). Wire the print button to `useReactToPrint()` referencing the `RecipePrintView` ref. Ensure the print view excludes navigation, modals, and action buttons. Test in Chrome and Firefox print preview."
 
 ---
