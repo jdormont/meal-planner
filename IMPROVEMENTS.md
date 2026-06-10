@@ -6,7 +6,7 @@ _Assessment based on: git log (PR #50, Print-Friendly Recipe PDF Export, merged 
 ---
 
 ## Current Sprint
-None — ready for next implementation run. (PR #50, Print-Friendly Recipe PDF Export, merged June 8 and is now in Recently Completed. No commits or PRs have landed since.)
+None — Shopping List Categorization + "Clear Checked" (Tier 1) implemented on branch `claude/loving-allen-jqi1y2`, ready for review.
 
 ---
 
@@ -28,12 +28,12 @@ None — ready for next implementation run. (PR #50, Print-Friendly Recipe PDF E
 
 ## Tier 1 — Quick Wins
 
-### Shopping List: Store Categorization + "Clear Checked" Button — OPEN
+### Shopping List: Store Categorization + "Clear Checked" Button — DONE
 
 - **What:** Check-off is working (`is_checked` toggle with strikethrough persisted to the DB). What remains: grouping items by grocery store section so the in-store scanning experience is faster, and a "Clear Checked" action so the list resets cleanly after a shopping trip. Confirmed June 10: `ShoppingListDrawer.tsx` is still 95 lines, a flat unsorted list with no section headers and no bulk-clear action.
 - **Why now:** The check-off feature alone is half-useful — a user in-store still scans a flat unsorted list. The remaining work is contained entirely in `ShoppingListDrawer.tsx` and a new utility file; no DB schema changes are needed. This remains the longest-standing Tier 1 item (now confirmed unchanged across 5+ assessments) and the natural next pickup — it's smaller and more contained than anything else currently open.
 - **Effort estimate:** S
-- **Actual effort:** —
+- **Actual effort:** S — implemented `src/utils/ingredientCategories.ts` (keyword-based `categorizeIngredient`), grouped/sorted rendering with sticky amber-500 category headers in `ShoppingListDrawer.tsx`, and a `clearCheckedItems()` flow through `shoppingListService.clearCheckedItems` (single delete query) → `ShoppingListContext` → footer button (only shown when items are checked). `npm run lint`/`typecheck`/`build` all clean.
 - **Agent prompt:** "In `src/components/ShoppingListDrawer.tsx`, add two improvements to the existing check-off UI. (1) Create `src/utils/ingredientCategories.ts` exporting `categorizeIngredient(name: string): string` that maps ingredient names to store sections (Produce, Dairy, Meat & Seafood, Pantry, Frozen, Bakery, Other) using a keyword lookup table. (2) Group the rendered ingredient list by category: sort items by category name, render a sticky amber-500 `<h3>` section header above each group. (3) Add a 'Clear Checked' button in the drawer footer (left of the Instacart button) that calls a new `clearCheckedItems()` function in `src/contexts/ShoppingListContext.tsx` — remove all items where `is_checked === true` from both local state and the DB via `shoppingListService`. Only render 'Clear Checked' when at least one item is checked."
 
 ---
