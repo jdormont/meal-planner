@@ -6,7 +6,7 @@ _Assessment based on: git log (PR #52, Shopping List Store Categorization + "Cle
 ---
 
 ## Current Sprint
-None — ready for next implementation run.
+Finish the alert() → Toast Migration (Tier 1) — `[IN PROGRESS — PR: #54]`
 
 ---
 
@@ -29,13 +29,12 @@ None — ready for next implementation run.
 
 ## Tier 1 — Quick Wins
 
-### Finish the alert() → Toast Migration (10 calls missed by PR #44) — OPEN
+### Finish the alert() → Toast Migration (10 calls missed by PR #44) — `[IN PROGRESS — PR: #54]`
 
-- **What:** PR #44 (merged June 5) replaced 18+ native `alert()` calls with `react-hot-toast` across 7 files and was logged as fully complete. A repo-wide grep confirms **10 native `alert()` calls are still active** in 3 files that PR #44 never touched: `AdminDashboard.tsx` (7 — every admin action: approve user, reject user, update user status, delete user, update user model, toggle model active status, set default model), `ShoppingListContext.tsx` (2 — "All items are checked off!" info message and a generic error), and `OnboardingWizard.tsx` (1 — recipe-generation failure during FTUE).
-- **Why now:** The toast utility (`showSuccess`/`showError`/`showInfo` in `src/utils/toast.ts`) already exists and is proven across 7 files — this is a pure mechanical follow-on with zero new infrastructure. `AdminDashboard.tsx` is the highest-stakes surface still affected: every single admin action (the gatekeeping workflow this app depends on — see `ADMIN_APPROVAL_SYSTEM.md`) currently blocks on a jarring native dialog on failure, which is exactly the inconsistency the original migration was meant to eliminate. This item has now appeared in 4 consecutive assessments unpicked despite being S effort — it's the most "shovel-ready" item in the backlog.
+- **What:** PR #44 (merged June 5) replaced 18+ native `alert()` calls with `react-hot-toast` across 7 files and was logged as fully complete. A repo-wide grep confirmed 10 native `alert()` calls were still active in 3 files that PR #44 never touched: `AdminDashboard.tsx` (7 — every admin action: approve user, reject user, update user status, delete user, update user model, toggle model active status, set default model), `ShoppingListContext.tsx` (2 — "All items are checked off!" info message and a generic error), and `OnboardingWizard.tsx` (1 — recipe-generation failure during FTUE).
+- **Status:** PR #54 replaces all 10 calls with `showError`/`showInfo` from `src/utils/toast.ts`, following the PR #44 pattern. `confirm()` dialogs left untouched. `npm run lint`/`typecheck`/`build` all clean. Awaiting review/merge.
 - **Effort estimate:** S
-- **Actual effort:** —
-- **Agent prompt:** "In `src/components/AdminDashboard.tsx`, `src/contexts/ShoppingListContext.tsx`, and `src/components/onboarding/OnboardingWizard.tsx`, replace the remaining 10 native `alert()` calls with the existing `showError`/`showSuccess`/`showInfo` helpers from `src/utils/toast.ts`, following the exact pattern PR #44 used elsewhere. In `AdminDashboard.tsx`, replace all 7 failure alerts (approve/reject/update-status/delete user, update user model, toggle model active status, set default model) with `showError`. In `ShoppingListContext.tsx`, replace the 'All items are checked off!' alert with `showInfo` and the generic error alert with `showError`. In `OnboardingWizard.tsx`, replace the recipe-generation-failure alert with `showError`. Leave any `confirm()` dialogs untouched (PR #44 preserved these intentionally). Run `npm run lint && npm run typecheck` to confirm no new errors."
+- **Actual effort:** S
 
 ---
 
@@ -49,7 +48,7 @@ None — ready for next implementation run.
 
 ---
 
-_Note: 2 items remain at the Tier 1 bar (S effort, fully self-contained, no architectural dependencies) following the June 11 merge of the shopping-list categorization item (PR #52). The alert() → toast migration is the longest-standing unpicked item and the recommended next pickup._
+_Note: the alert() → toast migration is now in progress (PR #54). Once merged, "Fix Favorites N+1 in getDashboardData" will be the sole remaining Tier 1 item and the recommended next pickup._
 
 ---
 
