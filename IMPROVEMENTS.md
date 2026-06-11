@@ -1,12 +1,12 @@
 # Improvements
-_Last assessment: 2026-06-10_
-_Last knowledge sync: 2026-06-10_
-_Assessment based on: git log (PR #50, Print-Friendly Recipe PDF Export, merged June 8 — the only change since the June 7 reassessment, PR #49; no commits or PRs since), all PRs (state=all, sorted by created desc — PR #50 is the most recent and is merged; no other open or recently-closed PRs), open issues (none — `mcp__github__list_issues` returned 0 open issues), PRD.md re-read for roadmap/phase context, and fresh code inspection confirming all previously-tracked open items are unchanged: `ShoppingListDrawer.tsx` is still 95 lines (flat unsorted list, no categorization or bulk-clear), `recipeService.ts` `getDashboardData` N+1 (`uniqueFavIds` dedup + second `.in()` query) is still present at lines 320–325, `getCommunityRecipes` is still hardcoded to `limit = 24` and is still the only path used by `useRecipes.ts`, and a repo-wide grep for `alert(` confirms the same 10 native `alert()` calls remain in `AdminDashboard.tsx` (×7), `ShoppingListContext.tsx` (×2), and `OnboardingWizard.tsx` (×1). Also removed the "UX/UI Improvement Areas" section that had been mistakenly appended to this file on June 6 — it documented an onboarding walkthrough of a different product ("Somm", a wine app) and does not apply to meal-planner; see Dropped/Stale for details._
+_Last assessment: 2026-06-11_
+_Last knowledge sync: 2026-06-11_
+_Assessment based on: git log (PR #52, Shopping List Store Categorization + "Clear Checked" Button, merged June 11 — the only change since the June 10 reassessment, PR #51), all PRs (state=all, sorted by created desc — PR #52 is the most recent merged implementation PR; PR #53 is an open docs-only reassessment PR not yet merged), open issues (none), and confirmation that `ShoppingListDrawer.tsx` now groups items via `categorizeIngredient()` with sticky amber-500 headers and a working "Clear Checked" button._
 
 ---
 
 ## Current Sprint
-None — Shopping List Categorization + "Clear Checked" (Tier 1) implemented on branch `claude/loving-allen-jqi1y2`, ready for review.
+None — ready for next implementation run.
 
 ---
 
@@ -14,6 +14,7 @@ None — Shopping List Categorization + "Clear Checked" (Tier 1) implemented on 
 
 | Item | Status | Reference |
 |------|--------|------------|
+| Shopping List: Store Categorization + "Clear Checked" Button (Tier 1) | ✅ Done | PR #52, merged June 11, 2026 — `src/utils/ingredientCategories.ts` (`categorizeIngredient`), grouped/sorted rendering with sticky amber-500 category headers in `ShoppingListDrawer.tsx`, and `clearCheckedItems()` flow through `shoppingListService` → `ShoppingListContext` → footer button. Lint/typecheck/build all clean. |
 | Print-Friendly Recipe PDF Export (Tier 1) | ✅ Done | PR #50, merged June 8, 2026 — `react-to-print` + new `RecipePrintView.tsx`; "Print / Export PDF" button wired into `RecipeDetail.tsx` action row, reuses `scaledIngredients`/`currentServings`. Lint/typecheck/build all clean; interactive print-preview testing in Chrome/Firefox could not be completed in this environment (no browser automation/Chromium available) — flagged for manual verification if not already done. |
 | Fix Non-Functional Community Recipe Search (Tier 1) | ✅ Done | PR #47, June 5, 2026 — `filteredCommunityRecipes` replaced with `useMemo` keyed on search term, tags, recipe type, and time filter |
 | Replace browser alert() with toast notifications (Tier 1) | ✅ Done (scope as defined) | PR #44, June 5, 2026 — `react-hot-toast` installed; 18+ `alert()` calls replaced across the 7 files in scope. **Note:** a fresh repo-wide grep found 10 additional `alert()` calls in 3 files that were outside that PR's scope — tracked as a Tier 1 follow-on below (still open). |
@@ -27,16 +28,6 @@ None — Shopping List Categorization + "Clear Checked" (Tier 1) implemented on 
 ---
 
 ## Tier 1 — Quick Wins
-
-### Shopping List: Store Categorization + "Clear Checked" Button — DONE
-
-- **What:** Check-off is working (`is_checked` toggle with strikethrough persisted to the DB). What remains: grouping items by grocery store section so the in-store scanning experience is faster, and a "Clear Checked" action so the list resets cleanly after a shopping trip. Confirmed June 10: `ShoppingListDrawer.tsx` is still 95 lines, a flat unsorted list with no section headers and no bulk-clear action.
-- **Why now:** The check-off feature alone is half-useful — a user in-store still scans a flat unsorted list. The remaining work is contained entirely in `ShoppingListDrawer.tsx` and a new utility file; no DB schema changes are needed. This remains the longest-standing Tier 1 item (now confirmed unchanged across 5+ assessments) and the natural next pickup — it's smaller and more contained than anything else currently open.
-- **Effort estimate:** S
-- **Actual effort:** S — implemented `src/utils/ingredientCategories.ts` (keyword-based `categorizeIngredient`), grouped/sorted rendering with sticky amber-500 category headers in `ShoppingListDrawer.tsx`, and a `clearCheckedItems()` flow through `shoppingListService.clearCheckedItems` (single delete query) → `ShoppingListContext` → footer button (only shown when items are checked). `npm run lint`/`typecheck`/`build` all clean.
-- **Agent prompt:** "In `src/components/ShoppingListDrawer.tsx`, add two improvements to the existing check-off UI. (1) Create `src/utils/ingredientCategories.ts` exporting `categorizeIngredient(name: string): string` that maps ingredient names to store sections (Produce, Dairy, Meat & Seafood, Pantry, Frozen, Bakery, Other) using a keyword lookup table. (2) Group the rendered ingredient list by category: sort items by category name, render a sticky amber-500 `<h3>` section header above each group. (3) Add a 'Clear Checked' button in the drawer footer (left of the Instacart button) that calls a new `clearCheckedItems()` function in `src/contexts/ShoppingListContext.tsx` — remove all items where `is_checked === true` from both local state and the DB via `shoppingListService`. Only render 'Clear Checked' when at least one item is checked."
-
----
 
 ### Finish the alert() → Toast Migration (10 calls missed by PR #44) — OPEN
 
@@ -58,7 +49,7 @@ None — Shopping List Categorization + "Clear Checked" (Tier 1) implemented on 
 
 ---
 
-_Note: only 3 items currently meet the Tier 1 bar (S effort, fully self-contained, no architectural dependencies). The codebase has been unchanged since June 8, so no new Tier 1 candidates emerged this cycle. If the backlog continues to shrink, the next assessment should consider promoting "Community Recipe Pagination" (currently Tier 2, M effort) once one of the above ships._
+_Note: 2 items remain at the Tier 1 bar (S effort, fully self-contained, no architectural dependencies) following the June 11 merge of the shopping-list categorization item (PR #52). The alert() → toast migration is the longest-standing unpicked item and the recommended next pickup._
 
 ---
 
