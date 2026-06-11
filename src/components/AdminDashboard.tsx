@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase, UserProfile, LLMModel } from '../lib/supabase';
 import { Shield, Search, CheckCircle, XCircle, Users, Clock, UserCheck, UserX, Loader2, RotateCcw, Trash2, Settings, Cpu, Globe } from 'lucide-react';
 import CuisineProfileManager from './CuisineProfileManager';
+import { showError } from '../utils/toast';
 
 type FilterStatus = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
 type TabType = 'users' | 'models' | 'cuisines';
@@ -96,7 +97,7 @@ export function AdminDashboard() {
       await loadUsers();
     } catch (error) {
       console.error('Error approving user:', error);
-      alert('Failed to approve user. Please try again.');
+      showError('Failed to approve user. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -128,7 +129,7 @@ export function AdminDashboard() {
       await loadUsers();
     } catch (error) {
       console.error('Error rejecting user:', error);
-      alert('Failed to reject user. Please try again.');
+      showError('Failed to reject user. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -160,7 +161,7 @@ export function AdminDashboard() {
       await loadUsers();
     } catch (error) {
       console.error('Error updating user status:', error);
-      alert('Failed to update user status. Please try again.');
+      showError('Failed to update user status. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -197,7 +198,7 @@ export function AdminDashboard() {
       await loadUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Failed to delete user. Please try again.');
+      showError('Failed to delete user. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -241,7 +242,7 @@ export function AdminDashboard() {
       await loadUsers();
     } catch (error) {
       console.error('Error updating user model:', error);
-      alert('Failed to update user model. Please try again.');
+      showError('Failed to update user model. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -271,7 +272,7 @@ export function AdminDashboard() {
       await loadModels();
     } catch (error) {
       console.error('Error toggling model status:', error);
-      alert('Failed to toggle model status. Please try again.');
+      showError('Failed to toggle model status. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -303,7 +304,7 @@ export function AdminDashboard() {
       await loadModels();
     } catch (error) {
       console.error('Error setting default model:', error);
-      alert('Failed to set default model. Please try again.');
+      showError('Failed to set default model. Please try again.');
     } finally {
       setActionLoading(null);
     }

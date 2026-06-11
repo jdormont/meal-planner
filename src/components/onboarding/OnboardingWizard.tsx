@@ -10,6 +10,7 @@ import { ReviewStep } from './steps/ReviewStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { RecipeSuggestion } from '../RecipeSuggestionCard';
 import { LogOut } from 'lucide-react';
+import { showError } from '../../utils/toast';
 
 type OnboardingWizardProps = {
   onComplete: (suggestion: RecipeSuggestion) => void;
@@ -236,7 +237,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
       } catch (error) {
           console.error("Expansion error:", error);
-          alert("We couldn't generate the full recipe details right now. Please try clicking it again.");
+          showError("We couldn't generate the full recipe details right now. Please try clicking it again.");
           // Do NOT proceed with incomplete data
       } finally {
           setIsGenerating(false);
