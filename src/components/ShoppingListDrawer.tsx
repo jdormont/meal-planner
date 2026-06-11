@@ -1,7 +1,8 @@
-import { X, Trash2, ShoppingCart } from 'lucide-react';
+import { X, Trash2, ShoppingCart, Eraser } from 'lucide-react';
 import { InstacartButton } from './InstacartButton';
 import { useShoppingList } from '../contexts/ShoppingListContext';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { categorizeIngredient } from '../utils/ingredientCategories';
 
 type ShoppingListDrawerProps = {
   isOpen: boolean;
@@ -9,8 +10,27 @@ type ShoppingListDrawerProps = {
 };
 
 export function ShoppingListDrawer({ isOpen, onClose }: ShoppingListDrawerProps) {
-  const { items, removeItem, toggleItem, createInstacartLink, isLoading } = useShoppingList();
+  const { items, removeItem, toggleItem, clearCheckedItems, createInstacartLink, isLoading } = useShoppingList();
   const [isCreatingLink, setIsCreatingLink] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
+  const groupedItems = useMemo(() => {
+    const groups = new Map<string, typeof items>();
+
+    for (const item of items) {
+      const category = categorizeIngredient(item.name);
+      const group = groups.get(category);
+      if (group) {
+        group.push(item);
+      } else {
+        groups.set(category, [item]);
+      }
+    }
+
+    return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [items]);
+
+  const hasCheckedItems = items.some((item) => item.is_checked);
 
   if (!isOpen) return null;
 
@@ -23,13 +43,22 @@ export function ShoppingListDrawer({ isOpen, onClose }: ShoppingListDrawerProps)
     }
   };
 
+  const handleClearChecked = async () => {
+    setIsClearing(true);
+    try {
+      await clearCheckedItems();
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
-      
+
       <div className="absolute inset-y-0 right-0 max-w-md w-full flex">
         <div className="flex-1 flex flex-col bg-white shadow-xl transform transition-transform animate-slide-in-right">
-          
+
           <div className="px-6 py-4 border-b flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-terracotta-600" />
@@ -49,34 +78,53 @@ export function ShoppingListDrawer({ isOpen, onClose }: ShoppingListDrawerProps)
                 <p className="text-sm">Add ingredients from recipes to get started.</p>
               </div>
             ) : (
-              <ul className="space-y-4">
-                {items.map((item) => (
-                  <li key={item.id} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg group">
-                    <input 
-                      type="checkbox"
-                      checked={item.is_checked}
-                      onChange={(e) => toggleItem(item.id, e.target.checked)}
-                      className="w-5 h-5 text-terracotta-600 rounded border-gray-300 focus:ring-terracotta-500"
-                    />
-                    <div className={`flex-1 ${item.is_checked ? 'opacity-50 line-through' : ''}`}>
-                      <div className="font-medium text-gray-900">{item.name}</div>
-                      <div className="text-sm text-gray-500">
-                        {item.quantity} {item.unit}
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => removeItem(item.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </li>
+              <div className="space-y-6">
+                {groupedItems.map(([category, categoryItems]) => (
+                  <div key={category}>
+                    <h3 className="sticky top-0 z-10 -mx-6 px-6 py-1 bg-white text-sm font-semibold text-amber-500 uppercase tracking-wide">
+                      {category}
+                    </h3>
+                    <ul className="space-y-4 mt-2">
+                      {categoryItems.map((item) => (
+                        <li key={item.id} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg group">
+                          <input
+                            type="checkbox"
+                            checked={item.is_checked}
+                            onChange={(e) => toggleItem(item.id, e.target.checked)}
+                            className="w-5 h-5 text-terracotta-600 rounded border-gray-300 focus:ring-terracotta-500"
+                          />
+                          <div className={`flex-1 ${item.is_checked ? 'opacity-50 line-through' : ''}`}>
+                            <div className="font-medium text-gray-900">{item.name}</div>
+                            <div className="text-sm text-gray-500">
+                              {item.quantity} {item.unit}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
 
-          <div className="p-6 border-t bg-gray-50">
+          <div className="p-6 border-t bg-gray-50 space-y-2">
+            {hasCheckedItems && (
+              <button
+                onClick={handleClearChecked}
+                disabled={isClearing}
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                <Eraser className="w-4 h-4" />
+                {isClearing ? 'Clearing...' : 'Clear Checked'}
+              </button>
+            )}
             <InstacartButton
               text={isCreatingLink ? 'Building Cart...' : 'Shop with Instacart'}
               onClick={handleShopWithInstacart}

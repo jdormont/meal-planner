@@ -120,5 +120,18 @@ export const shoppingListService = {
       .eq('id', itemId);
 
     if (error) throw error;
+  },
+
+  /**
+   * Removes all checked-off items from a shopping list.
+   */
+  async clearCheckedItems(listId: string): Promise<void> {
+    const { error } = await supabase
+      .from('shopping_list_items')
+      .delete()
+      .eq('list_id', listId)
+      .eq('is_checked', true);
+
+    if (error) throw error;
   }
 };

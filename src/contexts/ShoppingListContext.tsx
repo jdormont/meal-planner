@@ -13,6 +13,7 @@ type ShoppingListContextType = {
   addItemsFromMeals: (meals: MealWithRecipes[]) => Promise<number>;
   removeItem: (itemId: string) => Promise<void>;
   toggleItem: (itemId: string, isChecked: boolean) => Promise<void>;
+  clearCheckedItems: () => Promise<void>;
   createInstacartLink: () => Promise<string | null>;
 };
 
@@ -139,6 +140,18 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clearCheckedItems = async () => {
+    if (!currentList) return;
+
+    try {
+      await shoppingListService.clearCheckedItems(currentList.id);
+      setItems(prev => prev.filter(i => !i.is_checked));
+    } catch (err) {
+      console.error('Error clearing checked items:', err);
+      throw err;
+    }
+  };
+
   const createInstacartLink = async () => {
     if (items.length === 0) return null;
 
@@ -197,6 +210,7 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
     addItemsFromMeals,
     removeItem,
     toggleItem,
+    clearCheckedItems,
     createInstacartLink
   };
 
