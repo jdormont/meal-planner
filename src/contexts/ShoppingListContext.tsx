@@ -3,6 +3,7 @@ import { ShoppingList, ShoppingListItem, MealWithRecipes } from '../lib/supabase
 import { useAuth } from './AuthContext';
 import { shoppingListService } from '../services/shoppingListService';
 import { supabase } from '../lib/supabase';
+import { showError, showInfo } from '../utils/toast';
 
 type ShoppingListContextType = {
   currentList: ShoppingList | null;
@@ -163,7 +164,7 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
       const itemsToShop = items.filter(i => !i.is_checked);
 
       if (itemsToShop.length === 0) {
-        alert("All items are checked off!");
+        showInfo("All items are checked off!");
         return null;
       }
 
@@ -196,7 +197,7 @@ export function ShoppingListProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      alert(errorMessage);
+      showError(errorMessage);
       return null;
     }
   };
