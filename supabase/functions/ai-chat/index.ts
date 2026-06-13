@@ -1,7 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { Message, UserPreferences, ModelConfig, CuisineProfile, RatingHistoryItem, RecipeResponseSchema } from "../_shared/types.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+import { corsHeaders, getCorsHeaders } from "../_shared/cors.ts";
+import { classifyCuisine, CuisineClassification } from "./classifier.ts";
 
 
 
@@ -143,6 +144,18 @@ async function callGemini(apiKey: string, model: string, messages: Message[], sy
   return data.candidates[0].content.parts[0].text;
 }
 
+async function callLLM(provider: string, apiKey: string, model: string, messages: Message[], systemPrompt: string): Promise<string> {
+  if (provider === "openai") {
+    return await callOpenAI(apiKey, model, messages, systemPrompt);
+  } else if (provider === "anthropic") {
+    return await callAnthropic(apiKey, model, messages, systemPrompt);
+  } else if (provider === "google") {
+    return await callGemini(apiKey, model, messages, systemPrompt);
+  } else {
+    throw new Error(`Unsupported provider: ${provider}`);
+  }
+}
+
 async function getRecentlySuggestedRecipes(
   userId: string,
   supabaseClient: SupabaseClient
@@ -243,111 +256,22 @@ async function searchTavily(query: string) {
   }
 }
 
-async function detectCuisineFromMessages(
-  messages: Message[],
-  userPreferences: UserPreferences,
-  supabaseClient: SupabaseClient
-): Promise<{ cuisine: string; confidence: string; rationale: string; allMatches: string } | null> {
-  try {
-    const { data: profiles, error } = await supabaseClient
-      .from("cuisine_profiles")
-      .select("cuisine_name, keywords, style_focus")
-      .eq("is_active", true);
-
-    if (error || !profiles || profiles.length === 0) {
-      return null;
-    }
-
-    const lastUserMessage = messages.length > 0 && messages[messages.length - 1].role === "user"
-      ? messages[messages.length - 1].content
-      : "";
-
-    const lastAssistantMessage = messages.length > 1 && messages[messages.length - 2].role === "assistant"
-      ? messages[messages.length - 2].content
-      : "";
-
-    const messageText = `${lastUserMessage} ${lastAssistantMessage}`.toLowerCase();
-
-    const matches: { cuisine: string; styleFocus: string; score: number; matchedKeywords: string[] }[] = [];
-
-    for (const profile of profiles) {
-      let score = 0;
-      const matchedKeywords: string[] = [];
-
-      for (const keyword of profile.keywords) {
-        const keywordLower = keyword.toLowerCase();
-        const regex = new RegExp(`\\b${keywordLower}\\b`, "gi");
-        const occurrences = (messageText.match(regex) || []).length;
-
-        if (occurrences > 0) {
-          const isCuisineName = keywordLower === profile.cuisine_name.toLowerCase();
-          const points = occurrences * (isCuisineName ? 3 : 1);
-          score += points;
-          matchedKeywords.push(`${keyword} (${occurrences}x, +${points}pts)`);
-        }
-      }
-
-      if (score > 0) {
-        matches.push({
-          cuisine: profile.cuisine_name,
-          styleFocus: profile.style_focus,
-          score,
-          matchedKeywords
-        });
-      }
-    }
-
-    if (matches.length > 0) {
-      matches.sort((a, b) => b.score - a.score);
-
-      if (matches[0].score > 0) {
-        let confidence = "low";
-        if (matches[0].score >= 5) {
-          confidence = "high";
-        } else if (matches[0].score >= 2) {
-          confidence = "medium";
-        }
-
-        const rationale = `Matched keywords: ${matches[0].matchedKeywords.join(", ")}. Total score: ${matches[0].score}`;
-        const allMatchesSummary = matches.slice(0, 3).map(m =>
-          `${m.cuisine} (${m.score}pts): ${m.matchedKeywords.slice(0, 3).join(", ")}`
-        ).join(" | ");
-
-        console.log(`Detected cuisine: ${matches[0].cuisine} (score: ${matches[0].score}, confidence: ${confidence})`);
-        console.log(`Rationale: ${rationale}`);
-        console.log(`All matches: ${allMatchesSummary}`);
-
-        return {
-          cuisine: matches[0].cuisine,
-          confidence,
-          rationale,
-          allMatches: allMatchesSummary
-        };
-      }
-    }
-
-    if (userPreferences?.favorite_cuisines && userPreferences.favorite_cuisines.length > 0) {
-      for (const favCuisine of userPreferences.favorite_cuisines) {
-        const profile = profiles.find(
-          (p: CuisineProfile) => p.cuisine_name.toLowerCase() === favCuisine.toLowerCase()
-        );
-        if (profile) {
-          console.log(`Using favorite cuisine: ${profile.cuisine_name}`);
-          return {
-            cuisine: profile.cuisine_name,
-            confidence: "medium",
-            rationale: "Based on user's favorite cuisines",
-            allMatches: "N/A"
-          };
-        }
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Error detecting cuisine:", error);
-    return null;
+function formatReducedCuisineProfile(profile: CuisineProfile): string {
+  if (!profile || !profile.profile_data) {
+    return "";
   }
+
+  const data = profile.profile_data;
+  let formatted = `\n\n**🌍 CUISINE MODE (INSPIRED): ${profile.cuisine_name.toUpperCase()} INFLUENCE**\n\n`;
+  formatted += `Style Focus: ${profile.style_focus}\n\n`;
+
+  if (data.ingredient_boundaries?.avoid && data.ingredient_boundaries.avoid.length > 0) {
+    formatted += `Avoid (unless confirmed available): ${data.ingredient_boundaries.avoid.join(", ")}\n\n`;
+  }
+
+  formatted += `**IMPORTANT:** Blend this cuisine's style and respect the AVOID ingredient boundaries, but do not strictly enforce full traditional technique defaults or generation guardrails.\n`;
+
+  return formatted;
 }
 
 async function getCuisineProfile(
@@ -456,6 +380,7 @@ function formatCuisineProfile(profile: CuisineProfile): string {
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
@@ -710,15 +635,8 @@ OUTPUT SCHEMA (JSON ONLY):
 }`;
 
       try {
-        let routingResult = '';
         console.log("Routing Intent...");
-        if (modelConfig.provider === 'openai') {
-          routingResult = await callOpenAI(apiKey, modelConfig.model_identifier, messages, routingSystemPrompt);
-        } else if (modelConfig.provider === 'anthropic') {
-          routingResult = await callAnthropic(apiKey, modelConfig.model_identifier, messages, routingSystemPrompt);
-        } else if (modelConfig.provider === 'google') {
-          routingResult = await callGemini(apiKey, modelConfig.model_identifier, messages, routingSystemPrompt);
-        }
+        const routingResult = await callLLM(modelConfig.provider, apiKey, modelConfig.model_identifier, messages, routingSystemPrompt);
 
         const routingJsonStr = routingResult.replace(/```json\n?|```/g, "").trim();
         const routingData = JSON.parse(routingJsonStr);
@@ -754,52 +672,63 @@ OUTPUT SCHEMA (JSON ONLY):
     //    However, the plan says: "Disable global profile injection for the initial Suggestion phase".
     //    So if !forceCuisine, we skip profile injection (or maybe just keep detection for metadata but don't inject prompt).
     
-    let detectedCuisine = null;
     let targetCuisine = forceCuisine;
+    let classification: CuisineClassification | null = null;
 
     if (!targetCuisine) {
-        // Run detection just for metadata or potential future use, but DON'T enforce it on the generation
-        // UNLESS we want "smart" detection for Q&A. 
-        // For now, per plan: "Disable global profile injection for initial phase".
-        // So we only use detection for tagging, not prompting? 
-        // Actually, the plan implies we simply DON'T inject the profile context unless forceCuisine is set.
-        // But let's see if the user explicitly asked for "Thai food".
-        // If they asked for "Thai food", we SHOULD probably still give Thai suggestions.
-        // But the user wants "Tacos" + "Curry" variety. 
-        // So we rely on the generic model knowledge for suggestions, and only STRICT profile for details.
-        
-        // Let's still run detection so we can log it, but NOT inject it into system prompt
-        // OR we can inject it as "User seems interested in X", but not "STRICT MODE".
-        // Evaluating the Plan again: "Disable global profile injection for the initial 'Suggestion' phase".
-        // Okay, so we only inject if forceCuisine is true.
-        detectedCuisine = await detectCuisineFromMessages(messages, userPreferences, supabaseClient);
+      classification = await classifyCuisine(messages, userPreferences, modelConfig.provider, apiKey, callLLM);
+      if (classification.primary && classification.mode !== "none" && classification.confidence !== "low") {
+        targetCuisine = classification.primary;
+      }
+    } else {
+      classification = {
+        primary: forceCuisine,
+        secondary: [],
+        mode: "authentic",
+        confidence: "high"
+      };
     }
 
-    if (targetCuisine) {
+    if (targetCuisine && !weeklyBrief) {
       const cuisineProfile = await getCuisineProfile(targetCuisine, supabaseClient);
       if (cuisineProfile) {
-        cuisineProfileContext = formatCuisineProfile(cuisineProfile);
+        const useFullProfile = classification.mode === "authentic" && classification.confidence === "high";
+
+        if (useFullProfile) {
+          cuisineProfileContext = formatCuisineProfile(cuisineProfile);
+        } else if (classification.mode === "inspired" || classification.confidence === "medium") {
+          cuisineProfileContext = formatReducedCuisineProfile(cuisineProfile);
+        }
+
+        if (classification.secondary && classification.secondary.length > 0) {
+          cuisineProfileContext += `\n\nSecondary influences: ${classification.secondary.join(", ")}. Blend principles lightly, don't enforce their restrictions.`;
+        }
+
         cuisineMetadata = {
           applied: true,
           cuisine: cuisineProfile.cuisine_name,
           styleFocus: cuisineProfile.style_focus,
-          confidence: "forced",
-          rationale: "User selected cuisine suggestion",
-          allMatches: "Force Cuisine"
+          confidence: forceCuisine ? "forced" : classification.confidence,
+          rationale: forceCuisine
+            ? "User selected cuisine suggestion"
+            : `Classified mode: ${classification.mode}, confidence: ${classification.confidence}`,
+          allMatches: classification.secondary && classification.secondary.length > 0
+            ? `Primary: ${classification.primary} | Secondary: ${classification.secondary.join(", ")}`
+            : `Primary: ${classification.primary}`
         };
-        console.log(`Injecting FORCED ${targetCuisine} cuisine profile into system prompt`);
+        console.log(`Injecting ${useFullProfile ? "FULL" : "REDUCED"} ${targetCuisine} cuisine profile into system prompt`);
       }
-    } else if (detectedCuisine && !weeklyBrief) { 
-        // Optional: We can still track what was detected, but we do NOT inject it.
-        // Metadata tracking for debug
-        cuisineMetadata = {
-            applied: false,
-            cuisine: detectedCuisine.cuisine,
-            styleFocus: "",
-            confidence: detectedCuisine.confidence,
-            rationale: detectedCuisine.rationale,
-            allMatches: detectedCuisine.allMatches
-        };
+    } else if (classification) {
+      cuisineMetadata = {
+        applied: false,
+        cuisine: classification.primary || "",
+        styleFocus: "",
+        confidence: classification.confidence,
+        rationale: `Classified mode: ${classification.mode}, confidence: ${classification.confidence}`,
+        allMatches: classification.secondary && classification.secondary.length > 0
+          ? `Primary: ${classification.primary} | Secondary: ${classification.secondary.join(", ")}`
+          : `Primary: ${classification.primary || ""}`
+      };
     }
 
 
@@ -883,14 +812,7 @@ Instructions: ${JSON.stringify(recipe.instructions)}
 Please rescale this to ${targetServings} servings.`;
 
        try {
-         let resultContext = '';
-         if (modelConfig.provider === 'openai') {
-           resultContext = await callOpenAI(apiKey, modelConfig.model_identifier, [{role: 'user', content: userMessage}], rescaleSystemPrompt);
-         } else if (modelConfig.provider === 'anthropic') {
-           resultContext = await callAnthropic(apiKey, modelConfig.model_identifier, [{role: 'user', content: userMessage}], rescaleSystemPrompt);
-         } else if (modelConfig.provider === 'google') {
-           resultContext = await callGemini(apiKey, modelConfig.model_identifier, [{role: 'user', content: userMessage}], rescaleSystemPrompt);
-         }
+         const resultContext = await callLLM(modelConfig.provider, apiKey, modelConfig.model_identifier, [{role: 'user', content: userMessage}], rescaleSystemPrompt);
 
         // Clean up markdown block if present
         const jsonStr = resultContext.replace(/```json\n?|```/g, "").trim();
@@ -902,8 +824,9 @@ Please rescale this to ${targetServings} servings.`;
 
        } catch (error) {
          console.error("Error rescaling recipe:", error);
+         const errorMessage = error instanceof Error ? error.message : String(error);
          return new Response(
-           JSON.stringify({ error: "Failed to rescale recipe", details: error.message }),
+           JSON.stringify({ error: "Failed to rescale recipe", details: errorMessage }),
            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
          );
        }
@@ -1004,15 +927,7 @@ Please rescale this to ${targetServings} servings.`;
     let usedFallback = false;
     try {
       console.log(`Attempting to call ${modelConfig.provider} with model ${modelConfig.model_identifier}`);
-      if (modelConfig.provider === "openai") {
-        message = await callOpenAI(apiKey, modelConfig.model_identifier, messages, systemPrompt);
-      } else if (modelConfig.provider === "anthropic") {
-        message = await callAnthropic(apiKey, modelConfig.model_identifier, messages, systemPrompt);
-      } else if (modelConfig.provider === "google") {
-        message = await callGemini(apiKey, modelConfig.model_identifier, messages, systemPrompt);
-      } else {
-        throw new Error(`Unknown provider: ${modelConfig.provider}`);
-      }
+      message = await callLLM(modelConfig.provider, apiKey, modelConfig.model_identifier, messages, systemPrompt);
     } catch (error) {
       console.error(`Error with ${modelConfig.provider}:`, error);
 
@@ -1030,14 +945,12 @@ Please rescale this to ${targetServings} servings.`;
 
         if (modelConfig.provider === "openai") {
           apiKey = Deno.env.get("OPENAI_API_KEY") || "";
-          message = await callOpenAI(apiKey, modelConfig.model_identifier, messages, systemPrompt);
         } else if (modelConfig.provider === "anthropic") {
           apiKey = Deno.env.get("ANTHROPIC_API_KEY") || "";
-          message = await callAnthropic(apiKey, modelConfig.model_identifier, messages, systemPrompt);
         } else if (modelConfig.provider === "google") {
           apiKey = Deno.env.get("GOOGLE_API_KEY") || "";
-          message = await callGemini(apiKey, modelConfig.model_identifier, messages, systemPrompt);
         }
+        message = await callLLM(modelConfig.provider, apiKey, modelConfig.model_identifier, messages, systemPrompt);
       } else {
         throw error;
       }

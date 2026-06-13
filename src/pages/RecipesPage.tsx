@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useRecipes } from '../hooks/useRecipes';
@@ -233,7 +233,7 @@ export function RecipesPage() {
         />
       )}
 
-      {matchDetail && paramsDetail?.id && (
+      {matchDetail && paramsDetail?.id && paramsDetail.id !== 'new' && paramsDetail.id !== 'import' && paramsDetail.id !== 'scan' && (
         <RecipeDetailWrapper
           recipeId={paramsDetail.id}
           onClose={() => setLocation('/')}
@@ -361,24 +361,29 @@ function RecipeEditWrapper({ recipeId, onSave, onCancel, onDelete }: { recipeId:
 // Wrapper to initialize a new recipe form, pre-filling it if scanned or imported
 function RecipeFormNewWrapper({ onSave, onCancel }: { onSave: (recipeData: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void; onCancel: () => void }) {
   const { user } = useAuth();
-  const storedStr = sessionStorage.getItem('temp_import_recipe');
-  let initialRecipe: Recipe | null = null;
-
-  if (storedStr) {
-    try {
-      const parsed = JSON.parse(storedStr);
-      initialRecipe = {
-        ...parsed,
-        id: parsed.id || `temp-${Date.now()}`,
-        user_id: user?.id || '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as Recipe;
-      sessionStorage.removeItem('temp_import_recipe');
-    } catch (e) {
-      console.error('Failed to parse temp_import_recipe', e);
+  
+  const [initialRecipe] = useState<Recipe | null>(() => {
+    const storedStr = sessionStorage.getItem('temp_import_recipe');
+    if (storedStr) {
+      try {
+        const parsed = JSON.parse(storedStr);
+        return {
+          ...parsed,
+          id: parsed.id || `temp-${Date.now()}`,
+          user_id: user?.id || '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as Recipe;
+      } catch (e) {
+        console.error('Failed to parse temp_import_recipe', e);
+      }
     }
-  }
+    return null;
+  });
+
+  useEffect(() => {
+    sessionStorage.removeItem('temp_import_recipe');
+  }, []);
 
   return (
     <RecipeForm
