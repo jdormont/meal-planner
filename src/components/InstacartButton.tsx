@@ -18,8 +18,8 @@ export function InstacartButton({
       className={`
         flex items-center justify-center gap-2 
         bg-[#003D29] text-[#FAF1E5] 
-        px-[18px] 
-        h-[46px] 
+        px-6 
+        h-12 
         rounded-xl 
         font-medium text-base whitespace-nowrap
         hover:opacity-90 transition-opacity 

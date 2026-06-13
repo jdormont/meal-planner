@@ -247,12 +247,22 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
               <span className="text-9xl">🍽️</span>
             </div>
           )}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-lg transition shadow-lg"
-          >
-            <X className="w-6 h-6 text-gray-700" />
-          </button>
+          <div className="absolute top-4 right-4 flex gap-2 z-10">
+            <button
+              onClick={() => handlePrint()}
+              className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-lg transition shadow-lg text-gray-700 hover:text-gray-900"
+              title="Print / Export PDF"
+            >
+              <Printer className="w-6 h-6" />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-lg transition shadow-lg text-gray-700 hover:text-gray-900"
+              title="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8">
@@ -512,11 +522,11 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
             </div>
           )}
 
-          <div className="flex flex-wrap gap-3 pt-6 border-t">
+          <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
             {isOwner ? (
               <button
                 onClick={onEdit}
-                className="flex-1 px-6 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2"
+                className="w-full sm:flex-1 h-12 px-6 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2 whitespace-nowrap text-base"
               >
                 <Edit2 className="w-5 h-5" />
                 Edit Recipe
@@ -524,7 +534,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
             ) : onCopy ? (
               <button
                 onClick={() => onCopy(recipe)}
-                className="flex-1 px-6 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2"
+                className="w-full sm:flex-1 h-12 px-6 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium flex items-center justify-center gap-2 whitespace-nowrap text-base"
               >
                 <Copy className="w-5 h-5" />
                 Copy Recipe
@@ -540,21 +550,14 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
 
             <button
               onClick={() => setShowMealSelector(true)}
-              className="flex-1 px-6 py-3 border-2 border-sage-600 text-sage-600 rounded-xl hover:bg-sage-50 transition font-medium flex items-center justify-center gap-2"
+              className="w-full sm:flex-1 h-12 px-6 border border-sage-600 text-sage-600 hover:bg-sage-50 rounded-xl transition font-medium flex items-center justify-center gap-2 whitespace-nowrap text-base"
             >
               <Calendar className="w-5 h-5" />
               Add to Meal
             </button>
             <button
-              onClick={() => handlePrint()}
-              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium flex items-center justify-center gap-2"
-            >
-              <Printer className="w-5 h-5" />
-              Print / Export PDF
-            </button>
-            <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
+              className="w-full sm:flex-1 h-12 px-6 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl transition font-medium flex items-center justify-center gap-2 whitespace-nowrap text-base"
             >
               Close
             </button>
