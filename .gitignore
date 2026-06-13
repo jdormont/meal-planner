@@ -21,3 +21,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Supabase CLI temporary files
+supabase/.temp/
+
+# Playwright MCP browser subagent recordings/telemetry
+.playwright-mcp/
