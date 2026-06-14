@@ -15,9 +15,12 @@ setup('authenticate', async ({ page }) => {
 
   await page.goto('/');
 
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.getByRole('button', { name: 'Sign In' }).first().click();
+
+  const form = page.locator('form');
+  await form.getByLabel('Email').fill(email);
+  await form.getByLabel('Password').fill(password);
+  await form.getByRole('button', { name: 'Sign In' }).click();
 
   await expect(page.getByRole('button', { name: 'My Recipes' })).toBeVisible({ timeout: 30_000 });
 

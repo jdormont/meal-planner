@@ -22,9 +22,12 @@ test.describe('unauthenticated', () => {
     );
 
     await page.goto('/');
-    await page.getByLabel('Email').fill(pendingEmail!);
-    await page.getByLabel('Password').fill(pendingPassword!);
-    await page.getByRole('button', { name: 'Sign In' }).click();
+    await page.getByRole('button', { name: 'Sign In' }).first().click();
+
+    const form = page.locator('form');
+    await form.getByLabel('Email').fill(pendingEmail!);
+    await form.getByLabel('Password').fill(pendingPassword!);
+    await form.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(page.getByRole('heading', { name: /Account Under Review|Account Not Approved/ })).toBeVisible({
       timeout: 30_000,
