@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
+import { expect, test } from './fixtures';
 
 test('AI chat suggests a recipe and saves it to the recipe list', async ({ page }) => {
   await page.goto('/chat');

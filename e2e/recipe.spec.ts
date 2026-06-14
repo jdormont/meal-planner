@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-import { E2E_RECIPE_TITLE, cleanupTestRecipes, createTestRecipe } from './fixtures';
+import { E2E_RECIPE_TITLE, cleanupTestRecipes, createTestRecipe, expect, test } from './fixtures';
 
 test.describe('recipe CRUD', () => {
   test.afterAll(async () => {

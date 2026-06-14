@@ -1,7 +1,36 @@
-import { Page, expect } from '@playwright/test';
+import { test as base, Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 
 export const E2E_RECIPE_TITLE = '[E2E] Test Recipe';
+
+/**
+ * Extends the base test with a `page` that only attaches the Vercel
+ * protection-bypass headers to requests made to the preview deployment itself.
+ * Applying them globally (e.g. via `use.extraHTTPHeaders`) causes the browser
+ * to send them on every request, including calls to Supabase Edge Functions,
+ * whose CORS config doesn't allow these extra headers and so silently fails
+ * the preflight for those requests.
+ */
+export const test = base.extend<object>({
+  page: async ({ page, baseURL }, use) => {
+    const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    if (bypassSecret && baseURL) {
+      const host = new URL(baseURL).host;
+      await page.route(`https://${host}/**`, async (route) => {
+        await route.continue({
+          headers: {
+            ...route.request().headers(),
+            'x-vercel-protection-bypass': bypassSecret,
+            'x-vercel-set-bypass-cookie': 'true',
+          },
+        });
+      });
+    }
+    await use(page);
+  },
+});
+
+export const expect = test.expect;
 
 /**
  * Logs in as the dedicated E2E test user via the UI.

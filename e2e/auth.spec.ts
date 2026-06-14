@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test('logged-in user is redirected to the recipes view', async ({ page }) => {
   await page.goto('/');
