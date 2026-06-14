@@ -211,7 +211,7 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
     // This is a workaround to reuse the existing parsing logic.
     // A better approach would be to update onSaveRecipe to accept structured data.
     const markdownRecipe = `
-${suggestion.title}
+# ${suggestion.title}
 
 ${suggestion.description}
 
