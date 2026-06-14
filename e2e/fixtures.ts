@@ -64,7 +64,9 @@ export async function createTestRecipe(page: Page, title: string = E2E_RECIPE_TI
   await page.goto('/recipes/new');
   await page.getByPlaceholder('Delicious Pasta Carbonara').fill(title);
   await page.getByRole('button', { name: /Save Recipe|Generating image/ }).click();
-  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 30_000 });
+  // Saving opens a detail modal (h2) on top of the recipe list (h4 card),
+  // so the title appears twice - just check that at least one is visible.
+  await expect(page.getByRole('heading', { name: title }).first()).toBeVisible({ timeout: 30_000 });
 }
 
 /**
