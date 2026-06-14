@@ -19,6 +19,14 @@ test('AI chat suggests a recipe and saves it to the recipe list', async ({ page 
   // Saving navigates to a pre-filled "new recipe" form; submit it to add to the list.
   await expect(page).toHaveURL(/\/recipes\/new/);
   await page.getByRole('button', { name: /Save Recipe|Generating image/ }).click();
+
+  // For a user's first-ever saved recipe, an onboarding "Recipe Saved!" modal
+  // appears instead of the usual detail modal - dismiss it if present.
+  const maybeLater = page.getByRole('button', { name: 'Maybe later' });
+  if (await maybeLater.isVisible({ timeout: 10_000 }).catch(() => false)) {
+    await maybeLater.click();
+  }
+
   // Saving opens a detail modal (h2) on top of the recipe list (h4 card),
   // so the title appears twice - just check that at least one is visible.
   await expect(page.getByRole('heading', { name: recipeTitle! }).first()).toBeVisible({ timeout: 30_000 });
