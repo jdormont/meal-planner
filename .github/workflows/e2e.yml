@@ -30,7 +30,7 @@ jobs:
 
       - name: Wait for Vercel preview deployment
         id: vercel_preview
-        uses: patrickedqvist/wait-for-vercel-preview@master
+        uses: patrickedqvist/wait-for-vercel-preview@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           max_timeout: 600
