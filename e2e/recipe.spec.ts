@@ -9,6 +9,10 @@ test.describe('recipe CRUD', () => {
     await createTestRecipe(page, E2E_RECIPE_TITLE);
 
     await page.goto('/recipes');
+    // The dashboard view shows the recipe in a featured carousel and/or lanes,
+    // where the title heading isn't unique. Switch to the full grid view, which
+    // has one card per recipe with a Delete Recipe button.
+    await page.getByRole('button', { name: 'Browse Full Library' }).click();
     const card = page.locator('.group', { has: page.getByRole('heading', { name: E2E_RECIPE_TITLE }) });
     await expect(card).toBeVisible();
 
