@@ -15,6 +15,6 @@ test.describe('recipe CRUD', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await card.getByTitle('Delete Recipe').click();
 
-    await expect(page.getByRole('heading', { name: E2E_RECIPE_TITLE })).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: E2E_RECIPE_TITLE })).toHaveCount(0, { timeout: 10_000 });
   });
 });

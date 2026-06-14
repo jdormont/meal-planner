@@ -33,7 +33,7 @@ setup('authenticate', async ({ page }) => {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { data } = await supabase.auth.signInWithPassword({ email, password });
     if (data.user) {
-      await supabase.from('user_profiles').update({ has_seen_onboarding: true }).eq('id', data.user.id);
+      await supabase.from('user_profiles').update({ has_seen_onboarding: true }).eq('user_id', data.user.id);
     }
     await supabase.auth.signOut();
   }
