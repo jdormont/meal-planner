@@ -27,3 +27,8 @@ supabase/.temp/
 
 # Playwright MCP browser subagent recordings/telemetry
 .playwright-mcp/
+
+# Playwright E2E test artifacts
+.auth/
+playwright-report/
+test-results/
