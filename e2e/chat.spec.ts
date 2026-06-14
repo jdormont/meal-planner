@@ -19,9 +19,12 @@ test('AI chat suggests a recipe and saves it to the recipe list', async ({ page 
   // Saving navigates to a pre-filled "new recipe" form; submit it to add to the list.
   await expect(page).toHaveURL(/\/recipes\/new/);
   await page.getByRole('button', { name: /Save Recipe|Generating image/ }).click();
+  // Saving opens a detail modal (h2) on top of the recipe list (h4 card),
+  // so the title appears twice - just check that at least one is visible.
+  await expect(page.getByRole('heading', { name: recipeTitle! }).first()).toBeVisible({ timeout: 30_000 });
 
   await page.goto('/recipes');
-  await expect(page.getByRole('heading', { name: recipeTitle! })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: recipeTitle! }).first()).toBeVisible({ timeout: 30_000 });
 
   // Clean up the recipe created from this AI suggestion.
   const supabaseUrl = process.env.VITE_SUPABASE_URL!;
