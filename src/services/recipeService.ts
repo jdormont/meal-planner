@@ -1,4 +1,4 @@
-import { supabase, Recipe, RecipeRating, DbRecipeInsert, DbRecipeUpdate, DbRecipeRatingInsert, DbRecipeRatingUpdate } from '../lib/supabase';
+import { supabase, Recipe, RecipeRating, DbRecipe, DbRecipeInsert, DbRecipeUpdate, DbRecipeRatingInsert, DbRecipeRatingUpdate } from '../lib/supabase';
 import { mapRecipe } from '../lib/mappers';
 
 const ITEMS_PER_PAGE = 12;
@@ -278,7 +278,7 @@ export const recipeService = {
     recent: Recipe[];
     older: Recipe[];
   }> {
-    const [quickWinsRes, favoritesRes, recentRes, olderRes] = await Promise.all([
+    const [quickWinsRes, recentRes, olderRes] = await Promise.all([
       supabase
         .from('recipes')
         .select('*')
@@ -286,13 +286,6 @@ export const recipeService = {
         .lte('total_time', 30)
         .order('created_at', { ascending: false })
         .limit(10),
-
-      supabase
-        .from('recipe_ratings')
-        .select('recipe_id')
-        .eq('user_id', userId)
-        .eq('rating', 'thumbs_up')
-        .limit(20),
 
       supabase
         .from('recipes')
@@ -310,24 +303,20 @@ export const recipeService = {
     ]);
 
     if (quickWinsRes.error) throw quickWinsRes.error;
-    if (favoritesRes.error) throw favoritesRes.error;
     if (recentRes.error) throw recentRes.error;
     if (olderRes.error) throw olderRes.error;
 
-    let favorites: Recipe[] = [];
-    if (favoritesRes.data && favoritesRes.data.length > 0) {
-      const favIds = favoritesRes.data.map(r => r.recipe_id);
-      const uniqueFavIds = [...new Set(favIds)];
-
-      const { data: favRecipes, error: favErr } = await supabase
-        .from('recipes')
-        .select('*')
-        .in('id', uniqueFavIds)
-        .limit(20);
-
-      if (favErr) throw favErr;
-      favorites = (favRecipes || []).map(mapRecipe);
-    }
+    const { data: favData, error: favErr } = await supabase
+      .from('recipe_ratings')
+      .select('recipe_id, recipes(*)')
+      .eq('user_id', userId)
+      .eq('rating', 'thumbs_up')
+      .limit(20);
+    if (favErr) throw favErr;
+    const favorites = (favData || [])
+      .map(row => row.recipes as DbRecipe | null)
+      .filter((r): r is DbRecipe => r !== null)
+      .map(mapRecipe);
 
     return {
       quickWins: (quickWinsRes.data || []).map(mapRecipe),

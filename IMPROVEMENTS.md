@@ -6,7 +6,7 @@ _Assessment based on: `git fetch origin main` + `git log` review of all 17 commi
 ---
 
 ## Current Sprint
-Fix Favorites N+1 in getDashboardData (Tier 1) — `[IN PROGRESS — branch: claude/brave-brahmagupta-lqx73b, started: 2026-06-16]`
+Fix Favorites N+1 in getDashboardData (Tier 1) — `[IN PROGRESS — PR: #57]`
 
 ---
 
@@ -35,7 +35,8 @@ Fix Favorites N+1 in getDashboardData (Tier 1) — `[IN PROGRESS — branch: cla
 - **What:** `recipeService.getDashboardData()` fetches favorite IDs from `recipe_ratings`, then issues a second serial query via `.in('id', uniqueFavIds)`. Two round-trips where a single Supabase join suffices. Re-confirmed June 15: the `uniqueFavIds` dedup + second `.in()` query pattern is still present at lines ~318-328 of `recipeService.ts`, byte-for-byte unchanged from the last 4 assessments.
 - **Why now:** This is the most over-tracked item in the backlog — a genuine half-day fix, fully self-contained, with the exact replacement query already specified, that has now sat open across 5+ consecutive assessments while smaller and larger items both got picked up around it. With the alert migration and E2E suite both now shipped, this is the lowest-risk, smallest-diff item available and should be the very next pickup.
 - **Effort estimate:** S
-- **Actual effort:** —
+- **Actual effort:** S
+- **Status:** `[IN PROGRESS — PR: #57]`
 - **Agent prompt:** "In `src/services/recipeService.ts`, in `getDashboardData`, replace the two-step favorites fetch (fetch IDs from `recipe_ratings`, then `.in('id', uniqueFavIds)` from `recipes`) with a single join query: `supabase.from('recipe_ratings').select('recipe_id, recipes(*)').eq('user_id', userId).eq('rating', 'thumbs_up')`. Map the nested `recipes` object directly to the favorites array. Remove the `uniqueFavIds` dedup step. Verify the dashboard still renders the favorites shelf correctly. Run `npm run lint && npm run typecheck && npm run build`."
 
 ---
