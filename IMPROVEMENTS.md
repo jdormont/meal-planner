@@ -6,7 +6,7 @@ _Assessment based on: `git fetch origin main` + `git log` review of all 17 commi
 ---
 
 ## Current Sprint
-None — ready for next implementation run.
+Fix Favorites N+1 in getDashboardData (Tier 1) — `[IN PROGRESS — branch: claude/brave-brahmagupta-lqx73b, started: 2026-06-16]`
 
 ---
 
@@ -30,7 +30,7 @@ None — ready for next implementation run.
 
 ## Tier 1 — Quick Wins
 
-### Fix Favorites N+1 in getDashboardData — OPEN
+### Fix Favorites N+1 in getDashboardData — IN PROGRESS
 
 - **What:** `recipeService.getDashboardData()` fetches favorite IDs from `recipe_ratings`, then issues a second serial query via `.in('id', uniqueFavIds)`. Two round-trips where a single Supabase join suffices. Re-confirmed June 15: the `uniqueFavIds` dedup + second `.in()` query pattern is still present at lines ~318-328 of `recipeService.ts`, byte-for-byte unchanged from the last 4 assessments.
 - **Why now:** This is the most over-tracked item in the backlog — a genuine half-day fix, fully self-contained, with the exact replacement query already specified, that has now sat open across 5+ consecutive assessments while smaller and larger items both got picked up around it. With the alert migration and E2E suite both now shipped, this is the lowest-risk, smallest-diff item available and should be the very next pickup.
