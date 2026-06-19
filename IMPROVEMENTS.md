@@ -6,7 +6,7 @@ _Assessment based on: `git log` review of all commits since the June 15 reassess
 ---
 
 ## Current Sprint
-Community Recipe Pagination / Infinite Scroll (Tier 1) — `[IN PROGRESS]`
+Community Recipe Pagination / Infinite Scroll (Tier 1) — `[IN PROGRESS — PR: #59]`
 
 ---
 
