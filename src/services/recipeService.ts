@@ -112,6 +112,7 @@ export const recipeService = {
 
   /**
    * Fetches community recipes.
+   * @deprecated Use getCommunityRecipesPaginated for paginated/infinite-scroll loading.
    */
   async getCommunityRecipes(limit = 24): Promise<Recipe[]> {
     const { data, error } = await supabase
@@ -123,6 +124,25 @@ export const recipeService = {
 
     if (error) throw error;
     return (data || []).map(mapRecipe);
+  },
+
+  /**
+   * Fetches a paginated page of community (shared) recipes, for infinite scroll.
+   */
+  async getCommunityRecipesPaginated(page: number, limit = 12): Promise<{ recipes: Recipe[]; hasMore: boolean }> {
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('is_shared', true)
+      .order('created_at', { ascending: false })
+      .range(page * limit, (page + 1) * limit - 1);
+
+    if (error) throw error;
+
+    return {
+      recipes: (data || []).map(mapRecipe),
+      hasMore: (data?.length || 0) === limit
+    };
   },
 
   /**

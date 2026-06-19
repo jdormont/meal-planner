@@ -59,12 +59,26 @@ export function useRecipes() {
     const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load recipes') : null;
     const hasMore = !!hasNextPage;
 
-    // Community Recipes Query
-    const { data: communityRecipes = [] } = useQuery({
-        queryKey: ['community-recipes'],
-        queryFn: () => recipeService.getCommunityRecipes(24),
-        enabled: !!user
+    // Community Recipes Infinite Query
+    const {
+        data: communityData,
+        fetchNextPage: fetchNextPageCommunity,
+        hasNextPage: hasNextPageCommunity,
+        isFetchingNextPage: isFetchingNextPageCommunity,
+    } = useInfiniteQuery({
+        queryKey: ['community-recipes-paged'],
+        queryFn: ({ pageParam = 0 }) => recipeService.getCommunityRecipesPaginated(pageParam),
+        getNextPageParam: (lastPage, allPages) => {
+            return lastPage.hasMore ? allPages.length : undefined;
+        },
+        initialPageParam: 0,
+        enabled: !!user,
     });
+
+    const communityRecipes = useMemo(
+        () => communityData ? communityData.pages.flatMap(page => page.recipes) : [],
+        [communityData]
+    );
 
     // Available Tags Query
     const { data: allUserTags = [] } = useQuery({
@@ -83,7 +97,7 @@ export function useRecipes() {
     }, [queryClient, user?.id]);
 
     const loadCommunityRecipes = useCallback(async () => {
-        await queryClient.invalidateQueries({ queryKey: ['community-recipes'] });
+        await queryClient.invalidateQueries({ queryKey: ['community-recipes-paged'] });
     }, [queryClient]);
 
     const loadMore = useCallback(() => {
@@ -91,6 +105,12 @@ export function useRecipes() {
             fetchNextPage();
         }
     }, [hasNextPage, loading, fetchNextPage]);
+
+    const loadMoreCommunity = useCallback(() => {
+        if (hasNextPageCommunity && !isFetchingNextPageCommunity) {
+            fetchNextPageCommunity();
+        }
+    }, [hasNextPageCommunity, isFetchingNextPageCommunity, fetchNextPageCommunity]);
 
     const executeSearch = useCallback(() => {
         setDebouncedSearchTerm(searchTerm);
@@ -252,6 +272,9 @@ export function useRecipes() {
         toggleTag,
         loadMore,
         hasMore,
+        loadMoreCommunity,
+        hasNextPageCommunity: !!hasNextPageCommunity,
+        isFetchingNextPageCommunity,
         executeSearch
     };
 }

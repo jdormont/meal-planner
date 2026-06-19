@@ -9,7 +9,7 @@ import { CommunityRecipes } from '../components/CommunityRecipes';
 import { RecipeDetail } from '../components/RecipeDetail';
 import { recipeService } from '../services/recipeService';
 import { Recipe } from '../lib/supabase';
-import { Users, Loader2 } from 'lucide-react';
+import { Users, Loader2, ChevronDown } from 'lucide-react';
 import { showSuccess } from '../utils/toast';
 
 export function CommunityPage() {
@@ -33,6 +33,9 @@ export function CommunityPage() {
     getAllTags,
     executeSearch,
     copyRecipe,
+    loadMoreCommunity,
+    hasNextPageCommunity,
+    isFetchingNextPageCommunity,
   } = useRecipes();
 
   const handleCopyRecipe = async (recipe: Recipe) => {
@@ -84,6 +87,28 @@ export function CommunityPage() {
             onEdit={(recipe) => setLocation(`~/recipes/${recipe.id}/edit`)}
             currentUserId={user!.id}
           />
+
+          {hasNextPageCommunity && (
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={loadMoreCommunity}
+                disabled={isFetchingNextPageCommunity}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              >
+                {isFetchingNextPageCommunity ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading more...
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    Load More
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </>
       )}
 

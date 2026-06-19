@@ -6,7 +6,7 @@ _Assessment based on: `git log` review of all commits since the June 15 reassess
 ---
 
 ## Current Sprint
-None — ready for next implementation run
+Community Recipe Pagination / Infinite Scroll (Tier 1) — `[IN PROGRESS — PR: #59]`
 
 ---
 
@@ -27,7 +27,7 @@ None — ready for next implementation run
 
 ## Tier 1 — Quick Wins
 
-### Community Recipe Pagination / Infinite Scroll — OPEN
+### Community Recipe Pagination / Infinite Scroll — IN PROGRESS
 
 - **What:** `getCommunityRecipes` is hardcoded to `limit(24)` at `src/services/recipeService.ts:116`; `src/hooks/useRecipes.ts:63` fetches it via a plain `useQuery` (not `useInfiniteQuery`, unlike the personal recipe feed at line 37, which already uses `useInfiniteQuery`). Any shared recipe beyond the first 24 is permanently invisible to all users.
 - **Why now:** This is now the single longest-standing open item in the backlog — its 5th consecutive appearance, unchanged since at least June 6. With the favorites N+1 fix shipped, this is unambiguously the next most "shovel-ready" item and the highest-priority pickup this cycle. The `useInfiniteQuery` pattern is proven in this exact hook for the personal recipe feed, so this remains a copy-adapt of an existing, working pattern. Every day the community feature gets used without this fix increases the chance of a silent discovery cliff.
