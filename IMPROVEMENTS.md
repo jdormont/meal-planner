@@ -6,7 +6,13 @@ _Assessment based on: `git log` review of all commits since the June 18 reassess
 ---
 
 ## Current Sprint
-None — ready for next implementation run.
+
+### Community Filters Don't Search the Full Community Set — `[IN PROGRESS — branch: claude/brave-brahmagupta-j486b7, started: 2026-06-22]`
+
+- **What:** Since PR #59 switched community recipes to `useInfiniteQuery` (12/page), `filteredCommunityRecipes` (`src/hooks/useRecipes.ts:214-249`) filters client-side over only the pages already fetched into the React Query cache. `getCommunityRecipesPaginated` takes no search/tag/time-filter args, unlike `getRecipes` (which filters server-side). The "Load More" button in `CommunityPage.tsx` is wired to `hasNextPageCommunity`/`loadMoreCommunity`, which is filter-unaware — it fetches the next unfiltered page of all community recipes, not the next page of matches. Net effect: once the community has more than 12 shared recipes, searching or tag-filtering in the Community tab silently misses matches that haven't been paged in yet, and clicking "Load More" while a filter is active does nothing useful toward finding more matches.
+- **Why now:** This is a direct, foreseeable regression introduced by last cycle's own fix (PR #59) — pagination solved the "recipes beyond 24 are invisible" bug but reintroduced a milder version of the same discoverability problem for anyone who searches/filters. It's a small, contained fix in the same file already touched by PR #59, and is higher priority than any backlog item that hasn't moved in 3+ cycles.
+- **Effort estimate:** M
+- **Actual effort:** —
 
 ---
 
@@ -24,16 +30,6 @@ None — ready for next implementation run.
 ---
 
 ## Tier 1 — Quick Wins
-
-### Community Filters Don't Search the Full Community Set — NEW
-
-- **What:** Since PR #59 switched community recipes to `useInfiniteQuery` (12/page), `filteredCommunityRecipes` (`src/hooks/useRecipes.ts:214-249`) filters client-side over only the pages already fetched into the React Query cache. `getCommunityRecipesPaginated` takes no search/tag/time-filter args, unlike `getRecipes` (which filters server-side). The "Load More" button in `CommunityPage.tsx` is wired to `hasNextPageCommunity`/`loadMoreCommunity`, which is filter-unaware — it fetches the next unfiltered page of all community recipes, not the next page of matches. Net effect: once the community has more than 12 shared recipes, searching or tag-filtering in the Community tab silently misses matches that haven't been paged in yet, and clicking "Load More" while a filter is active does nothing useful toward finding more matches.
-- **Why now:** This is a direct, foreseeable regression introduced by last cycle's own fix (PR #59) — pagination solved the "recipes beyond 24 are invisible" bug but reintroduced a milder version of the same discoverability problem for anyone who searches/filters. It's a small, contained fix in the same file already touched by PR #59, and is higher priority than any backlog item that hasn't moved in 3+ cycles.
-- **Effort estimate:** M
-- **Actual effort:** —
-- **Agent prompt:** "In `src/services/recipeService.ts`, extend `getCommunityRecipesPaginated(page, limit, filters?)` to accept the same filter shape as `getRecipes` (`recipeType`, `searchTerm`, `selectedTags`, `selectedTimeFilter`) and apply them server-side via Supabase query builders (`.ilike`/`.contains`), matching the filter semantics already implemented client-side in `filteredCommunityRecipes` (`src/hooks/useRecipes.ts:214-249`). In `useRecipes.ts`, pass `{ recipeType, searchTerm: debouncedSearchTerm, selectedTags, selectedTimeFilter }` into the community `useInfiniteQuery`'s `queryFn` and include them in its `queryKey` (so changing a filter restarts pagination from page 0, mirroring the personal-recipes query at line 37). Remove the now-redundant client-side `filteredCommunityRecipes` `useMemo` (or reduce it to a passthrough) once server-side filtering covers the same cases. Run `npm run lint && npm run typecheck && npm run build`."
-
----
 
 ### Update CLAUDE.md routing description (stale "No router" claim) — OPEN, 3rd consecutive appearance
 
@@ -131,7 +127,7 @@ None — ready for next implementation run.
 ## Process Notes
 
 - **Quiet cycle:** only PR #59 (Community Recipe Pagination, merged June 19) landed since the June 18 reassessment. No other PRs opened, merged, or closed; no GitHub issues opened.
-- **New finding this cycle — community pagination introduced a filter gap:** PR #59 fixed the "recipes beyond 24 are invisible" bug but, because `getCommunityRecipesPaginated` has no filter args, searching/tag-filtering in the Community tab now only operates over whatever pages have been scrolled into the cache. This is now the top Tier 1 item — it's a foreseeable side effect of last cycle's own fix and should be closed out before any other community-adjacent feature (e.g., Community Ratings & Comments) is started.
+- **New finding this cycle — community pagination introduced a filter gap:** PR #59 fixed the "recipes beyond 24 are invisible" bug but, because `getCommunityRecipesPaginated` has no filter args, searching/tag-filtering in the Community tab now only operates over whatever pages have been scrolled into the cache. This is now picked up as the Current Sprint item — it's a foreseeable side effect of last cycle's own fix and should be closed out before any other community-adjacent feature (e.g., Community Ratings & Comments) is started.
 - **CLAUDE.md "No router" doc fix has now gone three consecutive cycles without being picked up** (June 15, June 18, June 22) despite being the lowest-risk, lowest-effort item available. Per the staleness rule, this is escalated in place: it stays in Tier 1 with a stronger flag rather than being dropped, since dropping a near-zero-cost documentation accuracy fix would be the wrong call. Strongly recommend it be bundled into whatever PR addresses the community filter gap above.
 - **No open GitHub issues** — still no direct user-feedback signal. The instrumentation suggestion from prior cycles (lightweight PostHog event counts for Community tab search/filter usage and Shopping List drawer usage) stands, and would now also help validate whether the community filter gap finding above is actually being hit by real users before investing M effort in the fix.
 - **Recipe Folders (Tier 2)** implementation plan remains unchanged and shovel-ready; no code toward it has landed. It remains queued behind the Tier 1 items above.
