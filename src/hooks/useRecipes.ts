@@ -66,8 +66,13 @@ export function useRecipes() {
         hasNextPage: hasNextPageCommunity,
         isFetchingNextPage: isFetchingNextPageCommunity,
     } = useInfiniteQuery({
-        queryKey: ['community-recipes-paged'],
-        queryFn: ({ pageParam = 0 }) => recipeService.getCommunityRecipesPaginated(pageParam),
+        queryKey: ['community-recipes-paged', { recipeType, searchTerm: debouncedSearchTerm, selectedTags, selectedTimeFilter }],
+        queryFn: ({ pageParam = 0 }) => recipeService.getCommunityRecipesPaginated(pageParam, 12, {
+            recipeType,
+            searchTerm: debouncedSearchTerm,
+            selectedTags,
+            selectedTimeFilter
+        }),
         getNextPageParam: (lastPage, allPages) => {
             return lastPage.hasMore ? allPages.length : undefined;
         },
@@ -211,42 +216,9 @@ export function useRecipes() {
         return allUserTags;
     };
 
-    const filteredCommunityRecipes = useMemo(() => {
-        let result = communityRecipes;
-
-        result = result.filter(r => r.recipe_type === recipeType);
-
-        if (debouncedSearchTerm) {
-            const term = debouncedSearchTerm.toLowerCase();
-            result = result.filter(r =>
-                r.title.toLowerCase().includes(term) ||
-                r.description.toLowerCase().includes(term) ||
-                r.ingredients.some(i => i.name.toLowerCase().includes(term))
-            );
-        }
-
-        if (selectedTags.length > 0) {
-            result = result.filter(r =>
-                selectedTags.every(tag => r.tags.includes(tag))
-            );
-        }
-
-        if (selectedTimeFilter) {
-            result = result.filter(r => {
-                const t = r.total_time;
-                if (!t) return false;
-                switch (selectedTimeFilter) {
-                    case 'quick':   return t <= 30;
-                    case 'medium':  return t > 30 && t <= 45;
-                    case 'hour':    return t > 45 && t <= 90;
-                    case 'project': return t > 90;
-                    default:        return true;
-                }
-            });
-        }
-
-        return result;
-    }, [communityRecipes, debouncedSearchTerm, selectedTags, recipeType, selectedTimeFilter]);
+    // Community recipes are now filtered server-side (recipeType/searchTerm/selectedTags/
+    // selectedTimeFilter are baked into the community query above), so this is a passthrough.
+    const filteredCommunityRecipes = communityRecipes;
 
     return {
         recipes,

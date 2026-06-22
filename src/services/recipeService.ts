@@ -128,20 +128,78 @@ export const recipeService = {
 
   /**
    * Fetches a paginated page of community (shared) recipes, for infinite scroll.
+   * When filters.searchTerm is set, uses the search_shared_recipes_by_ingredient RPC so
+   * search/tag/time filters match server-side across the entire shared-recipe set, not
+   * just the pages already fetched into the cache.
    */
-  async getCommunityRecipesPaginated(page: number, limit = 12): Promise<{ recipes: Recipe[]; hasMore: boolean }> {
-    const { data, error } = await supabase
-      .from('recipes')
-      .select('*')
-      .eq('is_shared', true)
-      .order('created_at', { ascending: false })
-      .range(page * limit, (page + 1) * limit - 1);
+  async getCommunityRecipesPaginated(
+    page: number,
+    limit = 12,
+    filters?: { recipeType: 'food' | 'cocktail'; searchTerm?: string; selectedTags?: string[]; selectedTimeFilter?: string }
+  ): Promise<{ recipes: Recipe[]; hasMore: boolean }> {
+    const recipeType = filters?.recipeType ?? 'food';
+    const searchTerm = filters?.searchTerm ?? '';
+    const selectedTags = filters?.selectedTags ?? [];
+    const selectedTimeFilter = filters?.selectedTimeFilter ?? '';
 
-    if (error) throw error;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let rawData: any[] | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let queryError: any;
+
+    if (searchTerm) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (supabase as any).rpc('search_shared_recipes_by_ingredient', {
+        search_term: searchTerm,
+        p_recipe_type: recipeType,
+        p_tags: selectedTags.length > 0 ? selectedTags : [],
+        p_time_filter: selectedTimeFilter || '',
+        p_limit: limit,
+        p_offset: page * limit
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rawData = result.data as any[] | null;
+      queryError = result.error;
+    } else {
+      let query = supabase
+        .from('recipes')
+        .select('*')
+        .eq('is_shared', true)
+        .eq('recipe_type', recipeType)
+        .order('created_at', { ascending: false })
+        .range(page * limit, (page + 1) * limit - 1);
+
+      if (selectedTags.length > 0) {
+        query = query.contains('tags', selectedTags);
+      }
+
+      if (selectedTimeFilter) {
+        switch (selectedTimeFilter) {
+          case 'quick':
+            query = query.lte('total_time', 30);
+            break;
+          case 'medium':
+            query = query.gt('total_time', 30).lte('total_time', 45);
+            break;
+          case 'hour':
+            query = query.gt('total_time', 45).lte('total_time', 90);
+            break;
+          case 'project':
+            query = query.gt('total_time', 90);
+            break;
+        }
+      }
+
+      const result = await query;
+      rawData = result.data;
+      queryError = result.error;
+    }
+
+    if (queryError) throw queryError;
 
     return {
-      recipes: (data || []).map(mapRecipe),
-      hasMore: (data?.length || 0) === limit
+      recipes: (rawData || []).map(mapRecipe),
+      hasMore: (rawData?.length || 0) === limit
     };
   },
 
