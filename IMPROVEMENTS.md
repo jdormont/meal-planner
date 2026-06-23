@@ -7,12 +7,12 @@ _Assessment based on: `git log` review of all commits since the June 18 reassess
 
 ## Current Sprint
 
-### Community Filters Don't Search the Full Community Set — `[IN PROGRESS — branch: claude/brave-brahmagupta-j486b7, started: 2026-06-22]`
+### Community Filters Don't Search the Full Community Set — `[IN PROGRESS — PR: #61]`
 
 - **What:** Since PR #59 switched community recipes to `useInfiniteQuery` (12/page), `filteredCommunityRecipes` (`src/hooks/useRecipes.ts:214-249`) filters client-side over only the pages already fetched into the React Query cache. `getCommunityRecipesPaginated` takes no search/tag/time-filter args, unlike `getRecipes` (which filters server-side). The "Load More" button in `CommunityPage.tsx` is wired to `hasNextPageCommunity`/`loadMoreCommunity`, which is filter-unaware — it fetches the next unfiltered page of all community recipes, not the next page of matches. Net effect: once the community has more than 12 shared recipes, searching or tag-filtering in the Community tab silently misses matches that haven't been paged in yet, and clicking "Load More" while a filter is active does nothing useful toward finding more matches.
 - **Why now:** This is a direct, foreseeable regression introduced by last cycle's own fix (PR #59) — pagination solved the "recipes beyond 24 are invisible" bug but reintroduced a milder version of the same discoverability problem for anyone who searches/filters. It's a small, contained fix in the same file already touched by PR #59, and is higher priority than any backlog item that hasn't moved in 3+ cycles.
 - **Effort estimate:** M
-- **Actual effort:** —
+- **Actual effort:** M — added a sibling RPC (`search_shared_recipes_by_ingredient`), extended `getCommunityRecipesPaginated` with the same filter shape as `getRecipes`, wired filters into the community `useInfiniteQuery`'s `queryFn`/`queryKey`, and reduced `filteredCommunityRecipes` to a passthrough. `npm run lint`/`typecheck`/`build` all clean. See PR #61.
 
 ---
 
