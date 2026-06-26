@@ -1,8 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { Message, UserPreferences, ModelConfig, CuisineProfile, RatingHistoryItem, RecipeResponseSchema } from "../_shared/types.ts";
+import { Message, UserPreferences, ModelConfig, CuisineProfile, RatingHistoryItem } from "../_shared/types.ts";
 import { corsHeaders, getCorsHeaders } from "../_shared/cors.ts";
 import { classifyCuisine, CuisineClassification } from "./classifier.ts";
+import { parseRecipeResponse } from "./recipeResponseParser.ts";
 
 
 
@@ -182,34 +183,6 @@ async function getRecentlySuggestedRecipes(
   } catch (error) {
     console.error("Error getting recent recipes:", error);
     return [];
-  }
-}
-
-async function saveSuggestedRecipes(
-  userId: string,
-  recipes: any[],
-  supabaseClient: SupabaseClient
-) {
-  if (!userId || recipes.length === 0) return;
-
-  try {
-    const records = recipes.map(r => ({
-      user_id: userId,
-      recipe_name: r.title,
-      protein: r.tags?.protein || null,
-      carb: r.tags?.carb || null,
-      method: r.tags?.method || null
-    }));
-
-    const { error } = await supabaseClient
-      .from("suggested_recipes")
-      .insert(records);
-
-    if (error) {
-      console.error("Error saving suggested recipes:", error);
-    }
-  } catch (error) {
-    console.error("Error saving suggested recipes:", error);
   }
 }
 
@@ -959,43 +932,7 @@ Please rescale this to ${targetServings} servings.`;
 
 
     // Process structured response
-    let parsedData;
-    try {
-      // The model might wrap the JSON in markdown code blocks despite instructions, handle that.
-      const cleanMessage = message.trim();
-      const jsonString = cleanMessage
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/, "")
-        .replace(/\s*```$/, "");
-
-      const rawData = JSON.parse(jsonString);
-      const validation = RecipeResponseSchema.safeParse(rawData);
-
-      if (validation.success) {
-        parsedData = validation.data;
-
-         if (parsedData.suggestions.length > 0 && userId) {
-          console.log("Saving suggested recipes:", parsedData.suggestions.map((s: any) => s.title));
-          await saveSuggestedRecipes(userId, parsedData.suggestions, supabaseClient);
-        }
-      } else {
-        console.error("Schema validation failed:", validation.error);
-        // Attempt to use what we have
-        parsedData = {
-          reply: rawData.reply || message,
-          suggestions: Array.isArray(rawData.suggestions) ? rawData.suggestions : []
-        };
-      }
-    } catch (e) {
-      console.error("Error parsing JSON response:", e);
-      console.log("Raw message:", message);
-      // Fallback: If JSON parsing fails, assume the entire message is the reply text.
-      // This prevents 500 errors when the model decides to be chatty and skip JSON.
-      parsedData = {
-        reply: message,
-        suggestions: []
-      };
-    }
+    const parsedData = await parseRecipeResponse(message, userId, supabaseClient);
 
     // We no longer have a free-form text message. 
     // We return the structured data.
