@@ -7,12 +7,7 @@ _Assessment based on: `git log` review of all commits since the June 22 reassess
 
 ## Current Sprint
 
-### ai-chat Edge Function Size / Modularity (recipeResponseParser.ts extraction) — `[IN PROGRESS — PR: TBD]`
-
-- **What:** `supabase/functions/ai-chat/index.ts` remains 1039 lines, unchanged since the June 15 cuisine-classifier extraction. The directory still only contains `classifier.ts` and `index.ts` — no further extraction (`promptBuilder.ts`, `modelResolver.ts`, `recipeResponseParser.ts`) has happened.
-- **Why now:** With the community filter fix and the CLAUDE.md doc fix both closed out last cycle, this is the single oldest open Tier 1 item and the lowest-risk code change available — a pure, behavior-preserving extraction of one well-bounded piece of logic (structured-recipe-response parsing) following the precedent already set by `classifier.ts`.
-- **Effort estimate:** S (for the single `recipeResponseParser.ts` extraction only; the full 3-module split remains M-L and can follow as a separate item if desired)
-- **Actual effort:** —
+None — ready for next implementation run.
 
 ---
 
@@ -20,6 +15,7 @@ _Assessment based on: `git log` review of all commits since the June 22 reassess
 
 | Item | Status | Reference |
 |------|--------|------------|
+| ai-chat Edge Function Size / Modularity (recipeResponseParser.ts extraction) | ✅ Done | Extracted structured-recipe-response parsing (JSON fence stripping, `RecipeResponseSchema` validation, fallback handling, `saveSuggestedRecipes`) from `ai-chat/index.ts` into `ai-chat/recipeResponseParser.ts`, following the `classifier.ts` precedent. Pure extraction, no behavior change. `npm run lint`/`typecheck`/`build` all clean (edge function itself manually reviewed — Deno-only, not covered by those commands). Actual effort: S. See PR (branch `feature/ai-chat-recipe-parser-extraction`). |
 | Community Filters Don't Search the Full Community Set | ✅ Done | PR #61, merged June 23, 2026 — added `search_shared_recipes_by_ingredient` RPC (migration `20260622000001_add_shared_recipe_search_rpc.sql`), extended `getCommunityRecipesPaginated` with the same filter shape as `getRecipes`, wired filters into the community `useInfiniteQuery`'s `queryFn`/`queryKey`, reduced `filteredCommunityRecipes` to a passthrough. |
 | CLAUDE.md stale "No router" claim | ✅ Done | Fixed directly in this assessment (2026-06-25, no PR needed for code — included in this cycle's docs PR). Replaced with an accurate description of `wouter`-based routing in `src/App.tsx`. Closes out a doc-accuracy item that had recurred 4 consecutive cycles. |
 | Community Recipe Pagination / Infinite Scroll | ✅ Done | PR #59, merged June 19, 2026 |
@@ -29,7 +25,7 @@ _Assessment based on: `git log` review of all commits since the June 22 reassess
 
 ## Tier 1 — Quick Wins
 
-### Lightweight Usage Instrumentation for Community Tab & Shopping List — OPEN
+### Lightweight Usage Instrumentation for Community Tab & Shopping List — OPEN (now the oldest open Tier 1 item)
 - **What:** PostHog (`useAnalytics`) is wired throughout the app, but there is no event tracking specifically for Community tab search/filter usage or Shopping List drawer interactions (check-off, "Clear Checked", store-section grouping). Confirmed via grep: no community-search or shopping-list-specific custom events exist in `useAnalytics.ts` beyond generic pageviews.
 - **Why now:** This assessment has gone three consecutive cycles with zero open GitHub issues — there is no direct user-feedback signal informing prioritization. The two areas with the most recent bug activity (community search/filter, PR #47 and #61; shopping list, PR #52) are exactly the ones with no usage instrumentation, so it's impossible to tell whether real users are hitting edge cases there or whether further investment is warranted. This is a small, additive change with no risk to existing flows.
 - **Effort estimate:** S
@@ -108,4 +104,4 @@ Fewer than 3 clear strategic-tier items currently have enough shape to act on wi
 - **Community Recipe Ratings & Comments escalated from Tier 3 to Tier 2** this cycle per the staleness rule — its blocker (community discovery correctness) is now resolved by PR #61, and it had reached 3+ consecutive cycles without movement.
 - **No open GitHub issues for three consecutive cycles** — still no direct user-feedback signal. This is itself now flagged as a Tier 1 item (lightweight PostHog instrumentation for Community/Shopping List usage) to give the next few cycles real data to prioritize against, given the original PRD-derived backlog is largely worked through.
 - **Tier 3 is intentionally thin this cycle** (see note above) — the remaining PRD "Future Considerations" items are too broad/speculative to scope responsibly without more signal.
-- **ai-chat Edge Function Modularity selected for implementation 2026-06-26** — picked as the highest-priority incomplete Tier 1 item (oldest open, lowest risk) by the autonomous implementation routine. Branched as `feature/ai-chat-recipe-parser-extraction` directly off `origin/main` rather than waiting for this reassessment PR (#62) to merge, since the two changes don't overlap; this PR's Step 9 update will supersede the Current Sprint marker above once #62 (or this PR, whichever merges first) lands.
+- **ai-chat Edge Function Modularity implemented 2026-06-26** — picked as the highest-priority incomplete Tier 1 item (oldest open, lowest risk) by the autonomous implementation routine, branched as `feature/ai-chat-recipe-parser-extraction` directly off `origin/main` rather than waiting for this reassessment PR (#62) to merge (the two changes don't overlap). Implementation, verification, and this status update all landed in that same PR. If PR #62 merges separately, its next reassessment cycle should reconcile/dedupe this entry against the one being added here.
