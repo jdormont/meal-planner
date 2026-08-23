@@ -68,7 +68,7 @@ async function callOpenAI(apiKey: string, model: string, messages: Message[], sy
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 4096,
     }),
   });
 
@@ -91,7 +91,8 @@ async function callAnthropic(apiKey: string, model: string, messages: Message[],
     },
     body: JSON.stringify({
       model,
-      max_tokens: 1000,
+      max_tokens: 4096,
+      thinking: { type: "disabled" },
       system: systemPrompt,
       messages: messages,
     }),
@@ -103,7 +104,11 @@ async function callAnthropic(apiKey: string, model: string, messages: Message[],
   }
 
   const data = await response.json();
-  return data.content[0].text;
+  const textBlock = data.content?.find((block: any) => block.type === "text");
+  if (!textBlock?.text) {
+    throw new Error(`Anthropic API returned no text content: ${JSON.stringify(data)}`);
+  }
+  return textBlock.text;
 }
 
 async function callGemini(apiKey: string, model: string, messages: Message[], systemPrompt: string) {
@@ -129,7 +134,7 @@ async function callGemini(apiKey: string, model: string, messages: Message[], sy
         contents,
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 1000,
+          maxOutputTokens: 4096,
           responseMimeType: "application/json",
         },
       }),

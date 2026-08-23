@@ -116,8 +116,9 @@ Select ONE option from each category. Choose the most appropriate option based o
         "Content-Type": "application/json",
       };
       requestBody = {
-        model: "claude-3-5-haiku-20241022",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 200,
+        thinking: { type: "disabled" },
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
       };
@@ -150,7 +151,8 @@ Select ONE option from each category. Choose the most appropriate option based o
     if (isOpenAI) {
       message = data.choices[0].message.content;
     } else {
-      message = data.content[0].text;
+      const textBlock = data.content?.find((block: any) => block.type === "text");
+      message = textBlock?.text;
     }
 
     console.log("Extracted message:", message);

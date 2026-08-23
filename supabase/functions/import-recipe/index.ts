@@ -467,8 +467,9 @@ Return ONLY valid JSON, no additional text.`;
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-3-haiku-20240307",
+          model: "claude-haiku-4-5-20251001",
           max_tokens: 2048,
+          thinking: { type: "disabled" },
           messages: [
             { role: "user", content: prompt }
           ],
@@ -481,7 +482,9 @@ Return ONLY valid JSON, no additional text.`;
       }
 
       const data = await response.json();
-      const content = data.content[0].text.trim();
+      const textBlock = data.content?.find((block: any) => block.type === "text");
+      const content = textBlock?.text?.trim();
+      if (!content) return null;
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);

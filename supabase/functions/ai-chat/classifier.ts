@@ -125,7 +125,7 @@ Remember: Be decisive. If the request is generic ("what should I cook for dinner
     if (provider === "openai") {
       classifierModel = "gpt-4o-mini";
     } else if (provider === "anthropic") {
-      classifierModel = "claude-3-5-haiku-20241022";
+      classifierModel = "claude-haiku-4-5-20251001";
     } else if (provider === "google") {
       classifierModel = "gemini-1.5-flash";
     } else {

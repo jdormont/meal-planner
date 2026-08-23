@@ -1,4 +1,4 @@
-const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN") ?? "*";
+const allowedOrigin = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").replace(/\/+$/, "");
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": allowedOrigin,
