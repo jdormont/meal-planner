@@ -900,6 +900,8 @@ Please rescale this to ${targetServings} servings.`;
     5. **Q&A Mode** (User asks a general cooking question):
        - Answer in "reply". Return "suggestions": [].
 
+    CAPABILITIES: You cannot modify the user's meal planner, calendar, shopping list, or saved recipes. NEVER say or imply you added, saved, scheduled, or updated anything. If the user asks you to add meals to their planner, return the meals as "suggestions" (if not already shown) and tell them to use the calendar icon on a meal card, or the "Add all to planner" button under the meals, to pick days and add them.
+
     CRITICAL: If the user asks for a substitution (e.g. "use tofu instead"), you MUST return the NEW, MODIFIED recipes in the "suggestions" array. Do not just describe the change in text.
     
     ${preferencesContext}${ratingContext}${weeklyBriefContext}${cuisineProfileContext}
