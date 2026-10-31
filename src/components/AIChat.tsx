@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, User, Loader2, Trash2, Plus, ArrowLeft, MessageSquare, Bug } from 'lucide-react';
+import { Send, User, Loader2, Trash2, Plus, ArrowLeft, MessageSquare, Bug, CalendarPlus } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { RecipeSuggestionCard, RecipeSuggestion } from './RecipeSuggestionCard';
+import { AddToPlanModal } from './AddToPlanModal';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -203,6 +204,8 @@ export function AIChat({ onSaveRecipe, onFirstAction, onViewRecipe }: AIChatProp
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const [planSuggestions, setPlanSuggestions] = useState<RecipeSuggestion[] | null>(null);
 
   const handleSaveCard = async (suggestion: RecipeSuggestion) => {
     if (!onSaveRecipe) return;
@@ -551,6 +554,7 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
                           <RecipeSuggestionCard
                             suggestion={suggestion}
                             onSave={() => handleSaveCard(suggestion)}
+                            onAddToPlan={() => setPlanSuggestions([suggestion])}
                             onClick={() => {
                               if (suggestion.full_details && onViewRecipe) {
                                 onViewRecipe(suggestion);
@@ -562,6 +566,15 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
                         </div>
                       ))}
                     </div>
+                  )}
+                  {message.role === 'assistant' && message.suggestions && message.suggestions.length > 1 && (
+                    <button
+                      onClick={() => setPlanSuggestions(message.suggestions!)}
+                      className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl text-sm font-medium transition"
+                    >
+                      <CalendarPlus className="w-4 h-4" />
+                      Add all {message.suggestions.length} to planner
+                    </button>
                   )}
 
                   {/* Admin Metadata */}
@@ -634,6 +647,12 @@ ${suggestion.full_details?.instructions?.map((i: string, idx: number) => `${idx 
           </div>
         </div>
       </div>
+      {planSuggestions && (
+        <AddToPlanModal
+          suggestions={planSuggestions}
+          onClose={() => setPlanSuggestions(null)}
+        />
+      )}
     </div>
   );
 }

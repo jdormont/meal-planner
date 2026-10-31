@@ -1,4 +1,4 @@
-import { Bookmark, Clock, Signal } from 'lucide-react';
+import { Bookmark, CalendarPlus, Clock, Signal } from 'lucide-react';
 import { useState } from 'react';
 
 export type RecipeSuggestion = {
@@ -20,9 +20,10 @@ type RecipeSuggestionCardProps = {
     suggestion: RecipeSuggestion;
     onSave: () => Promise<void>;
     onClick: () => void;
+    onAddToPlan?: () => void;
 };
 
-export function RecipeSuggestionCard({ suggestion, onSave, onClick }: RecipeSuggestionCardProps) {
+export function RecipeSuggestionCard({ suggestion, onSave, onClick, onAddToPlan }: RecipeSuggestionCardProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
 
@@ -59,10 +60,20 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick }: RecipeSugg
                 <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-orange-600 transition-colors">
                     {suggestion.title}
                 </h3>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                {onAddToPlan && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onAddToPlan(); }}
+                        className="text-gray-400 hover:text-orange-500 transition-colors"
+                        title="Add to planner"
+                    >
+                        <CalendarPlus className="w-5 h-5" />
+                    </button>
+                )}
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="text-gray-400 hover:text-orange-500 transition-colors flex-shrink-0"
+                    className="text-gray-400 hover:text-orange-500 transition-colors"
                     title="Save Recipe"
                 >
                     {isSaving ? (
@@ -71,6 +82,7 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick }: RecipeSugg
                         <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-orange-500 text-orange-500' : ''}`} />
                     )}
                 </button>
+                </div>
             </div>
 
             <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
