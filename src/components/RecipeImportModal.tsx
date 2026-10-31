@@ -150,8 +150,9 @@ export function RecipeImportModal({ onClose, onImportComplete }: RecipeImportMod
       setStatus('done');
 
       setTimeout(() => {
+        // Navigation to the recipe form unmounts this modal; calling onClose()
+        // here would navigate back to '/' and override it.
         onImportComplete(recipeWithParsedIngredients);
-        onClose();
       }, 1000);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

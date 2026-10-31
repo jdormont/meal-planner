@@ -165,8 +165,9 @@ export function RecipePhotoModal({ onClose, onImportComplete }: RecipePhotoModal
       setStatus('done');
 
       setTimeout(() => {
+        // Navigation to the recipe form unmounts this modal; calling onClose()
+        // here would navigate back to '/' and override it.
         onImportComplete(recipeWithDefaults);
-        onClose();
       }, 1000);
     } catch (err) {
       setStatus('error');
