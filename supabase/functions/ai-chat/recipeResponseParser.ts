@@ -34,6 +34,24 @@ async function saveSuggestedRecipes(
   }
 }
 
+// Parse JSON, falling back to the outermost {...} when the model wrapped it in prose.
+function parseJsonLenient(text: string): any {
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      try {
+        return JSON.parse(text.slice(start, end + 1));
+      } catch {
+        // fall through to the original error
+      }
+    }
+    throw e;
+  }
+}
+
 export async function parseRecipeResponse(
   message: string,
   userId: string | null,
@@ -48,7 +66,7 @@ export async function parseRecipeResponse(
       .replace(/^```\s*/, "")
       .replace(/\s*```$/, "");
 
-    const rawData = JSON.parse(jsonString);
+    const rawData = parseJsonLenient(jsonString);
     const validation = RecipeResponseSchema.safeParse(rawData);
 
     if (validation.success) {

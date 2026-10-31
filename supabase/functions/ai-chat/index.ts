@@ -93,7 +93,8 @@ async function callAnthropic(apiKey: string, model: string, messages: Message[],
       model,
       max_tokens: 4096,
       thinking: { type: "disabled" },
-      system: systemPrompt,
+      // Anthropic has no JSON mode, so reinforce the output contract.
+      system: `${systemPrompt}\n\nOUTPUT FORMAT: Respond with a single JSON object only. No text, greetings, or markdown before or after it. Everything conversational belongs inside the "reply" field.`,
       messages: messages,
     }),
   });
@@ -104,11 +105,18 @@ async function callAnthropic(apiKey: string, model: string, messages: Message[],
   }
 
   const data = await response.json();
-  const textBlock = data.content?.find((block: any) => block.type === "text");
-  if (!textBlock?.text) {
+  // The response can contain several text blocks; using only the first one drops the rest (e.g. the JSON payload).
+  const text = (data.content ?? [])
+    .filter((block: any) => block.type === "text" && block.text)
+    .map((block: any) => block.text)
+    .join("");
+  if (!text) {
     throw new Error(`Anthropic API returned no text content: ${JSON.stringify(data)}`);
   }
-  return textBlock.text;
+  if (data.stop_reason === "max_tokens") {
+    console.warn("Anthropic response hit max_tokens; output may be truncated");
+  }
+  return text;
 }
 
 async function callGemini(apiKey: string, model: string, messages: Message[], systemPrompt: string) {
