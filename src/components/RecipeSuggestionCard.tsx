@@ -17,6 +17,8 @@ export type RecipeSuggestion = {
         nutrition_notes?: string;
     };
     image_url?: string;
+    /** Set server-side by the ai-chat allergen guard when the suggestion still matches a restriction after one retry. */
+    allergen_blocked?: boolean;
 };
 
 type RecipeSuggestionCardProps = {
