@@ -1,3 +1,4 @@
+import { AllergenSafetyBadge } from './AllergenSafetyBadge';
 import { useState } from 'react';
 import { Edit2, Trash2, Clock, Users, ArrowRight, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Recipe } from '../lib/supabase';
@@ -251,6 +252,8 @@ export function RecipeList({
                   </button>
                 </div>
               </div>
+
+              <AllergenSafetyBadge recipe={recipe} source="recipe_card" className="mb-3" />
 
               <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                 <div className="flex items-center gap-1">

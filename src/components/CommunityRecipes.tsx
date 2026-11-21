@@ -1,3 +1,4 @@
+import { AllergenSafetyBadge } from './AllergenSafetyBadge';
 import { Recipe } from '../lib/supabase';
 import { Clock, Users, Copy, Eye, Edit2 } from 'lucide-react';
 
@@ -60,9 +61,10 @@ export function CommunityRecipes({ recipes, onSelect, onCopy, onEdit, currentUse
                 <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
                   {recipe.title}
                 </h3>
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                 {recipe.description || 'No description'}
               </p>
+              <AllergenSafetyBadge recipe={recipe} source="community_card" className="mb-4" />
 
               <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                 <div className="flex items-center gap-1">

@@ -1,3 +1,4 @@
+import { AllergenSafetyBadge } from './AllergenSafetyBadge';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Check, CalendarPlus, Loader2, ChevronLeft, ChevronRight, Clock, ChefHat } from 'lucide-react';
@@ -247,6 +248,15 @@ export function WeeklyMealCarousel({ onMealAdded }: WeeklyMealCarouselProps) {
                         <p className="text-gray-200 text-lg sm:text-xl mb-8 line-clamp-2 max-w-2xl font-light">
                             {currentRecipe.description}
                         </p>
+                        <AllergenSafetyBadge
+                            recipe={{
+                                title: currentRecipe.title,
+                                description: currentRecipe.description,
+                                ingredients: Array.isArray(currentRecipe.ingredients) ? currentRecipe.ingredients : [],
+                            }}
+                            source="weekly_curator"
+                            className="mb-6"
+                        />
                         
                         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                             <div className="flex items-center gap-2 text-gray-100 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { PREFERENCES_QUERY_KEY } from '../../hooks/useRestrictions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -18,6 +20,7 @@ type OnboardingWizardProps = {
 
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const { user, signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(0); // 0 is now WelcomeStep
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -95,6 +98,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         }, { onConflict: 'user_id' });
 
       if (error) throw error;
+      if (newAllergies !== undefined) {
+        await queryClient.invalidateQueries({ queryKey: [PREFERENCES_QUERY_KEY, user.id] });
+      }
     } catch (error) {
       console.error('Error saving step data:', error);
     }

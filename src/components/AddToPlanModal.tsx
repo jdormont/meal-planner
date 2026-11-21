@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { X, CalendarPlus, Loader2 } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
@@ -6,6 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { RecipeSuggestion } from './RecipeSuggestionCard';
 import { addSuggestionsToPlanner } from '../services/planService';
 import { showError, showSuccess } from '../utils/toast';
+import { AllergenSafetyBadge } from './AllergenSafetyBadge';
+import { useRestrictions } from '../hooks/useRestrictions';
+import { useAnalytics } from '../hooks/useAnalytics';
+import { checkRecipe, hasAnyRestrictions } from '../../supabase/functions/_shared/allergens/index.ts';
 
 type AddToPlanModalProps = {
   suggestions: RecipeSuggestion[];
@@ -17,6 +21,17 @@ export function AddToPlanModal({ suggestions, onClose, onAdded }: AddToPlanModal
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [confirmBlocked, setConfirmBlocked] = useState(false);
+  const { diners } = useRestrictions();
+  const { track } = useAnalytics();
+  const recipeInputs = useMemo(
+    () => suggestions.map(s => ({ title: s.title, description: s.description, ingredients: s.full_details?.ingredients ?? [] })),
+    [suggestions]
+  );
+  const blockedCount = useMemo(
+    () => (hasAnyRestrictions(diners) ? recipeInputs.filter(r => checkRecipe(r, diners).status === 'blocked').length : 0),
+    [recipeInputs, diners]
+  );
   // Default to consecutive days starting today.
   const [dates, setDates] = useState<string[]>(() =>
     suggestions.map((_, i) => format(addDays(new Date(), i), 'yyyy-MM-dd'))
@@ -24,6 +39,11 @@ export function AddToPlanModal({ suggestions, onClose, onAdded }: AddToPlanModal
 
   const handleConfirm = async () => {
     if (!user || saving) return;
+    if (blockedCount > 0 && !confirmBlocked) {
+      setConfirmBlocked(true);
+      return;
+    }
+    if (blockedCount > 0) track('allergen_blocked_confirmed_override', { action: 'add_to_plan', blocked_count: blockedCount });
     setSaving(true);
     try {
       const { added, failed } = await addSuggestionsToPlanner(
@@ -64,7 +84,10 @@ export function AddToPlanModal({ suggestions, onClose, onAdded }: AddToPlanModal
           <p className="text-sm text-gray-600">Pick a day for each dinner. They'll be saved to your recipes too.</p>
           {suggestions.map((s, i) => (
             <div key={`${s.title}-${i}`} className="flex items-center gap-3">
-              <span className="flex-1 text-sm font-medium text-gray-900 line-clamp-2">{s.title}</span>
+              <div className="flex-1 min-w-0 space-y-1">
+                <span className="block text-sm font-medium text-gray-900 line-clamp-2">{s.title}</span>
+                <AllergenSafetyBadge recipe={recipeInputs[i]} source="add_to_plan" />
+              </div>
               <input
                 type="date"
                 value={dates[i]}
@@ -73,6 +96,11 @@ export function AddToPlanModal({ suggestions, onClose, onAdded }: AddToPlanModal
               />
             </div>
           ))}
+          {confirmBlocked && blockedCount > 0 && (
+            <p className="text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+              {blockedCount === 1 ? '1 recipe matches' : `${blockedCount} recipes match`} a restriction you set. Tap the button again to add anyway.
+            </p>
+          )}
         </div>
 
         <div className="p-6 border-t border-gray-200 flex gap-3">
@@ -89,7 +117,7 @@ export function AddToPlanModal({ suggestions, onClose, onAdded }: AddToPlanModal
             className="flex-1 px-4 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white rounded-xl transition font-medium disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CalendarPlus className="w-5 h-5" />}
-            {saving ? 'Adding...' : 'Add to planner'}
+            {saving ? 'Adding...' : confirmBlocked && blockedCount > 0 ? 'Add anyway' : 'Add to planner'}
           </button>
         </div>
       </div>

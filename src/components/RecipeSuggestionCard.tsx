@@ -1,5 +1,8 @@
 import { Bookmark, CalendarPlus, Clock, Signal } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { AllergenSafetyBadge } from './AllergenSafetyBadge';
+import { useAllergenCheck } from '../hooks/useAllergenCheck';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 export type RecipeSuggestion = {
     title: string;
@@ -26,10 +29,24 @@ type RecipeSuggestionCardProps = {
 export function RecipeSuggestionCard({ suggestion, onSave, onClick, onAddToPlan }: RecipeSuggestionCardProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const [confirmBlocked, setConfirmBlocked] = useState(false);
+    const { track } = useAnalytics();
+    const checkInput = useMemo(
+        () => ({ title: suggestion.title, description: suggestion.description, ingredients: suggestion.full_details?.ingredients ?? [] }),
+        [suggestion]
+    );
+    const check = useAllergenCheck(checkInput);
+    const isBlocked = check?.status === 'blocked';
 
     const handleSave = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (isSaving || isSaved) return;
+        if (isBlocked && !confirmBlocked) {
+            // Blocked recipes need an explicit second click.
+            setConfirmBlocked(true);
+            return;
+        }
+        if (isBlocked) track('allergen_blocked_confirmed_override', { action: 'save' });
         setIsSaving(true);
         try {
             await onSave();
@@ -74,7 +91,7 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick, onAddToPlan 
                     onClick={handleSave}
                     disabled={isSaving}
                     className="text-gray-400 hover:text-orange-500 transition-colors"
-                    title="Save Recipe"
+                    title={confirmBlocked ? 'Click again to save despite the allergen match' : 'Save Recipe'}
                 >
                     {isSaving ? (
                         <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
@@ -102,6 +119,13 @@ export function RecipeSuggestionCard({ suggestion, onSave, onClick, onAddToPlan 
                     </div>
                 )}
             </div>
+
+            <AllergenSafetyBadge recipe={checkInput} source="chat_suggestion" />
+            {confirmBlocked && !isSaved && (
+                <p className="text-xs font-medium text-red-700">
+                    This recipe matches a restriction you set. Tap the bookmark again to save it anyway.
+                </p>
+            )}
 
             <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
                 {suggestion.description}
