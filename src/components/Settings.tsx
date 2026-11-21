@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { PREFERENCES_QUERY_KEY } from '../hooks/useRestrictions';
 import { useAuth } from '../contexts/AuthContext';
 import { Save, Loader2 } from 'lucide-react';
 import { profileService } from '../services/profileService';
@@ -20,6 +22,7 @@ const equipmentOptions = [
 export default function Settings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -66,6 +69,8 @@ export default function Settings() {
 
     try {
       await profileService.saveUserPreferences(user.id, preferences);
+      // Restrictions changed? Re-evaluate every allergen badge immediately.
+      await queryClient.invalidateQueries({ queryKey: [PREFERENCES_QUERY_KEY, user.id] });
       setMessage('Preferences saved successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {

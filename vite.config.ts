@@ -20,10 +20,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/utils/**', 'src/lib/**'],
+      include: ['src/utils/**', 'src/lib/**', 'supabase/functions/_shared/allergens/**'],
     },
   },
 });

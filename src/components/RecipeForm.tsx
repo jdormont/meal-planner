@@ -1,3 +1,4 @@
+import { AllergenSafetyBadge } from './AllergenSafetyBadge';
 import { useState, useEffect } from 'react';
 import { Recipe, CocktailMetadata } from '../lib/supabase';
 import { X, Plus, Minus, Loader2, Trash2, Sparkles } from 'lucide-react';
@@ -354,6 +355,11 @@ export function RecipeForm({ recipe, onSave, onCancel, onDelete }: RecipeFormPro
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+          <AllergenSafetyBadge
+            recipe={{ title, description, ingredients: ingredients.filter(i => i.name.trim()) }}
+            variant="full"
+            source="recipe_form"
+          />
           {recipe?.id.startsWith('temp-') && (
             <div className="bg-sage-50 border border-sage-200 rounded-xl p-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">

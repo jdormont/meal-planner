@@ -1,3 +1,4 @@
+import { AllergenSafetyBadge } from './AllergenSafetyBadge';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Recipe, RecipeRating, Meal, supabase } from '../lib/supabase';
 import { useShoppingList } from '../contexts/ShoppingListContext';
@@ -282,6 +283,7 @@ export function RecipeDetail({ recipe, onClose, onEdit, onCopy, onFirstAction, o
                 {recipe.description}
               </p>
             )}
+            <AllergenSafetyBadge recipe={recipe} variant="full" source="recipe_detail" className="mt-4" />
           </div>
 
           <div className="flex flex-wrap items-center gap-6 mb-6 pb-6 border-b">

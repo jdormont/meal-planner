@@ -4,6 +4,7 @@ import { Message, UserPreferences, ModelConfig, CuisineProfile, RatingHistoryIte
 import { corsHeaders, getCorsHeaders } from "../_shared/cors.ts";
 import { classifyCuisine, CuisineClassification } from "./classifier.ts";
 import { parseRecipeResponse } from "./recipeResponseParser.ts";
+import { guardResponse } from "../_shared/allergens/guard.ts";
 
 
 
@@ -947,7 +948,31 @@ Please rescale this to ${targetServings} servings.`;
 
 
     // Process structured response
-    const parsedData = await parseRecipeResponse(message, userId, supabaseClient);
+    const initialParsed = await parseRecipeResponse(message, userId, supabaseClient);
+
+    // Deterministic allergen guard (defence in depth on top of the prompt-based safety block).
+    // If any suggestion matches the user's restrictions, make ONE regeneration attempt that names
+    // the violation; anything still blocked is returned flagged (allergen_blocked) so the UI warns.
+    // Cost: one extra LLM call, only in the failure case.
+    const guard = await guardResponse(
+      initialParsed,
+      Array.isArray(userPreferences?.food_restrictions) ? userPreferences.food_restrictions : [],
+      async (correctionNote: string) => {
+        const retryMessage = await callLLM(
+          modelConfig.provider,
+          apiKey,
+          modelConfig.model_identifier,
+          [...messages, { role: "assistant", content: message }, { role: "user", content: correctionNote }],
+          systemPrompt
+        );
+        return await parseRecipeResponse(retryMessage, userId, supabaseClient);
+      }
+    );
+    const parsedData = guard.response;
+    if (guard.regenerated) {
+      // Counts only; no ingredient or restriction values in logs.
+      console.log(`Allergen guard regenerated once; blocked suggestions remaining: ${guard.blockedCount}`);
+    }
 
     // We no longer have a free-form text message. 
     // We return the structured data.
