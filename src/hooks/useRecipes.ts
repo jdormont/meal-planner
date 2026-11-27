@@ -6,6 +6,8 @@ import { useAnalytics } from './useAnalytics';
 import { updateCachedFeaturedRecipe } from './useRecipeDashboard';
 import { recipeService } from '../services/recipeService';
 
+const MIN_SEARCH_LENGTH = 2;
+
 export function useRecipes() {
     const { user } = useAuth();
     const { track } = useAnalytics();
@@ -18,11 +20,19 @@ export function useRecipes() {
     const [selectedTimeFilter, setSelectedTimeFilter] = useState<string>('');
     const [recipeType, setRecipeType] = useState<'food' | 'cocktail'>('food');
 
-    // Debounce search term to avoid rapid network requests
+    // Debounce search term to avoid rapid network requests. Terms shorter than
+    // MIN_SEARCH_LENGTH are not sent to the server (a single letter matches almost
+    // everything via ILIKE '%x%'); clearing the box resets the list immediately.
     useEffect(() => {
+        const trimmed = searchTerm.trim();
+        if (trimmed.length === 0) {
+            setDebouncedSearchTerm('');
+            return;
+        }
+        if (trimmed.length < MIN_SEARCH_LENGTH) return;
         const handler = setTimeout(() => {
-            setDebouncedSearchTerm(searchTerm);
-        }, 300);
+            setDebouncedSearchTerm(trimmed);
+        }, 500);
         return () => clearTimeout(handler);
     }, [searchTerm]);
 
@@ -118,7 +128,7 @@ export function useRecipes() {
     }, [hasNextPageCommunity, isFetchingNextPageCommunity, fetchNextPageCommunity]);
 
     const executeSearch = useCallback(() => {
-        setDebouncedSearchTerm(searchTerm);
+        setDebouncedSearchTerm(searchTerm.trim());
     }, [searchTerm]);
 
     // Mutations
